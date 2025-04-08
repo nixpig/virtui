@@ -13,6 +13,9 @@ import (
 
 const libvirtURI = "qemu:///system"
 
+var rows = []table.Row{}
+var domains []libvirt.Domain
+
 var domainState = map[libvirt.DomainState]string{
 	libvirt.DOMAIN_NOSTATE:     "None",
 	libvirt.DOMAIN_RUNNING:     "Running",
@@ -65,21 +68,77 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
+	r := m.table.Cursor()
+	d := domains[r]
+	s, _, _ := d.GetState()
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
+
 		case "esc":
 			if m.table.Focused() {
 				m.table.Blur()
 			} else {
 				m.table.Focus()
 			}
+
 		case "q", "ctrl+c":
 			return m, tea.Quit
+
 		case "enter":
-			return m, tea.Batch(
-				tea.Printf("Let's go to %s!", m.table.SelectedRow()[1]),
-			)
+			if err := d.Create(); err != nil {
+				fmt.Println("ERR: ", err)
+			}
+			fmt.Println("Start")
+			return m, nil
+
+		case "p":
+			if s == libvirt.DOMAIN_PAUSED {
+				if err := d.Resume(); err != nil {
+					fmt.Println("ERR: ", err)
+				}
+				fmt.Println("Resume")
+			} else {
+				if err := d.Suspend(); err != nil {
+					fmt.Println("ERR: ", err)
+				}
+				fmt.Println("Suspend")
+			}
+			return m, nil
+
+		case "s":
+			if err := d.Shutdown(); err != nil {
+				fmt.Println("ERR: ", err)
+			}
+			fmt.Println("Shutdown")
+			return m, nil
+
+		case "r":
+			if err := d.Reboot(0); err != nil {
+				fmt.Println("ERR: ", err)
+			}
+			fmt.Println("Reboot")
+			return m, nil
+
+		case "o":
+			if err := d.Reset(0); err != nil {
+				fmt.Println("ERR: ", err)
+			}
+			fmt.Println("Reset")
+			return m, nil
+
+		case "f":
+			return m, nil
+
+		case "v":
+			i, _ := d.GetFSInfo(0)
+			fmt.Println("INFO: ", i)
+			// if err := d.Save(); err != nil {
+			// 		fmt.Println("ERR: ", err)
+			// 	}
+			return m, nil
+
 		}
 	}
 
@@ -100,31 +159,33 @@ func main() {
 	defer conn.Close()
 
 	flags := libvirt.ConnectListAllDomainsFlags(libvirt.CONNECT_LIST_DOMAINS_ACTIVE | libvirt.CONNECT_LIST_DOMAINS_INACTIVE)
-	domains, _ := conn.ListAllDomains(flags)
+	domains, _ = conn.ListAllDomains(flags)
 
 	w, _, err := term.GetSize(0)
 	if err != nil {
 		fmt.Println("failed to get term size: ", err)
 	}
 
-	idWidth := 4
-	stateWidth := 8
-	nameWidth := w - idWidth - stateWidth - 4 - 4 - 2
+	idWidth := 3
+	stateWidth := 7
+	nameWidth := w - idWidth - stateWidth - 4 - 4 - 2 - 4 - 4 - 4 - 6
 
 	columns := []table.Column{
 		{Title: "ID", Width: idWidth},
 		{Title: "Name", Width: nameWidth},
 		{Title: "State", Width: stateWidth},
+		{Title: "CPU", Width: 3},
+		{Title: "Mem", Width: 3},
+		{Title: "Blk", Width: 3},
+		{Title: "Net", Width: 3},
 	}
 
-	rows := make([]table.Row, len(domains))
-
-	for i, d := range domains {
+	for _, d := range domains {
 		name, _ := d.GetName()
 		state := fmtState(&d)
 		id := fmtID(&d)
 
-		rows[i] = table.Row{id, name, state}
+		rows = append(rows, table.Row{id, name, state, "▄█▄", "█▄▄", "▄ █", "█ ▄"})
 	}
 
 	t := table.New(
@@ -139,7 +200,7 @@ func main() {
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderForeground(lipgloss.Color("240")).
 		BorderBottom(true).
-		Bold(false)
+		Bold(true)
 
 	s.Selected = s.Selected.
 		Foreground(lipgloss.Color("229")).

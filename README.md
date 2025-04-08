@@ -22,19 +22,52 @@ Create a domain with CPU, memory, network and disk, from an ISO.
 ## Commands from list
 
 - Select domain - ↓/↑ j/k
-- Open          - O
-- Run           - ENTER
-    - Pause         - P
-    - Shutdown      - S
-    - Reboot        - R
-    - Force Reset   - O
-    - Force Off     - F
-    - Save          - V
-    - Close menu    - ESC
-- Migrate       - M
-- Delete        - D
-- Clone         - C
-- Help          - H
-- New           - N
-- Quit          - Q/ESC
 
+- Open          - O
+    - xxx
+
+- Start         - ENTER
+- Pause/Resume  - P
+- Shutdown      - S
+- Reboot        - R
+- Force Reset   - O
+- Force Off     - F
+- Save/Restore  - V
+
+- Migrate       - M
+    - Close wizard  - ESC
+
+- Delete        - D
+    - Confirm
+
+- Clone         - C
+    - Close wizard  - ESC
+
+- Help          - H
+    - Close help    - ESC
+
+- New           - N
+    - Close wizard  - ESC
+
+- Quit          - Q
+
+
+## States
+
+libvirt.DOMAIN_NOSTATE:     "None"
+libvirt.DOMAIN_RUNNING:     "Running"
+libvirt.DOMAIN_BLOCKED:     "Blocked"
+libvirt.DOMAIN_PAUSED:      "Paused"
+libvirt.DOMAIN_SHUTDOWN:    "Shutdown"
+libvirt.DOMAIN_CRASHED:     "Crashed"
+libvirt.DOMAIN_PMSUSPENDED: "Suspended"
+libvirt.DOMAIN_SHUTOFF:     "Shutoff"
+
+If it's `x` then it can be `yz`: 
+
+Running -> Pause, Save, Migrate, Delete, Reboot, Shutdown, Force Reset, Force Off
+Paused -> Resume, Save, Migrate, Delete, Reboot, Shutdown, Force Reset, Force Off
+
+Shutoff -> Run, Clone, Delete
+
+Saved -> Restore, Clone, Delete

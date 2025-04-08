@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -25,6 +27,109 @@ var domainState = map[libvirt.DomainState]string{
 	libvirt.DOMAIN_CRASHED:     "Crashed",
 	libvirt.DOMAIN_PMSUSPENDED: "Suspended",
 	libvirt.DOMAIN_SHUTOFF:     "Shutoff",
+}
+
+type keymap struct {
+	Up          key.Binding
+	Down        key.Binding
+	Open        key.Binding
+	Start       key.Binding
+	PauseResume key.Binding
+	Shutdown    key.Binding
+	Reboot      key.Binding
+	Reset       key.Binding
+	PowerOff    key.Binding
+	SaveRestore key.Binding
+	Migrate     key.Binding
+	Delete      key.Binding
+	Clone       key.Binding
+	New         key.Binding
+	Help        key.Binding
+	Quit        key.Binding
+	Focus       key.Binding
+}
+
+func (k keymap) ShortHelp() []key.Binding {
+	return []key.Binding{k.Help, k.Quit}
+}
+
+func (k keymap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{k.Up, k.Down, k.Open, k.Help, k.Quit},
+		{k.Start, k.PauseResume, k.Shutdown, k.Reboot, k.Reset, k.PowerOff},
+		{k.New, k.SaveRestore, k.Migrate, k.Clone, k.Delete},
+	}
+}
+
+var keys = keymap{
+	Up: key.NewBinding(
+		key.WithKeys("up", "k", "K"),
+		key.WithHelp("↑/k", "up"),
+	),
+	Down: key.NewBinding(
+		key.WithKeys("down", "j", "J"),
+		key.WithHelp("↓/j", "down"),
+	),
+	Open: key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("enter", "open"),
+	),
+	Start: key.NewBinding(
+		key.WithKeys("t", "T"),
+		key.WithHelp("t", "start"),
+	),
+	PauseResume: key.NewBinding(
+		key.WithKeys("p", "P"),
+		key.WithHelp("p", "pause/resume"),
+	),
+	Shutdown: key.NewBinding(
+		key.WithKeys("s", "S"),
+		key.WithHelp("s", "shutdown"),
+	),
+	Reboot: key.NewBinding(
+		key.WithKeys("r", "R"),
+		key.WithHelp("r", "reboot"),
+	),
+	Reset: key.NewBinding(
+		key.WithKeys("o", "O"),
+		key.WithHelp("o", "reset"),
+	),
+	PowerOff: key.NewBinding(
+		key.WithKeys("f", "F"),
+		key.WithHelp("f", "poweroff"),
+	),
+	SaveRestore: key.NewBinding(
+		key.WithKeys("v", "V"),
+		key.WithHelp("v", "save/restore"),
+	),
+	Migrate: key.NewBinding(
+		key.WithKeys("m", "M"),
+		key.WithHelp("m", "migrate"),
+	),
+	Delete: key.NewBinding(
+		key.WithKeys("d", "D"),
+		key.WithHelp("d", "delete"),
+	),
+	Clone: key.NewBinding(
+		key.WithKeys("c", "C"),
+		key.WithHelp("c", "clone"),
+	),
+	Help: key.NewBinding(
+		key.WithKeys("h", "H", "?"),
+		key.WithHelp("h", "help"),
+	),
+	New: key.NewBinding(
+		key.WithKeys("n", "N"),
+		key.WithHelp("n", "new"),
+	),
+	Quit: key.NewBinding(
+		key.WithKeys("q", "Q", "ctrl+c"),
+		key.WithHelp("q", "quit"),
+	),
+	Focus: key.NewBinding(
+		key.WithKeys("esc"),
+		key.WithHelp("esc", "focus"),
+	),
 }
 
 func fmtState(d *libvirt.Domain) string {
@@ -59,6 +164,8 @@ var baseStyle = lipgloss.NewStyle().
 
 type model struct {
 	table table.Model
+	keys  keymap
+	help  help.Model
 }
 
 func (m model) Init() tea.Cmd {
@@ -73,22 +180,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	s, _, _ := d.GetState()
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
 
-		case "esc":
+	case tea.KeyMsg:
+		switch {
+
+		case key.Matches(msg, m.keys.Focus):
 			if m.table.Focused() {
 				m.table.Blur()
 			} else {
 				m.table.Focus()
 			}
 
-		// Quit
-		case "q", "Q", "ctrl+c":
+		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
 
 		// Start
-		case "t", "T":
+		case key.Matches(msg, m.keys.Start):
 			if err := d.Create(); err != nil {
 				fmt.Println("ERR: ", err)
 			}
@@ -96,7 +203,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		// Pause/Resume
-		case "p", "P":
+		case key.Matches(msg, m.keys.PauseResume):
 			if s == libvirt.DOMAIN_PAUSED {
 				if err := d.Resume(); err != nil {
 					fmt.Println("ERR: ", err)
@@ -111,7 +218,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		// Shutdown
-		case "s", "S":
+		case key.Matches(msg, m.keys.Shutdown):
 			if err := d.Shutdown(); err != nil {
 				fmt.Println("ERR: ", err)
 			}
@@ -119,7 +226,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		// Reboot
-		case "r", "R":
+		case key.Matches(msg, m.keys.Reboot):
 			if err := d.Reboot(0); err != nil {
 				fmt.Println("ERR: ", err)
 			}
@@ -127,7 +234,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		// Reset
-		case "o", "O":
+		case key.Matches(msg, m.keys.Reset):
 			if err := d.Reset(0); err != nil {
 				fmt.Println("ERR: ", err)
 			}
@@ -135,11 +242,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		// Off
-		case "f", "F":
+		case key.Matches(msg, m.keys.PowerOff):
 			return m, nil
 
 		// Save/Restore
-		case "v", "V":
+		case key.Matches(msg, m.keys.SaveRestore):
 			if s == libvirt.DOMAIN_RUNNING || s == libvirt.DOMAIN_PAUSED {
 				if err := d.ManagedSave(0); err != nil {
 					fmt.Println("ERR: ", err)
@@ -152,12 +259,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		// Delete
-		case "d", "D":
+		case key.Matches(msg, m.keys.Delete):
 			if err := d.Destroy(); err != nil {
 				fmt.Println("ERR: ", err)
 			}
 
 			return m, nil
+
+		case key.Matches(msg, m.keys.Help):
+			m.help.ShowAll = !m.help.ShowAll
+
 		}
 	}
 
@@ -166,7 +277,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return baseStyle.Render(m.table.View()) + "\n"
+	return baseStyle.Render(m.table.View()+"\n"+m.help.View(m.keys)) + "\n"
 }
 
 func main() {
@@ -240,7 +351,11 @@ func main() {
 
 	t.SetStyles(s)
 
-	m := model{t}
+	m := model{
+		table: t,
+		help:  help.New(),
+		keys:  keys,
+	}
 	if _, err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Println("failed to run program: ", err)
 		os.Exit(1)

@@ -83,17 +83,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.table.Focus()
 			}
 
-		case "q", "ctrl+c":
+		// Quit
+		case "q", "Q", "ctrl+c":
 			return m, tea.Quit
 
-		case "enter":
+		// Start
+		case "t", "T":
 			if err := d.Create(); err != nil {
 				fmt.Println("ERR: ", err)
 			}
 			fmt.Println("Start")
 			return m, nil
 
-		case "p":
+		// Pause/Resume
+		case "p", "P":
 			if s == libvirt.DOMAIN_PAUSED {
 				if err := d.Resume(); err != nil {
 					fmt.Println("ERR: ", err)
@@ -107,38 +110,54 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, nil
 
-		case "s":
+		// Shutdown
+		case "s", "S":
 			if err := d.Shutdown(); err != nil {
 				fmt.Println("ERR: ", err)
 			}
 			fmt.Println("Shutdown")
 			return m, nil
 
-		case "r":
+		// Reboot
+		case "r", "R":
 			if err := d.Reboot(0); err != nil {
 				fmt.Println("ERR: ", err)
 			}
 			fmt.Println("Reboot")
 			return m, nil
 
-		case "o":
+		// Reset
+		case "o", "O":
 			if err := d.Reset(0); err != nil {
 				fmt.Println("ERR: ", err)
 			}
 			fmt.Println("Reset")
 			return m, nil
 
-		case "f":
+		// Off
+		case "f", "F":
 			return m, nil
 
-		case "v":
-			i, _ := d.GetFSInfo(0)
-			fmt.Println("INFO: ", i)
-			// if err := d.Save(); err != nil {
-			// 		fmt.Println("ERR: ", err)
-			// 	}
+		// Save/Restore
+		case "v", "V":
+			if s == libvirt.DOMAIN_RUNNING || s == libvirt.DOMAIN_PAUSED {
+				if err := d.ManagedSave(0); err != nil {
+					fmt.Println("ERR: ", err)
+				}
+			} else {
+				if err := d.Create(); err != nil {
+					fmt.Println("ERR: ", err)
+				}
+			}
 			return m, nil
 
+		// Delete
+		case "d", "D":
+			if err := d.Destroy(); err != nil {
+				fmt.Println("ERR: ", err)
+			}
+
+			return m, nil
 		}
 	}
 
@@ -167,8 +186,8 @@ func main() {
 	}
 
 	idWidth := 3
-	stateWidth := 7
-	nameWidth := w - idWidth - stateWidth - 4 - 4 - 2 - 4 - 4 - 4 - 6
+	stateWidth := 8
+	nameWidth := w - idWidth - stateWidth - 4 - 4 - 2 - 4 - 4 - 4 - 7
 
 	columns := []table.Column{
 		{Title: "ID", Width: idWidth},
@@ -185,7 +204,19 @@ func main() {
 		state := fmtState(&d)
 		id := fmtID(&d)
 
-		rows = append(rows, table.Row{id, name, state, "▄█▄", "█▄▄", "▄ █", "█ ▄"})
+		// https://en.wikipedia.org/wiki/Braille_Patterns
+		// https://en.wikipedia.org/wiki/Block_Elements
+		rows = append(
+			rows,
+			table.Row{
+				id,
+				name,
+				state,
+				"⣾⣷⣷",
+				"⣷⣾⣤",
+				"▄ ▆",
+				"▇ ▃",
+			})
 	}
 
 	t := table.New(

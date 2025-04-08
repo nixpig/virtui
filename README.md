@@ -23,15 +23,15 @@ Create a domain with CPU, memory, network and disk, from an ISO.
 
 - Select domain - ↓/↑ j/k
 
-- Open          - O
+- Open          - ENTER
     - xxx
 
-- Start         - ENTER
+- Start         - T
 - Pause/Resume  - P
 - Shutdown      - S
 - Reboot        - R
-- Force Reset   - O
-- Force Off     - F
+- Reset         - O
+- Off           - F
 - Save/Restore  - V
 
 - Migrate       - M
@@ -43,7 +43,7 @@ Create a domain with CPU, memory, network and disk, from an ISO.
 - Clone         - C
     - Close wizard  - ESC
 
-- Help          - H
+- Help          - H/?
     - Close help    - ESC
 
 - New           - N

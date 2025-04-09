@@ -151,10 +151,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case responseMsg:
-		fmt.Println("received event: ", msg.event)
-		id := msg.vm.GetPresentableName()
-		fmt.Println("for domain: ", id)
-		return m, waitForActivity(m.sub)
+		id, _ := msg.vm.GetID()
+		d, _ := m.conn.LookupDomainById(uint32(id))
+		m.vms[m.table.Cursor()] = *vm.FromDomain(d)
+
+		// ---
+
+		existingRows := m.table.Rows()
+		existingRows[m.table.Cursor()] = table.Row{
+			msg.vm.GetPresentableID(),
+			msg.vm.GetPresentableName(),
+			msg.vm.GetPresentableState(),
+			"", "", "", "",
+		}
+
+		m.table.SetRows(existingRows)
+
+		// ---
+
+		return m, tea.Batch(waitForActivity(m.sub))
 
 	case tea.KeyMsg:
 		switch {
@@ -173,7 +188,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err := v.Run(); err != nil {
 				// TODO: present err and log
 			}
-			fmt.Println("DONE RUN")
 			// return m, nil
 
 		// Pause/Resume
@@ -188,7 +202,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err := v.Shutdown(); err != nil {
 				// TODO: present err and log
 			}
-			fmt.Println("DONE SHUTDOWN")
 			// return m, nil
 
 		// Reboot

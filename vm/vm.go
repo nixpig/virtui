@@ -55,7 +55,6 @@ func GetAll(conn *libvirt.Connect) []VM {
 }
 
 func (v *VM) Update(conn *libvirt.Connect) error {
-	fmt.Println("updating...")
 	id, err := v.Domain.GetID()
 	if err != nil {
 		return err

@@ -15,6 +15,17 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
+type responseMsg struct {
+	vm    *vm.VM
+	event libvirt.DomainEventType
+}
+
+func waitForActivity(sub chan responseMsg) tea.Cmd {
+	return func() tea.Msg {
+		return <-sub
+	}
+}
+
 var rows = []table.Row{}
 var domains []libvirt.Domain
 
@@ -23,6 +34,7 @@ var baseStyle = lipgloss.NewStyle().
 	BorderForeground(lipgloss.Color("240"))
 
 type Model struct {
+	sub   chan responseMsg
 	conn  *libvirt.Connect
 	vms   []vm.VM
 	table table.Model
@@ -30,17 +42,23 @@ type Model struct {
 	help  help.Model
 }
 
-func cb(
-	conn *libvirt.Connect,
-	d *libvirt.Domain,
-	event *libvirt.DomainEventLifecycle,
-) {
-	fmt.Println("Event: ", event.Event)
+func cb(sub chan responseMsg, v *vm.VM) libvirt.DomainEventLifecycleCallback {
+	return func(
+		conn *libvirt.Connect,
+		domain *libvirt.Domain,
+		event *libvirt.DomainEventLifecycle,
+	) {
+		sub <- responseMsg{
+			vm:    v,
+			event: event.Event,
+		}
+	}
 }
 
 func InitModel(conn *libvirt.Connect) Model {
 	m := Model{
 		conn: conn,
+		sub:  make(chan responseMsg),
 	}
 
 	vms := vm.GetAll(conn)
@@ -66,6 +84,14 @@ func InitModel(conn *libvirt.Connect) Model {
 	}
 
 	for _, v := range m.vms {
+		if _, err := conn.DomainEventLifecycleRegister(
+			v.Domain,
+			cb(m.sub, &v),
+		); err != nil {
+			fmt.Println("ERR: ", err)
+			os.Exit(1)
+		}
+
 		name := v.GetPresentableName()
 		state := v.GetPresentableState()
 		id := v.GetPresentableID()
@@ -84,10 +110,6 @@ func InitModel(conn *libvirt.Connect) Model {
 				"▇ ▃",
 			})
 
-		if _, err := conn.DomainEventLifecycleRegister(nil, cb); err != nil {
-			fmt.Println("ERR: ", err)
-			os.Exit(1)
-		}
 	}
 
 	t := table.New(
@@ -119,7 +141,7 @@ func InitModel(conn *libvirt.Connect) Model {
 }
 
 func (m Model) Init() tea.Cmd {
-	return nil
+	return tea.Batch(waitForActivity(m.sub))
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -128,10 +150,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	v := m.vms[m.table.Cursor()]
 
 	switch msg := msg.(type) {
+	case responseMsg:
+		fmt.Println("received event: ", msg.event)
+		id := msg.vm.GetPresentableName()
+		fmt.Println("for domain: ", id)
+		return m, waitForActivity(m.sub)
 
 	case tea.KeyMsg:
 		switch {
-
 		case key.Matches(msg, m.keys.Focus):
 			if m.table.Focused() {
 				m.table.Blur()
@@ -218,7 +244,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	fmt.Println("viewing...")
 	return baseStyle.Render(m.table.View()+"\n"+m.help.View(m.keys)) + "\n"
 }
 

@@ -199,6 +199,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Shutdown
 		case key.Matches(msg, m.keys.Shutdown):
+			existingRows := m.table.Rows()
+			existingRows[m.table.Cursor()] = table.Row{
+				m.vms[m.table.Cursor()].GetPresentableID(),
+				m.vms[m.table.Cursor()].GetPresentableName(),
+				"Updating",
+				"", "", "", "",
+			}
+
+			m.table.SetRows(existingRows)
 			if err := v.Shutdown(); err != nil {
 				// TODO: present err and log
 			}

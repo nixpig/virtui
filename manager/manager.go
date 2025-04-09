@@ -268,4 +268,3 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) View() string {
 	return baseStyle.Render(m.table.View()+"\n"+m.help.View(m.keys)) + "\n"
 }
-

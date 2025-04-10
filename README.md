@@ -18,6 +18,8 @@ Create a domain with CPU, memory, network and disk, from an ISO.
 1. Add user to group: `sudo usermod -aG libvirt $USER`
 1. Enable polling and stats for memory etc... via virt-manager.
 
+For LXC OS directory tree creation - `yay -Sy virt-bootstrap-git`
+
 
 ## Commands from list
 

@@ -9,7 +9,6 @@ import (
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/x/term"
 	"github.com/nixpig/virtui/keys"
 	"github.com/nixpig/virtui/vm"
 	"libvirt.org/go/libvirt"
@@ -26,12 +25,14 @@ var baseStyle = lipgloss.NewStyle().
 	BorderForeground(lipgloss.Color("240"))
 
 type Model struct {
-	event chan vm.Event
-	conn  *libvirt.Connect
-	vms   []vm.VM
-	table table.Model
-	keys  keys.Keymap
-	help  help.Model
+	event  chan vm.Event
+	conn   *libvirt.Connect
+	vms    []vm.VM
+	table  table.Model
+	keys   keys.Keymap
+	help   help.Model
+	width  int
+	height int
 }
 
 func cb(event chan vm.Event) libvirt.DomainEventLifecycleCallback {
@@ -63,11 +64,6 @@ func InitModel(conn *libvirt.Connect) Model {
 		os.Exit(1)
 	}
 
-	rows := vmsToRows(vms)
-
-	t := buildTableModel(rows)
-
-	m.table = t
 	m.help = help.New()
 	m.keys = keys.Keys
 
@@ -88,6 +84,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case vm.Event:
 
 		// we can do better than just re-fetching all the domains on every event
+		// probably only get details for the specific domain and update it
 		// but for now this will do
 		m.vms = vm.GetAll(m.conn)
 		rows := vmsToRows(m.vms)
@@ -96,6 +93,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// ---
 
 		return m, tea.Batch(waitForActivity(m.event))
+
+	// window size
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
 
 	// user input
 	case tea.KeyMsg:
@@ -115,44 +117,30 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err := v.Run(); err != nil {
 				// TODO: present err and log
 			}
-			return m, nil
 
 		// Pause/Resume
 		case key.Matches(msg, m.keys.PauseResume):
 			if err := v.PauseResume(); err != nil {
 				// TODO: present err and log
 			}
-			return m, nil
 
 		// Shutdown
 		case key.Matches(msg, m.keys.Shutdown):
-			existingRows := m.table.Rows()
-			existingRows[m.table.Cursor()] = table.Row{
-				m.vms[m.table.Cursor()].GetPresentableID(),
-				m.vms[m.table.Cursor()].GetPresentableName(),
-				"Updating",
-				"", "", "", "",
-			}
-
-			m.table.SetRows(existingRows)
 			if err := v.Shutdown(); err != nil {
 				// TODO: present err and log
 			}
-			return m, nil
 
 		// Reboot
 		case key.Matches(msg, m.keys.Reboot):
 			if err := v.Reboot(); err != nil {
 				// TODO: present err and log
 			}
-			return m, nil
 
 		// Reset
 		case key.Matches(msg, m.keys.ForceReset):
 			if err := v.ForceReset(); err != nil {
 				// TODO: present err and log
 			}
-			return m, nil
 
 		// Off
 		case key.Matches(msg, m.keys.ForceOff):
@@ -160,14 +148,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				fmt.Println("ERR: ", err)
 				// TODO: present err and log
 			}
-			return m, nil
 
 		// Save/Restore
 		case key.Matches(msg, m.keys.SaveRestore):
 			if err := v.SaveRestore(); err != nil {
 				// TODO: present err and log
 			}
-			return m, nil
 
 		// Delete
 		case key.Matches(msg, m.keys.Delete):
@@ -175,21 +161,50 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				fmt.Println("ERR: ", err)
 				// TODO: present err and log
 			}
-			return m, nil
 
 		case key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
-
 		}
 
-		m.table, cmd = m.table.Update(msg)
-		return m, nil
 	}
 
+	m.table, cmd = m.table.Update(msg)
 	return m, cmd
 }
 
 func (m Model) View() string {
+	nameWidth := m.width - 40
+
+	columns := []table.Column{
+		{Title: "ID", Width: 3},
+		{Title: "Name", Width: nameWidth},
+		{Title: "State", Width: 8},
+		{Title: "CPU", Width: 3},
+		{Title: "Mem", Width: 3},
+		{Title: "Blk", Width: 3},
+		{Title: "Net", Width: 3},
+	}
+
+	rows := vmsToRows(m.vms)
+
+	m.table = table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithFocused(true),
+	)
+
+	s := table.DefaultStyles()
+
+	s.Header = s.Header.
+		Bold(true)
+
+	s.Selected = s.Selected.
+		Foreground(lipgloss.Color("229")).
+		Background(lipgloss.Color("57")).
+		Bold(false)
+
+	m.table.SetStyles(s)
+
 	return baseStyle.Render(m.table.View()+"\n"+m.help.View(m.keys)) + "\n"
 }
 
@@ -203,62 +218,8 @@ func vmsToRows(vms []vm.VM) []table.Row {
 
 		// https://en.wikipedia.org/wiki/Braille_Patterns
 		// https://en.wikipedia.org/wiki/Block_Elements
-		rows = append(
-			rows,
-			table.Row{
-				id,
-				name,
-				state,
-				"⣾⣷⣷",
-				"⣷⣾⣤",
-				"▄ ▆",
-				"▇ ▃",
-			})
+		rows = append(rows, table.Row{id, name, state, "⣾⣷⣷", "⣷", "▄ ▆", "▃"})
 	}
 
 	return rows
-}
-
-func buildTableModel(rows []table.Row) table.Model {
-	w, _, err := term.GetSize(0)
-	if err != nil {
-		fmt.Println("failed to get term size: ", err)
-	}
-
-	idWidth := 3
-	stateWidth := 8
-	nameWidth := w - idWidth - stateWidth - 4 - 4 - 2 - 4 - 4 - 4 - 7
-
-	columns := []table.Column{
-		{Title: "ID", Width: idWidth},
-		{Title: "Name", Width: nameWidth},
-		{Title: "State", Width: stateWidth},
-		{Title: "CPU", Width: 3},
-		{Title: "Mem", Width: 3},
-		{Title: "Blk", Width: 3},
-		{Title: "Net", Width: 3},
-	}
-
-	t := table.New(
-		table.WithColumns(columns),
-		table.WithRows(rows),
-		table.WithFocused(true),
-	)
-
-	s := table.DefaultStyles()
-
-	s.Header = s.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		BorderBottom(true).
-		Bold(true)
-
-	s.Selected = s.Selected.
-		Foreground(lipgloss.Color("229")).
-		Background(lipgloss.Color("57")).
-		Bold(false)
-
-	t.SetStyles(s)
-
-	return t
 }

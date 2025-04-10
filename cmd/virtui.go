@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -17,6 +18,13 @@ func main() {
 		fmt.Println("register default event loop: ", err)
 		os.Exit(1)
 	}
+
+	f, err := os.OpenFile("./log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	log.SetOutput(f)
 
 	go func() {
 		for {
@@ -37,7 +45,7 @@ func main() {
 
 	m := manager.InitModel(conn)
 
-	if _, err := tea.NewProgram(m).Run(); err != nil {
+	if _, err := tea.NewProgram(m, tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("failed to run program: ", err)
 		// TODO: print and log err
 		os.Exit(1)

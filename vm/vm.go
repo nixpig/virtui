@@ -18,7 +18,7 @@ var (
 	SHUTOFF_STATE_PRESENTABLE   = "Shutoff"
 )
 
-var domainState = map[libvirt.DomainState]string{
+var presentableState = map[libvirt.DomainState]string{
 	libvirt.DOMAIN_NOSTATE:     NO_STATE_PRESENTABLE,
 	libvirt.DOMAIN_RUNNING:     RUNNING_STATE_PRESENTABLE,
 	libvirt.DOMAIN_BLOCKED:     BLOCKED_STATE_PRESENTABLE,
@@ -31,6 +31,11 @@ var domainState = map[libvirt.DomainState]string{
 
 type VM struct {
 	*libvirt.Domain
+}
+
+type Event struct {
+	VM    *VM
+	Event libvirt.DomainEventType
 }
 
 func New() *VM {
@@ -94,7 +99,7 @@ func (v *VM) GetPresentableState() string {
 		return UNKNOWN_STATE_PRESENTABLE
 	}
 
-	state, ok := domainState[s]
+	state, ok := presentableState[s]
 	if !ok {
 		return UNKNOWN_STATE_PRESENTABLE
 	}

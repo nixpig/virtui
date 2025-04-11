@@ -141,7 +141,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			// open
 		case key.Matches(msg, m.keys.Open):
-			m.vmModel.machine = m.vms[m.table.Cursor()]
 			m.screen = vmScreen
 			return m, nil
 
@@ -284,7 +283,7 @@ func vmsToRows(vms []vm.VM) []table.Row {
 		name := v.GetPresentableName()
 		state := v.GetPresentableState()
 		id := v.GetPresentableID()
-		row := table.Row{id, name, state, "⣾⣷⣷", "⣷⣾⣷", "▄ ▆", "▃"}
+		row := table.Row{id, name, state, "⣾⣷⣷", "⣷⣾⣷", "▄ ▆", "▆ ▃"}
 		log.Debug("add table row", "row", row)
 		rows[i] = row
 	}

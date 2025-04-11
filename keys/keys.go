@@ -44,7 +44,7 @@ var Keys = Keymap{
 		key.WithHelp("↓/j", "down"),
 	),
 	Open: key.NewBinding(
-		key.WithKeys("enter"),
+		key.WithKeys("enter", "o"),
 		key.WithHelp("enter", "open"),
 	),
 	Run: key.NewBinding(

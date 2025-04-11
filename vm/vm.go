@@ -86,6 +86,15 @@ func (v *VM) GetPresentableID() string {
 	return id
 }
 
+func (v *VM) GetPresentableUUID() string {
+	uuid, err := v.Domain.GetUUIDString()
+	if err != nil {
+		log.Error("get domain uuid", "err", err)
+	}
+
+	return uuid
+}
+
 func (v *VM) GetPresentableState() string {
 	s, _, err := v.Domain.GetState()
 	if err != nil {

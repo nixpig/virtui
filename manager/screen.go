@@ -6,13 +6,17 @@ import (
 )
 
 type ScreenModel struct {
-	machine vm.VM
-	basic   basic
+	basic basic
 }
 
 func InitScreenModel(v *vm.VM) ScreenModel {
 	return ScreenModel{
-		basic: basic{vm: v},
+		basic{
+			name:  v.GetPresentableName(),
+			id:    v.GetPresentableID(),
+			uuid:  v.GetPresentableUUID(),
+			state: v.GetPresentableState(),
+		},
 	}
 }
 

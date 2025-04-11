@@ -4,11 +4,13 @@ import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/nixpig/virtui/vm"
 )
 
 type basic struct {
-	vm *vm.VM
+	name  string
+	id    string
+	uuid  string
+	state string
 }
 
 func (m basic) Init() tea.Cmd {
@@ -20,12 +22,17 @@ func (m basic) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m basic) View() string {
-	uuid, _ := m.vm.GetUUIDString()
+	// conn, _ := m.vm.DomainGetConnect()
+	//
+	// t, _ := conn.GetType()
+	// i, _ := conn.GetNodeInfo()
+	// h, _ := conn.GetHostname()
+
 	return fmt.Sprintf(
-		"%s | %s | %s | %s",
-		m.vm.GetPresentableName(),
-		uuid,
-		m.vm.GetPresentableState(),
-		"something",
+		"%s (%s) | %s | %s ",
+		m.name,
+		m.id,
+		m.uuid,
+		m.state,
 	)
 }

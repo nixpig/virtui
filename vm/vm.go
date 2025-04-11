@@ -3,6 +3,7 @@ package vm
 import (
 	"fmt"
 
+	"github.com/charmbracelet/log"
 	"libvirt.org/go/libvirt"
 )
 
@@ -48,8 +49,10 @@ func FromDomain(domain *libvirt.Domain) *VM {
 
 func GetAll(conn *libvirt.Connect) []VM {
 	flags := libvirt.ConnectListAllDomainsFlags(libvirt.CONNECT_LIST_DOMAINS_ACTIVE | libvirt.CONNECT_LIST_DOMAINS_INACTIVE)
-	domains, _ := conn.ListAllDomains(flags)
-	// TODO: debug err
+	domains, err := conn.ListAllDomains(flags)
+	if err != nil {
+		log.Error("list all domains", "err", err)
+	}
 
 	vms := make([]VM, len(domains))
 	for i, d := range domains {
@@ -59,31 +62,22 @@ func GetAll(conn *libvirt.Connect) []VM {
 	return vms
 }
 
-func (v *VM) Update(conn *libvirt.Connect) error {
-	id, err := v.Domain.GetID()
-	if err != nil {
-		return err
-	}
-
-	domain, err := conn.LookupDomainById(uint32(id))
-	if err != nil {
-		return err
-	}
-
-	v.Domain = domain
-	return nil
-}
-
 func (v *VM) GetPresentableName() string {
-	n, _ := v.Domain.GetName()
-	// TODO: debug err
+	n, err := v.Domain.GetName()
+	if err != nil {
+		log.Error("get domain name", "err", err)
+	}
+
 	return n
 }
 
 func (v *VM) GetPresentableID() string {
 	id := "-"
 	s, _, err := v.Domain.GetState()
-	// TODO: debug err
+	if err != nil {
+		log.Error("get domain state", "err", err)
+	}
+
 	if err == nil && s != libvirt.DOMAIN_SHUTOFF {
 		u, _ := v.Domain.GetID()
 		id = fmt.Sprintf("%d", u)
@@ -95,12 +89,13 @@ func (v *VM) GetPresentableID() string {
 func (v *VM) GetPresentableState() string {
 	s, _, err := v.Domain.GetState()
 	if err != nil {
-		// TODO: debug err
+		log.Error("get domain state", "err", err)
 		return UNKNOWN_STATE_PRESENTABLE
 	}
 
 	state, ok := presentableState[s]
 	if !ok {
+		log.Debug("unknown domain state", "state", s)
 		return UNKNOWN_STATE_PRESENTABLE
 	}
 

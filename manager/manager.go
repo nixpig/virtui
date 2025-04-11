@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/x/term"
 	"github.com/nixpig/virtui/keys"
 	"github.com/nixpig/virtui/vm"
@@ -25,6 +26,13 @@ var baseStyle = lipgloss.NewStyle().
 	BorderStyle(lipgloss.NormalBorder()).
 	BorderForeground(lipgloss.Color("240"))
 
+type Screen int
+
+const (
+	tableScreen Screen = iota
+	vmScreen
+)
+
 type Model struct {
 	event  chan vm.Event
 	conn   *libvirt.Connect
@@ -34,6 +42,10 @@ type Model struct {
 	help   help.Model
 	width  int
 	height int
+
+	screen Screen
+
+	vmModel ScreenModel
 }
 
 func cb(event chan vm.Event) libvirt.DomainEventLifecycleCallback {
@@ -50,24 +62,27 @@ func cb(event chan vm.Event) libvirt.DomainEventLifecycleCallback {
 
 func InitModel(conn *libvirt.Connect) Model {
 	m := Model{
-		conn:  conn,
-		event: make(chan vm.Event),
+		conn:   conn,
+		event:  make(chan vm.Event),
+		screen: tableScreen,
 	}
 
 	vms := vm.GetAll(conn)
 	m.vms = vms
+	log.Debug("vms from connection", "count", len(vms))
 
 	if _, err := conn.DomainEventLifecycleRegister(
 		nil,
 		cb(m.event),
 	); err != nil {
-		fmt.Println("ERR: ", err)
+		log.Error("register domain lifecycle event callback", "err", err)
+		os.Stderr.Write(fmt.Appendf([]byte(""), "Error: failed to register event callback: %s", err.Error()))
 		os.Exit(1)
 	}
 
 	rows := vmsToRows(vms)
 
-	t := buildTableModel(rows)
+	t := m.buildTableModel(rows)
 
 	m.table = t
 	m.help = help.New()
@@ -96,12 +111,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		rows := vmsToRows(m.vms)
 		m.table.SetRows(rows)
 
-		// ---
-
 		return m, tea.Batch(waitForActivity(m.event))
 
 	// resize
 	case tea.WindowSizeMsg:
+		log.Debug("resize window", "width", msg.Width, "height", msg.Height)
 		m.width = msg.Width
 		m.height = msg.Height
 
@@ -109,70 +123,89 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Focus):
-			if m.table.Focused() {
-				m.table.Blur()
-			} else {
-				m.table.Focus()
+			switch m.screen {
+			case tableScreen:
+				if m.table.Focused() {
+					m.table.Blur()
+				} else {
+					m.table.Focus()
+				}
+			case vmScreen:
+				m.screen = tableScreen
+
+				return m, nil
 			}
 
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
 
+			// open
+		case key.Matches(msg, m.keys.Open):
+			m.vmModel.machine = m.vms[m.table.Cursor()]
+			m.screen = vmScreen
+			return m, nil
+
 		// Start
 		case key.Matches(msg, m.keys.Run):
 			if err := v.Run(); err != nil {
-				// TODO: present err and log
+				log.Error("run machine", "id", v.GetPresentableID(), "err", err)
+				fmt.Println("Error: ", err)
 			}
 			return m, nil
 
 		// Pause/Resume
 		case key.Matches(msg, m.keys.PauseResume):
 			if err := v.PauseResume(); err != nil {
-				// TODO: present err and log
+				log.Error("pause/resume machine", "id", v.GetPresentableID(), "err", err)
+				fmt.Println("Error: ", err)
 			}
 			return m, nil
 
 		// Shutdown
 		case key.Matches(msg, m.keys.Shutdown):
 			if err := v.Shutdown(); err != nil {
-				// TODO: present err and log
+				log.Error("shutdown machine", "id", v.GetPresentableID(), "err", err)
+				fmt.Println("Error: ", err)
 			}
 			return m, nil
 
 		// Reboot
 		case key.Matches(msg, m.keys.Reboot):
 			if err := v.Reboot(); err != nil {
-				// TODO: present err and log
+				log.Error("reboot machine", "id", v.GetPresentableID(), "err", err)
+				fmt.Println("Error: ", err)
 			}
 			return m, nil
 
 		// Reset
 		case key.Matches(msg, m.keys.ForceReset):
 			if err := v.ForceReset(); err != nil {
-				// TODO: present err and log
+				log.Error("reset machine", "id", v.GetPresentableID(), "err", err)
+				fmt.Println("Error: ", err)
 			}
 			return m, nil
 
 		// Off
 		case key.Matches(msg, m.keys.ForceOff):
 			if err := v.ForceOff(); err != nil {
-				fmt.Println("ERR: ", err)
-				// TODO: present err and log
+				log.Error("poweroff machine", "id", v.GetPresentableID(), "err", err)
+				fmt.Println("Error: ", err)
 			}
 			return m, nil
 
 		// Save/Restore
 		case key.Matches(msg, m.keys.SaveRestore):
 			if err := v.SaveRestore(); err != nil {
-				// TODO: present err and log
+				log.Error("save/restore machine", "id", v.GetPresentableID(), "err", err)
+				fmt.Println("Error: ", err)
 			}
 			return m, nil
 
 		// Delete
 		case key.Matches(msg, m.keys.Delete):
 			if err := v.Delete(); err != nil {
-				fmt.Println("ERR: ", err)
-				// TODO: present err and log
+				log.Error("delete machine", "id", v.GetPresentableID(), "err", err)
+				fmt.Println("Error: ", err)
 			}
 			return m, nil
 
@@ -187,13 +220,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	return baseStyle.Render(m.table.View()+"\n"+m.help.View(m.keys)) + "\n"
+	s := ""
+	switch m.screen {
+	case tableScreen:
+		s = baseStyle.Render(m.table.View()+"\n"+m.help.View(m.keys)) + "\n"
+	case vmScreen:
+		m.vmModel = InitScreenModel(&m.vms[m.table.Cursor()])
+		s = baseStyle.Render(m.vmModel.View()) + "\n"
+	}
+
+	return s
 }
 
-func buildTableModel(rows []table.Row) table.Model {
+func (m Model) buildTableModel(rows []table.Row) table.Model {
 	w, _, err := term.GetSize(0)
 	if err != nil {
-		fmt.Println("failed to get term size: ", err)
+		log.Error("get term size", "err", err)
+		fmt.Println("Error: failed to get terminal size: ", err)
 	}
 
 	idWidth := 3
@@ -241,7 +284,9 @@ func vmsToRows(vms []vm.VM) []table.Row {
 		name := v.GetPresentableName()
 		state := v.GetPresentableState()
 		id := v.GetPresentableID()
-		rows[i] = table.Row{id, name, state, "⣾⣷⣷", "⣷⣾⣷", "▄ ▆", "▃"}
+		row := table.Row{id, name, state, "⣾⣷⣷", "⣷⣾⣷", "▄ ▆", "▃"}
+		log.Debug("add table row", "row", row)
+		rows[i] = row
 	}
 
 	return rows

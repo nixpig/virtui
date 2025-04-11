@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/log"
 	"github.com/nixpig/virtui/manager"
 	"libvirt.org/go/libvirt"
 )
@@ -13,12 +13,6 @@ import (
 const libvirtURI = "qemu:///system"
 
 func main() {
-	// TODO: set up logging to file
-	if err := libvirt.EventRegisterDefaultImpl(); err != nil {
-		fmt.Println("register default event loop: ", err)
-		os.Exit(1)
-	}
-
 	f, err := os.OpenFile("./log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Println(err)
@@ -26,10 +20,17 @@ func main() {
 	}
 	log.SetOutput(f)
 
+	if err := libvirt.EventRegisterDefaultImpl(); err != nil {
+		log.Error("register libvirt event loop", "err", err)
+		os.Stderr.Write(fmt.Appendf([]byte(""), "Error: failed to register event loop: %s", err.Error()))
+		os.Exit(1)
+	}
+
 	go func() {
 		for {
 			if err := libvirt.EventRunDefaultImpl(); err != nil {
-				fmt.Println("run default event loop: ", err)
+				log.Error("run libvirt event loop", "err", err)
+				os.Stderr.Write(fmt.Appendf([]byte(""), "Error: failed to run event loop: %s", err.Error()))
 				os.Exit(1)
 			}
 		}
@@ -37,8 +38,8 @@ func main() {
 
 	conn, err := libvirt.NewConnect(libvirtURI)
 	if err != nil {
-		// TODO: print and log err
-		fmt.Println("failed to connect to: ", libvirtURI)
+		log.Error("connect to qemu", "err", err)
+		os.Stderr.Write(fmt.Appendf([]byte(""), "Error: failed to connect (%s): %s", libvirtURI, err.Error()))
 		os.Exit(1)
 	}
 	defer conn.Close()
@@ -46,8 +47,8 @@ func main() {
 	m := manager.InitModel(conn)
 
 	if _, err := tea.NewProgram(m, tea.WithAltScreen()).Run(); err != nil {
-		fmt.Println("failed to run program: ", err)
-		// TODO: print and log err
+		log.Error("start bubbletea program", "err", err)
+		os.Stderr.Write(fmt.Appendf([]byte(""), "Error: failed to start: %s", err.Error()))
 		os.Exit(1)
 	}
 }

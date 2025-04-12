@@ -12,6 +12,7 @@ import (
 	"github.com/nixpig/virtui/internal/app"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"libvirt.org/go/libvirt"
 )
 
 const libvirtURI = "qemu:///system"
@@ -59,7 +60,20 @@ func main() {
 		}
 	}
 
-	if err := app.Run(conn, v); err != nil {
+	if err := libvirt.EventRegisterDefaultImpl(); err != nil {
+		fatality("failed to register event loop", err)
+	}
+
+	go func() {
+		for {
+			if err := libvirt.EventRunDefaultImpl(); err != nil {
+				log.Error("run event loop", "err", err)
+				fatality("failed to run event loop", err)
+			}
+		}
+	}()
+
+	if err := app.Run(conn); err != nil {
 		fatality("failed to run virtui", err)
 	}
 }

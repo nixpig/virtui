@@ -32,11 +32,7 @@ func Initialise(path string, v *viper.Viper) error {
 		path = filepath.Join(userConfigDir, filename)
 	}
 
-	configFile, err := os.OpenFile(
-		path,
-		os.O_RDWR|os.O_CREATE,
-		0666,
-	)
+	configFile, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		return fmt.Errorf("open config file (%s): %w", path, err)
 	}

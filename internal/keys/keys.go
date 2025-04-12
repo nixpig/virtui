@@ -2,22 +2,22 @@ package keys
 
 import "github.com/charmbracelet/bubbles/key"
 
-type global struct {
+type GlobalMap struct {
 	Help key.Binding
 	Quit key.Binding
 }
 
-func (k global) ShortHelp() []key.Binding {
+func (k GlobalMap) ShortHelp() []key.Binding {
 	return []key.Binding{k.Help, k.Quit}
 }
 
-func (k global) FullHelp() [][]key.Binding {
+func (k GlobalMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Help, k.Quit},
 	}
 }
 
-var Global = global{
+var Global = GlobalMap{
 	Help: key.NewBinding(
 		key.WithKeys("?"),
 		key.WithHelp("?", "toggle help"),

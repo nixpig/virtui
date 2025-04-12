@@ -26,3 +26,6 @@ go.work.sum
 
 # Temp files
 tmp/
+
+virtui.db
+virtui.log

@@ -13,6 +13,22 @@ import (
 	"github.com/nixpig/virtui/keys"
 )
 
+type errMsg struct{ error }
+
+func (e errMsg) Error() string {
+	return e.error.Error()
+}
+
+type switchScreenMsg int
+
+const (
+	DASHBOARD_SCREEN switchScreenMsg = iota
+	CONNECTIONS_SCREEN
+	DOMAINS_SCREEN
+	ADD_CONNECTION_SCREEN
+	NEW_VM_SCREEN
+)
+
 type appModel struct {
 	screenModel tea.Model
 
@@ -57,14 +73,16 @@ type appModel struct {
 // }
 
 func InitModel(db *sql.DB) appModel {
-	return appModel{
-		screenModel: dashboardScreen(),
+	cr := connection.NewConnectionRepositoryImpl(db)
 
-		cr: connection.NewConnectionRepositoryImpl(db),
-
+	model := appModel{
 		help: help.New(),
 		keys: keys.Global,
 	}
+
+	model.screenModel = dashboardScreen(cr, model.Update)
+
+	return model
 }
 
 func (m appModel) Init() tea.Cmd {
@@ -92,6 +110,23 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
+	case switchScreenMsg:
+		switch msg {
+		case DASHBOARD_SCREEN:
+			return m.switchScreen(dashboardScreen(m.cr, m.Update))
+		case CONNECTIONS_SCREEN:
+			log.Info("CONNECTIONS SCREEN IN THE CONTAINER APP")
+			return m.switchScreen(connectionsScreen())
+		case DOMAINS_SCREEN:
+			log.Error("todo!")
+		case ADD_CONNECTION_SCREEN:
+			log.Info("SWITCH TO SCREEN!!")
+			return m.switchScreen(addConnectionScreen())
+		case NEW_VM_SCREEN:
+			log.Error("todo!")
+
+		}
+
 	case event.VM:
 		log.Debug("handle vm event", "id", msg.ID, "event", msg.Event)
 		// return m, tea.Batch(vmEventMsg(m.vmEventCh))
@@ -111,6 +146,10 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.screenModel, cmd = m.screenModel.Update(msg)
 			cmds = append(cmds, cmd)
 		}
+
+	default:
+		m.screenModel, cmd = m.screenModel.Update(msg)
+		cmds = append(cmds, cmd)
 	}
 
 	return m, tea.Batch(cmds...)
@@ -134,13 +173,7 @@ func (m appModel) View() string {
 		Height(containerHeight)
 
 	// help
-	// helpBorderStyle := lipgloss.NormalBorder()
-	// helpBorderColor := lipgloss.Color("gray")
-
 	helpStyle := lipgloss.NewStyle().
-		// BorderTop(true).
-		// BorderForeground(helpBorderColor).
-		// BorderStyle(helpBorderStyle).
 		Width(containerWidth)
 
 	helpView := helpStyle.Render(m.help.View(m.keys))
@@ -157,7 +190,7 @@ func (m appModel) View() string {
 	)
 }
 
-func (m appModel) SwitchScreen(model tea.Model) (tea.Model, tea.Cmd) {
+func (m appModel) switchScreen(model tea.Model) (tea.Model, tea.Cmd) {
 	m.screenModel = model
 
 	return m.screenModel, m.screenModel.Init()

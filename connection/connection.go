@@ -24,12 +24,12 @@ type ConnectionRepositoryImpl struct {
 	db *sql.DB
 }
 
-func NewConnectionRepositoryImpl(db *sql.DB) *ConnectionRepositoryImpl {
+func NewConnectionRepositoryImpl(db *sql.DB) ConnectionRepository {
 	return &ConnectionRepositoryImpl{db}
 }
 
 func (c ConnectionRepositoryImpl) HasConnections() (bool, error) {
-	query := `select count * from connections_`
+	query := `select count(*) from connections_;`
 
 	var count int
 	row := c.db.QueryRow(query)
@@ -98,7 +98,7 @@ func (c ConnectionRepositoryImpl) GetConnections() ([]Connection, error) {
 }
 
 func (c ConnectionRepositoryImpl) DeleteConnection(id int) error {
-	query := `delete from connections_ where id_ = $id`
+	query := `delete from connections_ where id_ = $id;`
 
 	if _, err := c.db.Exec(query, sql.Named("id", id)); err != nil {
 		return err

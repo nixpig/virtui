@@ -115,12 +115,10 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case DASHBOARD_SCREEN:
 			return m.switchScreen(dashboardScreen(m.cr, m.Update))
 		case CONNECTIONS_SCREEN:
-			log.Info("CONNECTIONS SCREEN IN THE CONTAINER APP")
 			return m.switchScreen(connectionsScreen())
 		case DOMAINS_SCREEN:
 			log.Error("todo!")
 		case ADD_CONNECTION_SCREEN:
-			log.Info("SWITCH TO SCREEN!!")
 			return m.switchScreen(addConnectionScreen())
 		case NEW_VM_SCREEN:
 			log.Error("todo!")
@@ -132,7 +130,6 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// return m, tea.Batch(vmEventMsg(m.vmEventCh))
 
 	case tea.WindowSizeMsg:
-		log.Debug("handle window resize", "width", msg.Width, "height", msg.Height)
 		m.width = msg.Width
 		m.height = msg.Height
 
@@ -180,10 +177,11 @@ func (m appModel) View() string {
 	helpHeight := lipgloss.Height(helpView)
 
 	// content
+	content := m.screenModel.View()
 	contentStyle := lipgloss.NewStyle().
 		Height(containerHeight - helpHeight)
 
-	contentView := contentStyle.Render(m.screenModel.View())
+	contentView := contentStyle.Render(content)
 
 	return containerStyle.Render(
 		lipgloss.JoinVertical(lipgloss.Top, contentView, helpView),

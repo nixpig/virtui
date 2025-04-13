@@ -5,7 +5,6 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 	"github.com/nixpig/virtui/connection"
 	"github.com/nixpig/virtui/keys"
 )
@@ -56,7 +55,6 @@ func (m dashboardModel) Init() tea.Cmd {
 }
 
 func (m dashboardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	log.Info("message received", "msg", msg)
 	switch msg := msg.(type) {
 
 	case hasConnectionsMsg:
@@ -64,7 +62,6 @@ func (m dashboardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.WindowSizeMsg:
-		log.Info("change size in dashbaord")
 		m.width = msg.Width
 		m.height = msg.Height
 
@@ -75,10 +72,8 @@ func (m dashboardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.NewVM):
 			m.content = "new vm!!"
-			log.Info("new vm")
 
 		case key.Matches(msg, m.keys.Help):
-			log.Info("toggle help", "showall", m.help.ShowAll)
 			m.help.ShowAll = !m.help.ShowAll
 
 		}

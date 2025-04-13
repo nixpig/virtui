@@ -83,14 +83,16 @@ func (m dashboardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m dashboardModel) View() string {
-	s := "content"
+	s := ""
 	if !m.hasConnections {
-		s += " no connections"
+		s += "No connections found.\nPress the 'a' key to add a connection."
+	} else {
+		s += "List connections and vms here..."
 	}
 
 	return lipgloss.NewStyle().
 		Width(m.width).
 		Height(m.height).
 		BorderStyle(lipgloss.RoundedBorder()).
-		Render("dashboard screen" + s + "\n" + m.help.View(m.keys))
+		Render(s + "\n" + m.help.View(m.keys))
 }

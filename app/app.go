@@ -2,7 +2,6 @@ package app
 
 import (
 	"database/sql"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -58,20 +57,14 @@ type appModel struct {
 // }
 
 func InitModel(db *sql.DB) appModel {
-	var currentModel tea.Model
-
-	currentModel = connectionsScreen()
-
-	m := appModel{
-		screenModel: currentModel,
+	return appModel{
+		screenModel: dashboardScreen(),
 
 		cr: connection.NewConnectionRepositoryImpl(db),
 
 		help: help.New(),
 		keys: keys.Global,
 	}
-
-	return m
 }
 
 func (m appModel) Init() tea.Cmd {
@@ -95,7 +88,8 @@ func (m appModel) Init() tea.Cmd {
 }
 
 func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	// var cmd tea.Cmd
+	var cmd tea.Cmd
+	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
 	case event.VM:
@@ -112,21 +106,14 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
 
-		case key.Matches(msg, m.keys.Help):
-			m.help.ShowAll = !m.help.ShowAll
-
-		case msg.String() == "d":
-			m.screenModel = domainsScreen()
-		case msg.String() == "c":
-			m.screenModel = connectionsScreen()
-
 		default:
 			// pass remaining keys down to child screen model
-			m.screenModel.Update(msg)
+			m.screenModel, cmd = m.screenModel.Update(msg)
+			cmds = append(cmds, cmd)
 		}
 	}
 
-	return m, nil
+	return m, tea.Batch(cmds...)
 }
 
 func (m appModel) View() string {
@@ -147,25 +134,27 @@ func (m appModel) View() string {
 		Height(containerHeight)
 
 	// help
-	helpBorderStyle := lipgloss.NormalBorder()
-	helpBorderColor := lipgloss.Color("gray")
+	// helpBorderStyle := lipgloss.NormalBorder()
+	// helpBorderColor := lipgloss.Color("gray")
 
 	helpStyle := lipgloss.NewStyle().
-		BorderTop(true).
-		BorderForeground(helpBorderColor).
-		BorderStyle(helpBorderStyle).
+		// BorderTop(true).
+		// BorderForeground(helpBorderColor).
+		// BorderStyle(helpBorderStyle).
 		Width(containerWidth)
 
-	helpView := "\n" + helpStyle.Render(m.help.View(m.keys))
+	helpView := helpStyle.Render(m.help.View(m.keys))
+	helpHeight := lipgloss.Height(helpView)
 
 	// content
-	contentHeight := containerHeight - strings.Count(helpView, "\n")
 	contentStyle := lipgloss.NewStyle().
-		Height(contentHeight)
+		Height(containerHeight - helpHeight)
 
 	contentView := contentStyle.Render(m.screenModel.View())
 
-	return containerStyle.Render(contentView + helpView)
+	return containerStyle.Render(
+		lipgloss.JoinVertical(lipgloss.Top, contentView, helpView),
+	)
 }
 
 func (m appModel) SwitchScreen(model tea.Model) (tea.Model, tea.Cmd) {

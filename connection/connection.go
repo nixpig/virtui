@@ -13,7 +13,34 @@ type Connection struct {
 	Password    string
 }
 
-func InsertConnection(db *sql.DB, connection *Connection) error {
+type ConnectionRepository interface {
+	HasConnections() (bool, error)
+	InsertConnection(connection *Connection) error
+	GetConnections() ([]Connection, error)
+	DeleteConnection(id int) error
+}
+
+type ConnectionRepositoryImpl struct {
+	db *sql.DB
+}
+
+func NewConnectionRepositoryImpl(db *sql.DB) *ConnectionRepositoryImpl {
+	return &ConnectionRepositoryImpl{db}
+}
+
+func (c ConnectionRepositoryImpl) HasConnections() (bool, error) {
+	query := `select count * from connections_`
+
+	var count int
+	row := c.db.QueryRow(query)
+	if err := row.Scan(&count); err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+func (c ConnectionRepositoryImpl) InsertConnection(connection *Connection) error {
 	query := `insert into connections_ (
 		hypervisor_,
 		url_,
@@ -32,7 +59,7 @@ func InsertConnection(db *sql.DB, connection *Connection) error {
 		$password
 	);`
 
-	if _, err := db.Exec(
+	if _, err := c.db.Exec(
 		query,
 		sql.Named("hypervisor", connection.Hypervisor),
 		sql.Named("url", connection.URL),
@@ -48,11 +75,11 @@ func InsertConnection(db *sql.DB, connection *Connection) error {
 	return nil
 }
 
-func GetConnections(db *sql.DB) ([]Connection, error) {
+func (c ConnectionRepositoryImpl) GetConnections() ([]Connection, error) {
 	query := `select id_, hypervisor_, url_, autoconnect_, ssh_, hostname_, username_, password_ 
 		from connections_;`
 
-	rows, err := db.Query(query)
+	rows, err := c.db.Query(query)
 	if err != nil {
 		return nil, err
 	}
@@ -70,10 +97,10 @@ func GetConnections(db *sql.DB) ([]Connection, error) {
 	return connections, nil
 }
 
-func DeleteConnection(db *sql.DB, id int) error {
+func (c ConnectionRepositoryImpl) DeleteConnection(id int) error {
 	query := `delete from connections_ where id_ = $id`
 
-	if _, err := db.Exec(query, sql.Named("id", id)); err != nil {
+	if _, err := c.db.Exec(query, sql.Named("id", id)); err != nil {
 		return err
 	}
 

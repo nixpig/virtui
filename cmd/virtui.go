@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"os"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
 	"github.com/golang-migrate/migrate/v4"
+	"github.com/nixpig/virtui/app"
 	"github.com/nixpig/virtui/config"
 	"github.com/nixpig/virtui/database"
-	"github.com/nixpig/virtui/internal/app"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"libvirt.org/go/libvirt"
@@ -73,7 +74,10 @@ func main() {
 		}
 	}()
 
-	if err := app.Run(conn); err != nil {
+	if _, err := tea.NewProgram(
+		app.InitModel(conn),
+		tea.WithAltScreen(),
+	).Run(); err != nil {
 		fatality("failed to run virtui", err)
 	}
 }

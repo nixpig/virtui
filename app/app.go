@@ -9,18 +9,15 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
-	"github.com/nixpig/virtui/internal/connection"
-	"github.com/nixpig/virtui/internal/event"
-	"github.com/nixpig/virtui/internal/keys"
-	"libvirt.org/go/libvirt"
+	"github.com/nixpig/virtui/connection"
+	"github.com/nixpig/virtui/event"
+	"github.com/nixpig/virtui/keys"
 )
 
-type model struct {
-	db *sql.DB
+type appModel struct {
+	screenModel tea.Model
 
-	connections []connection.Connection
-
-	vmEventCh chan event.VM
+	cr connection.ConnectionRepository
 
 	help help.Model
 	keys keys.GlobalMap
@@ -42,34 +39,33 @@ type model struct {
 	*/
 }
 
-func vmEventMsg(ch chan event.VM) tea.Cmd {
-	return func() tea.Msg {
-		return <-ch
-	}
-}
+// func vmEventMsg(ch chan event.VM) tea.Cmd {
+// 	return func() tea.Msg {
+// 		return <-ch
+// 	}
+// }
 
-func vmEventCallback(ch chan event.VM) libvirt.DomainEventLifecycleCallback {
-	return func(
-		c *libvirt.Connect,
-		d *libvirt.Domain,
-		l *libvirt.DomainEventLifecycle,
-	) {
-		ch <- event.VM{
-			Event: l.Event,
-		}
-	}
-}
+// func vmEventCallback(ch chan event.VM) libvirt.DomainEventLifecycleCallback {
+// 	return func(
+// 		c *libvirt.Connect,
+// 		d *libvirt.Domain,
+// 		l *libvirt.DomainEventLifecycle,
+// 	) {
+// 		ch <- event.VM{
+// 			Event: l.Event,
+// 		}
+// 	}
+// }
 
-func InitModel(db *sql.DB) model {
-	connections, err := connection.GetConnections(db)
-	if err != nil {
-		log.Error("get connections", "err", err)
-	}
+func InitModel(db *sql.DB) appModel {
+	var currentModel tea.Model
 
-	m := model{
-		db:          db,
-		connections: connections,
-		vmEventCh:   make(chan event.VM),
+	currentModel = connectionsScreen()
+
+	m := appModel{
+		screenModel: currentModel,
+
+		cr: connection.NewConnectionRepositoryImpl(db),
 
 		help: help.New(),
 		keys: keys.Global,
@@ -78,7 +74,7 @@ func InitModel(db *sql.DB) model {
 	return m
 }
 
-func (m model) Init() tea.Cmd {
+func (m appModel) Init() tea.Cmd {
 
 	// need to create a new libvirt connection for each connection
 	// then need to do this for _each_ of the connections
@@ -94,22 +90,22 @@ func (m model) Init() tea.Cmd {
 	// 	}
 	// }
 
-	return tea.Batch(vmEventMsg(m.vmEventCh))
+	// return tea.Batch(vmEventMsg(m.vmEventCh))
+	return m.screenModel.Init()
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// var cmd tea.Cmd
 
 	switch msg := msg.(type) {
 	case event.VM:
 		log.Debug("handle vm event", "id", msg.ID, "event", msg.Event)
-		return m, tea.Batch(vmEventMsg(m.vmEventCh))
+		// return m, tea.Batch(vmEventMsg(m.vmEventCh))
 
 	case tea.WindowSizeMsg:
 		log.Debug("handle window resize", "width", msg.Width, "height", msg.Height)
 		m.width = msg.Width
 		m.height = msg.Height
-		return m, nil
 
 	case tea.KeyMsg:
 		switch {
@@ -118,15 +114,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
-			return m, nil
 
+		case msg.String() == "d":
+			m.screenModel = domainsScreen()
+		case msg.String() == "c":
+			m.screenModel = connectionsScreen()
+
+		default:
+			// pass remaining keys down to child screen model
+			m.screenModel.Update(msg)
 		}
 	}
 
 	return m, nil
 }
 
-func (m model) View() string {
+func (m appModel) View() string {
 	// container
 	containerBorderStyle := lipgloss.RoundedBorder()
 	containerBorderColor := lipgloss.Color("63")
@@ -160,21 +163,13 @@ func (m model) View() string {
 	contentStyle := lipgloss.NewStyle().
 		Height(contentHeight)
 
-	contentView := contentStyle.Render("sadfskdf\nasdfasdf\nasdfdsaf\n")
+	contentView := contentStyle.Render(m.screenModel.View())
 
 	return containerStyle.Render(contentView + helpView)
 }
 
-func Run(db *sql.DB) error {
-	m := InitModel(db)
+func (m appModel) SwitchScreen(model tea.Model) (tea.Model, tea.Cmd) {
+	m.screenModel = model
 
-	o := []tea.ProgramOption{
-		tea.WithAltScreen(),
-	}
-
-	if _, err := tea.NewProgram(m, o...).Run(); err != nil {
-		return err
-	}
-
-	return nil
+	return m.screenModel, m.screenModel.Init()
 }

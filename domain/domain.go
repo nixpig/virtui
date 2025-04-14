@@ -88,12 +88,13 @@ type Devices struct {
 }
 
 type Disk struct {
-	XMLName xml.Name `xml:"disk"`
-	Type    string   `xml:"type,attr"`
-	Device  string   `xml:"device,attr"`
-	Driver  *Driver  `xml:"driver"`
-	Source  *Source  `xml:"source"`
-	Target  *Target  `xml:"target"`
+	XMLName  xml.Name `xml:"disk"`
+	Type     string   `xml:"type,attr"`
+	Device   string   `xml:"device,attr"`
+	Driver   *Driver  `xml:"driver"`
+	Source   *Source  `xml:"source"`
+	Target   *Target  `xml:"target"`
+	Readonly *string  `xml:"readonly"` // string pointer as needs to be completely omitted if not present, not just empty
 }
 
 type Driver struct {

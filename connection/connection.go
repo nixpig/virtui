@@ -12,6 +12,7 @@ type ConnectionStore interface {
 	HasConnections() (bool, error)
 	InsertConnection(connection *Connection) error
 	GetConnections() ([]Connection, error)
+	GetConnectionByID(id int) (*Connection, error)
 	DeleteConnectionByID(id int) error
 }
 
@@ -78,6 +79,23 @@ func (c ConnectionStoreImpl) GetConnections() ([]Connection, error) {
 	}
 
 	return connections, nil
+}
+
+func (c ConnectionStoreImpl) GetConnectionByID(id int) (*Connection, error) {
+	query := `select id_, url_, autoconnect_ from connections_ where id_ = $id;`
+
+	row := c.db.QueryRow(query, sql.Named("id", id))
+
+	var connection Connection
+	if err := row.Scan(
+		&connection.ID,
+		&connection.URL,
+		&connection.Autoconnect,
+	); err != nil {
+		return nil, err
+	}
+
+	return &connection, nil
 }
 
 func (c ConnectionStoreImpl) DeleteConnectionByID(id int) error {

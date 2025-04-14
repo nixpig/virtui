@@ -4,7 +4,12 @@ An interactive Terminal UI (TUI) for managing QEMU/KVM virtual machines via libv
 
 ## 🎯 Initial project goals
 
-Create a domain with CPU, memory, network and disk, from an ISO.
+- [ ] Connect to default `qemu:///system` hypervisor
+- [ ] Create `dir` (filesystem directory) storage pool
+- [ ] Create `qcow2` storage volume in storage pool
+- [ ] Create a `NAT` virtual network on IPv4 with DHCP
+- [ ] Create an Ubuntu 24.04 VM from `iso` image
+- [ ] Boot VM + shutdown/pause/resume/poweroff/reset
 
 
 ## Notes
@@ -73,3 +78,13 @@ Paused -> Resume, Save, Migrate, Delete, Reboot, Shutdown, Force Reset, Force Of
 Shutoff -> Run, Clone, Delete
 
 Saved -> Restore, Clone, Delete
+
+
+---
+
+`sudo virt-install --print-xml --connect qemu:///system --name test-vm --ram 2048 --vcpus 2 --disk path=/var/lib/libvirt/images/linux2022.qcow2 --location /var/lib/libvirt/images/ubuntu-24.04.2-live-server-amd64.iso,kernel=casper/vmlinuz,initrd=casper/initrd --os-variant ubuntu24.04 --graphics none --extra-args='console=ttyS0'`
+
+
+---
+
+

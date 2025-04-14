@@ -32,7 +32,7 @@ const (
 type appModel struct {
 	screenModel tea.Model
 
-	cr connection.ConnectionRepository
+	cr connection.ConnectionStore
 
 	help help.Model
 	keys keys.GlobalMap
@@ -73,7 +73,7 @@ type appModel struct {
 // }
 
 func InitModel(db *sql.DB) appModel {
-	cr := connection.NewConnectionRepositoryImpl(db)
+	cr := connection.NewConnectionStoreImpl(db)
 
 	model := appModel{
 		help: help.New(),

@@ -17,7 +17,7 @@ type dashboardModel struct {
 
 	updater func(tea.Msg) (tea.Model, tea.Cmd)
 
-	cr connection.ConnectionRepository
+	cr connection.ConnectionStore
 
 	content string
 
@@ -27,7 +27,7 @@ type dashboardModel struct {
 	height int
 }
 
-func dashboardScreen(cr connection.ConnectionRepository, updater func(tea.Msg) (tea.Model, tea.Cmd)) dashboardModel {
+func dashboardScreen(cr connection.ConnectionStore, updater func(tea.Msg) (tea.Model, tea.Cmd)) dashboardModel {
 	return dashboardModel{
 		keys:    keys.Dashboard,
 		help:    help.New(),

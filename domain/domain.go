@@ -249,7 +249,7 @@ type Clipboard struct {
 type Clock struct {
 	Offset string  `xml:"offset,attr,omitempty"`
 	Sync   string  `xml:"sync,attr,omitempty"`
-	Timer  []Timer `xml:"timer"`
+	Timers []Timer `xml:"timer"`
 }
 
 type Coalesce struct {
@@ -365,21 +365,21 @@ type Device struct {
 
 type Devices struct {
 	Audio       []Audio      `xml:"audio"`
-	Channel     []Channel    `xml:"channel"`
-	Console     []Console    `xml:"console"`
-	Controller  []Controller `xml:"controller"`
+	Channels    []Channel    `xml:"channel"`
+	Consoles    []Console    `xml:"console"`
+	Controllers []Controller `xml:"controller"`
 	Crypto      *Crypto      `xml:"crypto"`
-	Disk        []Disk       `xml:"disk"`
+	Disks       []Disk       `xml:"disk"`
 	Emulator    string       `xml:"emulator"`
 	Filesystem  []Filesystem `xml:"filesystem"`
 	Graphics    []Graphics   `xml:"graphics"`
 	Hostdev     []Hostdev    `xml:"hostdev"`
 	Hub         *Hub         `xml:"hub"`
 	Input       []Input      `xml:"input"`
-	Interface   []Interface  `xml:"interface"`
+	Interfaces  []Interface  `xml:"interface"`
 	Iommu       *Iommu       `xml:"iommu"`
 	Lease       *Lease       `xml:"lease"`
-	Memballoon  []Memballoon `xml:"memballoon"`
+	Memballoon  *Memballoon  `xml:"memballoon"`
 	Memory      []Memory     `xml:"memory"`
 	Nvram       *Nvram       `xml:"nvram"`
 	Panic       []Panic      `xml:"panic"`
@@ -416,7 +416,7 @@ type Disk struct {
 	BackingStore    *BackingStore    `xml:"backingStore"`
 	Blockio         *Blockio         `xml:"blockio"`
 	Boot            *Boot            `xml:"boot"`
-	Driver          []Driver         `xml:"driver"`
+	Driver          *Driver          `xml:"driver"`
 	Encryption      *Encryption      `xml:"encryption"`
 	Geometry        *Geometry        `xml:"geometry"`
 	Iotune          *Iotune          `xml:"iotune"`
@@ -840,7 +840,7 @@ type Interface struct {
 	Rom                 *Rom           `xml:"rom"`
 	Route               []Route        `xml:"route"`
 	Script              *Script        `xml:"script"`
-	Source              []Source       `xml:"source"`
+	Source              *Source        `xml:"source"`
 	Target              *Target        `xml:"target"`
 	Teaming             *Teaming       `xml:"teaming"`
 	Tune                *Tune          `xml:"tune"`
@@ -1379,9 +1379,9 @@ type Resource struct {
 }
 
 type Rng struct {
-	Model   string    `xml:"model,attr"`
-	Backend []Backend `xml:"backend"`
-	Rate    *Rate     `xml:"rate"`
+	Model   string   `xml:"model,attr"`
+	Backend *Backend `xml:"backend"`
+	Rate    *Rate    `xml:"rate"`
 }
 
 type Rom struct {

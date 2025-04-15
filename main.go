@@ -4,25 +4,128 @@ import (
 	"encoding/xml"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/nixpig/virtui/domain"
 )
 
 func main() {
 
-	i, err := os.ReadFile("test-vm.xml")
-	if err != nil {
-		log.Fatal(err)
+	d := &domain.Domain{
+		Type: "kvm",
+		Name: "test-vm",
+		Uuid: "63cfcedf-3de1-433f-80a0-9b39bfaa9605",
+		Metadata: &domain.Metadata{
+			Libosinfo: &domain.Libosinfo{
+				Os: &domain.Os{
+					ID: "http://ubuntu.com/ubuntu/24.04",
+				},
+			},
+		},
+		Memory: &domain.Memory{
+			CharData: "2907152",
+		},
+		CurrentMemory: &domain.CurrentMemory{
+			CharData: "2907152",
+		},
+		Vcpu: &domain.Vcpu{CharData: "2"},
+		Os: &domain.Os{
+			Type: &domain.Type{
+				Arch:    "x86_64",
+				Machine: "q35",
+			},
+			Kernel:  "/var/lib/libvirt/boot/virtinst-c6kdm5b8-vmlinuz",
+			Initrd:  "/var/lib/libvirt/boot/virtinst-ky336s4a-initrd",
+			Cmdline: "console=ttys0",
+		},
+		Features: &domain.Features{
+			Acpi: &domain.Acpi{},
+			Apic: &domain.Apic{},
+		},
+		Cpu: &domain.Cpu{
+			Mode: "host-passthrough",
+		},
+		Clock: &domain.Clock{
+			Offset: "utc",
+			Timer: []domain.Timer{
+				{Name: "rtc", Tickpolicy: "catchup"},
+				{Name: "pit", Tickpolicy: "delay"},
+				{Name: "hpet", Present: "no"},
+			},
+		},
+		Pm: &domain.Pm{
+			SuspendToMem: &domain.SuspendToMem{
+				Enabled: "no",
+			},
+			SuspendToDisk: &domain.SuspendToDisk{
+				Enabled: "no",
+			},
+		},
+		Devices: &domain.Devices{
+			Emulator: "/usr/bin/qemu-system-x86_64",
+			Disk: []domain.Disk{
+				{
+					Type:   "file",
+					Device: "disk",
+					Driver: []domain.Driver{{Name: "qemu", Type: "qcow2"}},
+					Source: &domain.Source{File: "/var/lib/libvirt/images/test-vm.qcow2"},
+					Target: &domain.Target{Dev: "vda", Bus: "virtio"},
+				},
+				{
+					Type:     "file",
+					Device:   "cdrom",
+					Driver:   []domain.Driver{{Name: "qemu", Type: "raw"}},
+					Source:   &domain.Source{File: "/var/lib/libvirt/images/ubuntu-24.04.2-live-server-amd64.iso"},
+					Target:   &domain.Target{Dev: "sda", Bus: "sata"},
+					Readonly: &domain.Readonly{},
+				},
+			},
+			Controller: []domain.Controller{
+				{Type: "usb", Model: "qemu-xhci", Ports: &[]int{15}[0]},
+				{Type: "pci", Model: "pcie-root"},
+				{Type: "pci", Model: "pcie-root-port"},
+				{Type: "pci", Model: "pcie-root-port"},
+				{Type: "pci", Model: "pcie-root-port"},
+				{Type: "pci", Model: "pcie-root-port"},
+				{Type: "pci", Model: "pcie-root-port"},
+				{Type: "pci", Model: "pcie-root-port"},
+				{Type: "pci", Model: "pcie-root-port"},
+				{Type: "pci", Model: "pcie-root-port"},
+				{Type: "pci", Model: "pcie-root-port"},
+				{Type: "pci", Model: "pcie-root-port"},
+				{Type: "pci", Model: "pcie-root-port"},
+				{Type: "pci", Model: "pcie-root-port"},
+				{Type: "pci", Model: "pcie-root-port"},
+				{Type: "pci", Model: "pcie-root-port"},
+			},
+			Interface: []domain.Interface{
+				{
+					Source: []domain.Source{{Network: "default"}},
+					Mac:    &domain.Mac{Address: "52:54:00:66:21:bf"},
+					Model:  &domain.Model{Type: "virtio"},
+					Type:   "network",
+				},
+			},
+			Console: []domain.Console{{Type: "pty"}},
+			Channel: []domain.Channel{{
+				Type:   "unix",
+				Source: &domain.Source{Mode: "bind"},
+				Target: &domain.Target{Type: "virtio", Name: "org.qemu.guest_agent.0"},
+			}},
+			Memballoon: []domain.Memballoon{
+				{Model: "virtio"},
+			},
+			Rng: &domain.Rng{
+				Model: "virtio",
+				Backend: []domain.Backend{
+					{
+						Model:    "random",
+						CharData: "/dev/urandom",
+					},
+				},
+			},
+		},
+		OnReboot: "destroy",
 	}
-
-	var d domain.Domain
-
-	if err := xml.Unmarshal(i, &d); err != nil {
-		log.Fatal("in: " + err.Error())
-	}
-
-	fmt.Printf("%+v\n", d)
 
 	o, err := xml.MarshalIndent(d, "", "  ")
 	if err != nil {

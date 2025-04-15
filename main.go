@@ -16,6 +16,7 @@ func main() {
 		Uuid: "63cfcedf-3de1-433f-80a0-9b39bfaa9605",
 		Metadata: &domain.Metadata{
 			Libosinfo: &domain.Libosinfo{
+				Libosinfo: "http://libosinfo.org/xmlns/libvirt/domain/1.0",
 				Os: &domain.Os{
 					ID: "http://ubuntu.com/ubuntu/24.04",
 				},

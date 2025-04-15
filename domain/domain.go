@@ -953,7 +953,7 @@ type Lease struct {
 }
 
 type Libosinfo struct {
-	Libosinfo string `xml:"libosinfo xmlns,attr"`
+	Libosinfo string `xml:"xmlns:libosinfo,attr"`
 	Os        *Os    `xml:"libosinfo:os"`
 }
 

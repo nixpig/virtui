@@ -1,6 +1,8 @@
 package connection
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 type Connection struct {
 	ID          int

@@ -28,17 +28,17 @@ type Adapter struct {
 
 type Address struct {
 	Base          string `xml:"base,attr,omitempty"`
-	Bus           int    `xml:"bus,attr,omitempty"`
+	Bus           string `xml:"bus,attr,omitempty"`
 	Controller    string `xml:"controller,attr"`
 	CSSID         string `xml:"cssid,attr,omitempty"`
 	DevNo         string `xml:"devno,attr,omitempty"`
-	Domain        int    `xml:"domain,attr,omitempty"`
-	Function      int    `xml:"function,attr,omitempty"`
+	Domain        string `xml:"domain,attr,omitempty"`
+	Function      string `xml:"function,attr,omitempty"`
 	IOBase        int    `xml:"iobase,attr,omitempty"`
 	Multifunction string `xml:"multifunction,attr,omitempty"`
 	Port          *int   `xml:"port,attr"`
 	Reg           string `xml:"reg,attr,omitempty"`
-	Slot          int    `xml:"slot,attr,omitempty"`
+	Slot          string `xml:"slot,attr,omitempty"`
 	SSID          string `xml:"ssid,attr,omitempty"`
 	Target        string `xml:"target,attr,omitempty"`
 	Type          string `xml:"type,attr,omitempty"`
@@ -1644,7 +1644,7 @@ type Target struct {
 	Name         string     `xml:"name,attr,omitempty"`
 	Offset       *int       `xml:"offset,attr"`
 	Path         *string    `xml:"path,attr"`
-	Port         int        `xml:"port,attr"`
+	Port         string     `xml:"port,attr,omitempty"`
 	RotationRate *int       `xml:"rotation_rate,attr"`
 	State        *string    `xml:"state,attr"`
 	Tray         *string    `xml:"tray,attr"`

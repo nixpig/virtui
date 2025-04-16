@@ -11,31 +11,31 @@ import (
 func main() {
 
 	metadata := &domain.Metadata{
-		Libosinfo: &domain.Libosinfo{
-			Libosinfo: "http://libosinfo.org/xmlns/libvirt/domain/1.0",
-			Os:        &domain.Os{ID: "http://ubuntu.com/ubuntu/24.04"},
+		LibOSInfo: &domain.LibOSInfo{
+			LibOSInfo: "http://libosinfo.org/xmlns/libvirt/domain/1.0",
+			OS:        &domain.OS{ID: "http://ubuntu.com/ubuntu/24.04"},
 		},
 	}
 
 	d := &domain.Domain{
 		Type:          "kvm",
 		Name:          "test-vm",
-		Uuid:          "63cfcedf-3de1-433f-80a0-9b39bfaa9605",
+		UUID:          "63cfcedf-3de1-433f-80a0-9b39bfaa9605",
 		Metadata:      metadata,
 		Memory:        &domain.Memory{CharData: "2907152"},
 		CurrentMemory: &domain.CurrentMemory{CharData: "2907152"},
-		Vcpu:          &domain.Vcpu{CharData: "2"},
-		Os: &domain.Os{
+		VCPU:          &domain.VCPU{CharData: "2"},
+		OS: &domain.OS{
 			Type:    &domain.Type{Arch: "x86_64", Machine: "q35"},
 			Kernel:  "/var/lib/libvirt/boot/virtinst-c6kdm5b8-vmlinuz",
-			Initrd:  "/var/lib/libvirt/boot/virtinst-ky336s4a-initrd",
+			InitRD:  "/var/lib/libvirt/boot/virtinst-ky336s4a-initrd",
 			Cmdline: "console=ttys0",
 		},
 		Features: &domain.Features{
-			Acpi: &domain.Acpi{},
-			Apic: &domain.Apic{},
+			ACPI: &domain.ACPI{},
+			APIC: &domain.APIC{},
 		},
-		Cpu: &domain.Cpu{Mode: "host-passthrough"},
+		Cpu: &domain.CPU{Mode: "host-passthrough"},
 		Clock: &domain.Clock{
 			Offset: "utc",
 			Timers: []domain.Timer{
@@ -44,7 +44,7 @@ func main() {
 				{Name: "hpet", Present: "no"},
 			},
 		},
-		Pm: &domain.Pm{
+		PM: &domain.PM{
 			SuspendToMem:  &domain.SuspendToMem{Enabled: "no"},
 			SuspendToDisk: &domain.SuspendToDisk{Enabled: "no"},
 		},
@@ -99,8 +99,8 @@ func main() {
 				Source: &domain.Source{Mode: "bind"},
 				Target: &domain.Target{Type: "virtio", Name: "org.qemu.guest_agent.0"},
 			}},
-			Memballoon: &domain.Memballoon{Model: "virtio"},
-			Rng: &domain.Rng{
+			MemBalloon: &domain.MemBalloon{Model: "virtio"},
+			RNG: &domain.RNG{
 				Model:   "virtio",
 				Backend: &domain.Backend{Model: "random", CharData: "/dev/urandom"},
 			},

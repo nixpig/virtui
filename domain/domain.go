@@ -11,14 +11,14 @@ type Access struct {
 	Mode string `xml:"mode,attr"`
 }
 
-type Acpi struct {
+type ACPI struct {
 	Index *int   `xml:"index,attr"`
 	Table *Table `xml:"table"`
 }
 
-type Apic struct{}
+type APIC struct{}
 
-type ActivePcrBanks struct {
+type ActivePCRBanks struct {
 	Sha256 struct{} `xml:"sha256"`
 }
 
@@ -27,58 +27,58 @@ type Adapter struct {
 }
 
 type Address struct {
-	Base          *string `xml:"base,attr"`
-	Bus           *string `xml:"bus,attr"`
-	Controller    *int    `xml:"controller,attr"`
-	Cssid         *string `xml:"cssid,attr"`
-	Devno         *string `xml:"devno,attr"`
-	Domain        *string `xml:"domain,attr"`
-	Function      *string `xml:"function,attr"`
-	Iobase        *string `xml:"iobase,attr"`
-	Multifunction *string `xml:"multifunction,attr"`
-	Port          *int    `xml:"port,attr"`
-	Reg           *string `xml:"reg,attr"`
-	Slot          *string `xml:"slot,attr"`
-	Ssid          *string `xml:"ssid,attr"`
-	Target        *int    `xml:"target,attr"`
-	Type          *string `xml:"type,attr"`
-	Unit          *int    `xml:"unit,attr"`
-	Uuid          *string `xml:"uuid,attr"`
+	Base          string `xml:"base,attr,omitempty"`
+	Bus           string `xml:"bus,attr,omitempty"`
+	Controller    *int   `xml:"controller,attr"`
+	CSSID         string `xml:"cssid,attr,omitempty"`
+	DevNo         string `xml:"devno,attr,omitempty"`
+	Domain        string `xml:"domain,attr,omitempty"`
+	Function      string `xml:"function,attr,omitempty"`
+	IOBase        string `xml:"iobase,attr,omitempty"`
+	Multifunction string `xml:"multifunction,attr,omitempty"`
+	Port          *int   `xml:"port,attr"`
+	Reg           string `xml:"reg,attr,omitempty"`
+	Slot          string `xml:"slot,attr,omitempty"`
+	SSID          string `xml:"ssid,attr,omitempty"`
+	Target        *int   `xml:"target,attr"`
+	Type          string `xml:"type,attr,omitempty"`
+	Unit          *int   `xml:"unit,attr"`
+	UUID          string `xml:"uuid,attr,omitempty"`
 }
 
-type Aia struct {
-	Value string `xml:"value,attr"`
+type AIA struct {
+	Value string `xml:"value,attr,omitempty"`
 }
 
 type Alias struct {
-	Name string `xml:"name,attr"`
+	Name string `xml:"name,attr,omitempty"`
 }
 
-type Alignsize struct {
-	Unit     string `xml:"unit,attr"`
+type AlignSize struct {
+	Unit     string `xml:"unit,attr,omitempty"`
 	CharData string `xml:",chardata"`
 }
 
 type Allocation struct {
-	Mode    string `xml:"mode,attr"`
+	Mode    string `xml:"mode,attr,omitempty"`
 	Threads int    `xml:"threads,attr"`
 }
 
 type AsyncTeardown struct {
-	Enabled string `xml:"enabled,attr"`
+	Enabled string `xml:"enabled,attr,omitempty"`
 }
 
 type Audio struct {
-	Driver      *string `xml:"driver,attr"`
-	DspPolicy   *int    `xml:"dspPolicy,attr"`
-	Exclusive   *string `xml:"exclusive,attr"`
+	Driver      string  `xml:"driver,attr,omitempty"`
+	DSPPolicy   *int    `xml:"dspPolicy,attr"`
+	Exclusive   string  `xml:"exclusive,attr,omitempty"`
 	ID          int     `xml:"id,attr"`
-	Path        *string `xml:"path,attr"`
-	RuntimeDir  *string `xml:"runtimeDir,attr"`
-	ServerName  *string `xml:"serverName,attr"`
+	Path        string  `xml:"path,attr,omitempty"`
+	RuntimeDir  string  `xml:"runtimeDir,attr,omitempty"`
+	ServerName  string  `xml:"serverName,attr,omitempty"`
 	TimerPeriod *int    `xml:"timerPeriod,attr"`
-	TryMMap     *string `xml:"tryMMap,attr"`
-	Type        *string `xml:"type,attr"`
+	TryMMap     string  `xml:"tryMMap,attr,omitempty"`
+	Type        string  `xml:"type,attr,omitempty"`
 	Input       *Input  `xml:"input"`
 	Output      *Output `xml:"output"`
 }
@@ -93,24 +93,24 @@ type Backend struct {
 	LogFile        string          `xml:"logFile,attr,omitempty"`
 	Model          string          `xml:"model,attr,omitempty"`
 	Queues         *int            `xml:"queues,attr"`
-	Tap            *string         `xml:"tap,attr"`
-	Type           *string         `xml:"type,attr"`
+	Tap            string          `xml:"tap,attr,omitempty"`
+	Type           string          `xml:"type,attr,omitempty"`
 	Version        *float64        `xml:"version,attr"`
-	Vhost          *string         `xml:"vhost,attr"`
+	VHost          string          `xml:"vhost,attr,omitempty"`
 	CharData       string          `xml:",chardata"`
-	ActivePcrBanks *ActivePcrBanks `xml:"active_pcr_banks"`
+	ActivePcrBanks *ActivePCRBanks `xml:"active_pcr_banks"`
 	Device         *Device         `xml:"device"`
 	Encryption     *Encryption     `xml:"encryption"`
 	Profile        *Profile        `xml:"profile"`
-	Source         []Source        `xml:"source"`
+	Source         *Source         `xml:"source"`
 }
 
-type Backenddomain struct {
-	Name string `xml:"name,attr"`
+type BackendDomain struct {
+	Name string `xml:"name,attr,omitempty"`
 }
 
 type BackingStore struct {
-	Type         *string       `xml:"type,attr"`
+	Type         string        `xml:"type,attr,omitempty"`
 	BackingStore *BackingStore `xml:"backingStore"`
 	Format       *Format       `xml:"format"`
 	Source       *Source       `xml:"source"`
@@ -119,40 +119,35 @@ type BackingStore struct {
 type Bandwidth struct {
 	Initiator *int     `xml:"initiator,attr"`
 	Target    *int     `xml:"target,attr"`
-	Type      *string  `xml:"type,attr"`
-	Unit      *string  `xml:"unit,attr"`
+	Type      string   `xml:"type,attr,omitempty"`
+	Unit      string   `xml:"unit,attr,omitempty"`
 	Value     *int     `xml:"value,attr"`
 	Inbound   Inbound  `xml:"inbound"`
 	Outbound  Outbound `xml:"outbound"`
 }
 
-type Bar struct {
-	App2     string `xml:"app2,attr"`
-	CharData string `xml:",chardata"`
-}
-
 type BaseBoard struct {
-	Entry []Entry `xml:"entry"`
+	Entries []Entry `xml:"entry"`
 }
 
 type Binary struct {
-	Path       string     `xml:"path,attr"`
-	Xattr      string     `xml:"xattr,attr"`
+	Path       string     `xml:"path,attr,omitempty"`
+	XAttr      string     `xml:"xattr,attr,omitempty"`
 	Cache      Cache      `xml:"cache"`
 	Lock       Lock       `xml:"lock"`
 	Sandbox    Sandbox    `xml:"sandbox"`
 	ThreadPool ThreadPool `xml:"thread_pool"`
 }
 
-type Bios struct {
+type BIOS struct {
 	RebootTimeout *int    `xml:"rebootTimeout,attr"`
-	Useserial     *string `xml:"useserial,attr"`
+	UseSerial     *string `xml:"useserial,attr"`
 	Entry         Entry   `xml:"entry"`
 }
 
-type Blkiotune struct {
-	Device []Device `xml:"device"`
-	Weight int      `xml:"weight"`
+type BlkioTune struct {
+	Device *Device `xml:"device"`
+	Weight int     `xml:"weight"`
 }
 
 type Block struct {
@@ -160,7 +155,7 @@ type Block struct {
 	CharData string  `xml:",chardata"`
 }
 
-type Blockio struct {
+type BlockIO struct {
 	DiscardGranularity int `xml:"discard_granularity,attr"`
 	LogicalBlockSize   int `xml:"logical_block_size,attr"`
 	PhysicalBlockSize  int `xml:"physical_block_size,attr"`
@@ -171,7 +166,7 @@ type Boot struct {
 	Order *int    `xml:"order,attr"`
 }
 
-type Bootmenu struct {
+type BootMenu struct {
 	Enable  string `xml:"enable,attr"`
 	Timeout int    `xml:"timeout,attr"`
 }
@@ -189,10 +184,10 @@ type Cache struct {
 	SizeAttr      *int    `xml:"size,attr"`
 }
 
-type Cachetune struct {
-	Vcpus   string    `xml:"vcpus,attr"`
-	Cache   []Cache   `xml:"cache"`
-	Monitor []Monitor `xml:"monitor"`
+type CacheTune struct {
+	VCPUs   string  `xml:"vcpus,attr"`
+	Cache   Cache   `xml:"cache"`
+	Monitor Monitor `xml:"monitor"`
 }
 
 type Catchup struct {
@@ -201,12 +196,12 @@ type Catchup struct {
 	Threshold int `xml:"threshold,attr"`
 }
 
-type CcfAssist struct {
+type CCFAssist struct {
 	State string `xml:"state,attr"`
 }
 
 type Cell struct {
-	Cpus      string     `xml:"cpus,attr"`
+	CPUs      string     `xml:"cpus,attr"`
 	Discard   *string    `xml:"discard,attr"`
 	ID        int        `xml:"id,attr"`
 	MemAccess *string    `xml:"memAccess,attr"`
@@ -216,7 +211,7 @@ type Cell struct {
 	Distances *Distances `xml:"distances"`
 }
 
-type Cfpc struct {
+type CFPC struct {
 	Value string `xml:"value,attr"`
 }
 
@@ -232,7 +227,7 @@ type Chassis struct {
 	Entry []Entry `xml:"entry"`
 }
 
-type Cid struct {
+type CID struct {
 	Address int    `xml:"address,attr"`
 	Auto    string `xml:"auto,attr"`
 }
@@ -243,7 +238,7 @@ type Cipher struct {
 }
 
 type Clipboard struct {
-	Copypaste string `xml:"copypaste,attr"`
+	CopyPaste string `xml:"copypaste,attr"`
 }
 
 type Clock struct {
@@ -280,7 +275,7 @@ type Controller struct {
 	Type             string   `xml:"type,attr,omitempty"`
 	Vectors          *int     `xml:"vectors,attr"`
 	Address          *Address `xml:"address"`
-	Driver           []Driver `xml:"driver"`
+	Driver           *Driver  `xml:"driver"`
 	Master           *Master  `xml:"master"`
 }
 
@@ -293,36 +288,36 @@ type Cookies struct {
 	Cookie Cookie `xml:"cookie"`
 }
 
-type Cpu struct {
+type CPU struct {
 	Match       string       `xml:"match,attr,omitempty"`
 	Migratable  *string      `xml:"migratable,attr"`
 	Mode        string       `xml:"mode,attr"`
 	Cache       *Cache       `xml:"cache"`
 	Feature     *Feature     `xml:"feature"`
-	Maxphysaddr *Maxphysaddr `xml:"maxphysaddr"`
+	Maxphysaddr *MaxPhysAddr `xml:"maxphysaddr"`
 	Model       *Model       `xml:"model"`
 	Numa        *Numa        `xml:"numa"`
 	Topology    *Topology    `xml:"topology"`
 	Vendor      *Vendor      `xml:"vendor"`
 }
 
-type Cputune struct {
-	Cachetune      []Cachetune   `xml:"cachetune"`
+type CPUTune struct {
+	CacheTune      []CacheTune   `xml:"cachetune"`
 	EmulatorPeriod int           `xml:"emulator_period"`
 	EmulatorQuota  int           `xml:"emulator_quota"`
-	Emulatorpin    Emulatorpin   `xml:"emulatorpin"`
+	EmulatorPIN    EmulatorPIN   `xml:"emulatorpin"`
 	GlobalPeriod   int           `xml:"global_period"`
 	GlobalQuota    int           `xml:"global_quota"`
 	IothreadPeriod int           `xml:"iothread_period"`
 	IothreadQuota  int           `xml:"iothread_quota"`
-	Iothreadpin    []Iothreadpin `xml:"iothreadpin"`
-	Iothreadsched  Iothreadsched `xml:"iothreadsched"`
-	Memorytune     Memorytune    `xml:"memorytune"`
+	IOThreadPIN    []IOThreadPIN `xml:"iothreadpin"`
+	IOThreadSched  IOThreadSched `xml:"iothreadsched"`
+	MemoryTune     MemoryTune    `xml:"memorytune"`
 	Period         int           `xml:"period"`
 	Quota          int           `xml:"quota"`
 	Shares         int           `xml:"shares"`
-	Vcpupin        []Vcpupin     `xml:"vcpupin"`
-	Vcpusched      Vcpusched     `xml:"vcpusched"`
+	VCPUPins       []VCPIPin     `xml:"vcpupin"`
+	VCPUSched      VCPUSched     `xml:"vcpusched"`
 }
 
 type Crypto struct {
@@ -347,7 +342,7 @@ type DataStore struct {
 	Source Source `xml:"source"`
 }
 
-type Defaultiothread struct {
+type DefaultIOThread struct {
 	ThreadPoolMax int `xml:"thread_pool_max,attr"`
 	ThreadPoolMin int `xml:"thread_pool_min,attr"`
 }
@@ -357,10 +352,10 @@ type Device struct {
 	Frontend      *Frontend `xml:"frontend"`
 	Path          string    `xml:"path"`
 	ReadBytesSec  int       `xml:"read_bytes_sec,omitzero"`
-	ReadIopsSec   int       `xml:"read_iops_sec,omitzero"`
+	ReadIOPSSec   int       `xml:"read_iops_sec,omitzero"`
 	Weight        int       `xml:"weight,omitzero"`
 	WriteBytesSec int       `xml:"write_bytes_sec,omitzero"`
-	WriteIopsSec  int       `xml:"write_iops_sec,omitzero"`
+	WriteIOPSSec  int       `xml:"write_iops_sec,omitzero"`
 }
 
 type Devices struct {
@@ -373,28 +368,28 @@ type Devices struct {
 	Emulator    string       `xml:"emulator"`
 	Filesystem  []Filesystem `xml:"filesystem"`
 	Graphics    []Graphics   `xml:"graphics"`
-	Hostdev     []Hostdev    `xml:"hostdev"`
+	HostDev     []HostDev    `xml:"hostdev"`
 	Hub         *Hub         `xml:"hub"`
 	Input       []Input      `xml:"input"`
 	Interfaces  []Interface  `xml:"interface"`
-	Iommu       *Iommu       `xml:"iommu"`
+	IOMMU       *IOMMU       `xml:"iommu"`
 	Lease       *Lease       `xml:"lease"`
-	Memballoon  *Memballoon  `xml:"memballoon"`
+	MemBalloon  *MemBalloon  `xml:"memballoon"`
 	Memory      []Memory     `xml:"memory"`
-	Nvram       *Nvram       `xml:"nvram"`
+	NVRam       *NVRAM       `xml:"nvram"`
 	Panic       []Panic      `xml:"panic"`
 	Parallel    []Parallel   `xml:"parallel"`
-	Pstore      *Pstore      `xml:"pstore"`
-	Redirdev    []Redirdev   `xml:"redirdev"`
-	Redirfilter *Redirfilter `xml:"redirfilter"`
-	Rng         *Rng         `xml:"rng"`
+	Pstore      *PStore      `xml:"pstore"`
+	RedirDev    []RedirDev   `xml:"redirdev"`
+	RedirFilter *RedirFilter `xml:"redirfilter"`
+	RNG         *RNG         `xml:"rng"`
 	Serial      []Serial     `xml:"serial"`
-	Shmem       []Shmem      `xml:"shmem"`
+	SHMem       []SHMem      `xml:"shmem"`
 	Smartcard   []Smartcard  `xml:"smartcard"`
 	Sound       []Sound      `xml:"sound"`
-	Tpm         []Tpm        `xml:"tpm"`
+	TPM         []Tpm        `xml:"tpm"`
 	Video       *Video       `xml:"video"`
-	Vsock       *Vsock       `xml:"vsock"`
+	VSock       *VSock       `xml:"vsock"`
 	Watchdog    []Watchdog   `xml:"watchdog"`
 }
 
@@ -414,83 +409,83 @@ type Disk struct {
 	Address         *Address         `xml:"address"`
 	Alias           *Alias           `xml:"alias"`
 	BackingStore    *BackingStore    `xml:"backingStore"`
-	Blockio         *Blockio         `xml:"blockio"`
+	BlockIO         *BlockIO         `xml:"blockio"`
 	Boot            *Boot            `xml:"boot"`
 	Driver          *Driver          `xml:"driver"`
 	Encryption      *Encryption      `xml:"encryption"`
 	Geometry        *Geometry        `xml:"geometry"`
-	Iotune          *Iotune          `xml:"iotune"`
+	IOTune          *IOTune          `xml:"iotune"`
 	Readonly        *Readonly        `xml:"readonly"`
 	Serial          *Serial          `xml:"serial"`
 	Shareable       *struct{}        `xml:"shareable"`
 	Source          *Source          `xml:"source"`
 	Target          *Target          `xml:"target"`
-	Throttlefilters *Throttlefilters `xml:"throttlefilters"`
+	ThrottleFilters *ThrottleFilters `xml:"throttlefilters"`
 	Transient       *struct{}        `xml:"transient"`
 }
 
 type Readonly struct{}
 
 type Distances struct {
-	Sibling []Sibling `xml:"sibling"`
+	Siblings []Sibling `xml:"sibling"`
 }
 
 type Domain struct {
 	XMLName         xml.Name         `xml:"domain"`
-	Blkiotune       *Blkiotune       `xml:"blkiotune"`
+	BlkioTune       *BlkioTune       `xml:"blkiotune"`
 	Clock           *Clock           `xml:"clock"`
-	Cpu             *Cpu             `xml:"cpu"`
-	Cputune         *Cputune         `xml:"cputune"`
+	Cpu             *CPU             `xml:"cpu"`
+	CPUTune         *CPUTune         `xml:"cputune"`
 	CurrentMemory   *CurrentMemory   `xml:"currentMemory"`
-	Defaultiothread *Defaultiothread `xml:"defaultiothread"`
+	DefaultIOThread *DefaultIOThread `xml:"defaultiothread"`
 	Description     *string          `xml:"description"`
 	Devices         *Devices         `xml:"devices"`
 	Features        *Features        `xml:"features"`
-	Genid           *string          `xml:"genid"`
-	Iothreadids     *Iothreadids     `xml:"iothreadids"`
-	Iothreads       *Iothreads       `xml:"iothreads"`
+	GenID           *string          `xml:"genid"`
+	IOThreadIDs     *IOThreadIDs     `xml:"iothreadids"`
+	IOThreads       *IOThread        `xml:"iothreads"`
 	Keywrap         *Keywrap         `xml:"keywrap"`
 	LaunchSecurity  *LaunchSecurity  `xml:"launchSecurity"`
 	MaxMemory       *MaxMemory       `xml:"maxMemory"`
 	Memory          *Memory          `xml:"memory"`
 	MemoryBacking   *MemoryBacking   `xml:"memoryBacking"`
-	Memtune         *Memtune         `xml:"memtune"`
+	MemTune         *Memtune         `xml:"memtune"`
 	Metadata        *Metadata        `xml:"metadata"`
 	Name            string           `xml:"name"`
-	Numatune        *Numatune        `xml:"numatune"`
+	NumaTune        *Numatune        `xml:"numatune"`
 	OnCrash         *string          `xml:"on_crash"`
-	OnLockfailure   *string          `xml:"on_lockfailure"`
+	OnLockFailure   *string          `xml:"on_lockfailure"`
 	OnPoweroff      *string          `xml:"on_poweroff"`
 	OnReboot        string           `xml:"on_reboot"`
-	Os              *Os              `xml:"os"`
+	OS              *OS              `xml:"os"`
 	Override        *Override        `xml:"override"`
 	Perf            *Perf            `xml:"perf"`
-	Pm              *Pm              `xml:"pm"`
-	Resource        []Resource       `xml:"resource"`
-	Seclabel        []Seclabel       `xml:"seclabel"`
+	PM              *PM              `xml:"pm"`
+	Resources       []Resource       `xml:"resource"`
+	SecLabels       []SecLabel       `xml:"seclabel"`
 	Sysinfo         []Sysinfo        `xml:"sysinfo"`
-	Throttlegroups  *Throttlegroups  `xml:"throttlegroups"`
-	Title           *string          `xml:"title"`
-	Type            string           `xml:"type,attr"`
-	Uuid            string           `xml:"uuid"`
-	Vcpu            *Vcpu            `xml:"vcpu"`
-	Vcpus           *Vcpus           `xml:"vcpus"`
+	ThrottleGroups  *ThrottleGroups  `xml:"throttlegroups"`
+	Title           string           `xml:"title,omitempty"`
+	Type            string           `xml:"type,attr,omitempty"`
+	UUID            string           `xml:"uuid,omitempty"`
+	VCPU            *VCPU            `xml:"vcpu"`
+	VCPUs           *VCPUs           `xml:"vcpus"`
 }
 
-type Downscript struct {
+type DownScript struct {
 	Path string `xml:"path,attr"`
 }
 
 type Driver struct {
-	Ats           *string        `xml:"ats,attr"`
+	ATS           *string        `xml:"ats,attr"`
 	Cache         *string        `xml:"cache,attr"`
-	EventIdx      *string        `xml:"event_idx,attr"`
+	EventIDX      *string        `xml:"event_idx,attr"`
 	Format        *string        `xml:"format,attr"`
-	Intremap      *string        `xml:"intremap,attr"`
-	Io            *string        `xml:"io,attr"`
-	Ioeventfd     *string        `xml:"ioeventfd,attr"`
-	Iommu         *string        `xml:"iommu,attr"`
-	Iothread      *int           `xml:"iothread,attr"`
+	IntRemap      *string        `xml:"intremap,attr"`
+	IO            *string        `xml:"io,attr"`
+	IOEventFD     *string        `xml:"ioeventfd,attr"`
+	IOMMU         *string        `xml:"iommu,attr"`
+	IOThread      *int           `xml:"iothread,attr"`
 	Name          string         `xml:"name,attr"`
 	Queue         *int           `xml:"queue,attr"`
 	QueueSize     *int           `xml:"queue_size,attr"`
@@ -499,10 +494,10 @@ type Driver struct {
 	TxQueueSize   *int           `xml:"tx_queue_size,attr"`
 	Txmode        *string        `xml:"txmode,attr"`
 	Type          string         `xml:"type,attr"`
-	Wrpolicy      *string        `xml:"wrpolicy,attr"`
+	WrPolicy      *string        `xml:"wrpolicy,attr"`
 	Guest         *Guest         `xml:"guest"`
 	Host          *Host          `xml:"host"`
-	Iothreads     *Iothreads     `xml:"iothreads"`
+	IOThreads     *IOThread      `xml:"iothreads"`
 	MetadataCache *MetadataCache `xml:"metadata_cache"`
 }
 
@@ -510,12 +505,12 @@ type E820Host struct {
 	State string `xml:"state,attr"`
 }
 
-type EmsrBitmap struct {
+type EMSRBitmap struct {
 	State string `xml:"state,attr"`
 }
 
-type Emulatorpin struct {
-	Cpuset string `xml:"cpuset,attr"`
+type EmulatorPIN struct {
+	CPUSet string `xml:"cpuset,attr"`
 }
 
 type Encryption struct {
@@ -535,7 +530,7 @@ type Event struct {
 	Name    string `xml:"name,attr"`
 }
 
-type Evmcs struct {
+type EVMCS struct {
 	State string `xml:"state,attr"`
 }
 
@@ -549,63 +544,58 @@ type Feature struct {
 }
 
 type Features struct {
-	Acpi          *Acpi          `xml:"acpi"`
-	Aia           *Aia           `xml:"aia"`
-	Apic          *Apic          `xml:"apic"`
+	ACPI          *ACPI          `xml:"acpi"`
+	AIA           *AIA           `xml:"aia"`
+	APIC          *APIC          `xml:"apic"`
 	AsyncTeardown *AsyncTeardown `xml:"async-teardown"`
-	CcfAssist     *CcfAssist     `xml:"ccf-assist"`
-	Cfpc          *Cfpc          `xml:"cfpc"`
-	Gic           *Gic           `xml:"gic"`
-	Hap           *struct{}      `xml:"hap"`
-	Hpt           *Hpt           `xml:"hpt"`
-	Htm           *Htm           `xml:"htm"`
-	Hyperv        *Hyperv        `xml:"hyperv"`
-	Ibs           *Ibs           `xml:"ibs"`
-	Ioapic        *Ioapic        `xml:"ioapic"`
-	Kvm           *Kvm           `xml:"kvm"`
-	Msrs          *Msrs          `xml:"msrs"`
-	Pae           *struct{}      `xml:"pae"`
-	Privnet       *struct{}      `xml:"privnet"`
-	Ps2           *Ps2           `xml:"ps2"`
-	Pvspinlock    *Pvspinlock    `xml:"pvspinlock"`
-	Ras           *Ras           `xml:"ras"`
-	Sbbc          *Sbbc          `xml:"sbbc"`
-	Smm           *Smm           `xml:"smm"`
-	Tcg           *Tcg           `xml:"tcg"`
-	Vmcoreinfo    *Vmcoreinfo    `xml:"vmcoreinfo"`
+	CCFAssist     *CCFAssist     `xml:"ccf-assist"`
+	CFPC          *CFPC          `xml:"cfpc"`
+	GIC           *GIC           `xml:"gic"`
+	HAP           *struct{}      `xml:"hap"`
+	HPT           *HPT           `xml:"hpt"`
+	HTM           *HTM           `xml:"htm"`
+	HyperV        *HyperV        `xml:"hyperv"`
+	IBS           *IBS           `xml:"ibs"`
+	IOAPIC        *IOAPIC        `xml:"ioapic"`
+	KVM           *KVN           `xml:"kvm"`
+	MSRS          *MSRS          `xml:"msrs"`
+	PAE           *struct{}      `xml:"pae"`
+	PrivNet       *struct{}      `xml:"privnet"`
+	PS2           *PS2           `xml:"ps2"`
+	PVSPINLock    *PVSPINLock    `xml:"pvspinlock"`
+	RAS           *RAS           `xml:"ras"`
+	SBBC          *SBBC          `xml:"sbbc"`
+	SMM           *SMM           `xml:"smm"`
+	TCG           *TCG           `xml:"tcg"`
+	VMCoreInfo    *VMCoreInfo    `xml:"vmcoreinfo"`
 	Xen           *Xen           `xml:"xen"`
 }
 
-type Fibrechannel struct {
-	Appid string `xml:"appid,attr"`
+type FibreChannel struct {
+	AppID string `xml:"appid,attr"`
 }
 
 type Filesystem struct {
 	Accessmode *string   `xml:"accessmode,attr"`
-	Dmode      *int      `xml:"dmode,attr"`
-	Fmode      *int      `xml:"fmode,attr"`
+	DMode      *int      `xml:"dmode,attr"`
+	FMode      *int      `xml:"fmode,attr"`
 	Multidevs  *string   `xml:"multidevs,attr"`
 	Type       string    `xml:"type,attr"`
 	Binary     *Binary   `xml:"binary"`
 	Driver     Driver    `xml:"driver"`
-	Idmap      *Idmap    `xml:"idmap"`
+	IDMap      *IDMAP    `xml:"idmap"`
 	Readonly   *struct{} `xml:"readonly"`
 	Source     Source    `xml:"source"`
 	Target     Target    `xml:"target"`
 }
 
-type Filetransfer struct {
+type FileTransfer struct {
 	Enable string `xml:"enable,attr"`
 }
 
-type Filterref struct {
-	Filter    string      `xml:"filter,attr"`
-	Parameter []Parameter `xml:"parameter"`
-}
-
-type Foo struct {
-	App1     string `xml:"app1,attr"`
-	CharData string `xml:",chardata"`
+type FilterRef struct {
+	Filter     string      `xml:"filter,attr"`
+	Patemeters []Parameter `xml:"parameter"`
 }
 
 type Format struct {
@@ -632,19 +622,19 @@ type Geometry struct {
 	Trans string `xml:"trans,attr"`
 }
 
-type Gic struct {
+type GIC struct {
 	Version int `xml:"version,attr"`
 }
 
-type Gid struct {
+type GID struct {
 	Count  int `xml:"count,attr"`
 	Start  int `xml:"start,attr"`
 	Target int `xml:"target,attr"`
 }
 
-type Gl struct {
+type GL struct {
 	Enable     string `xml:"enable,attr"`
-	Rendernode string `xml:"rendernode,attr"`
+	RenderNode string `xml:"rendernode,attr"`
 }
 
 type Graphics struct {
@@ -655,13 +645,13 @@ type Graphics struct {
 	MultiUser    *string       `xml:"multiUser,attr"`
 	Port         *int          `xml:"port,attr"`
 	SharePolicy  *string       `xml:"sharePolicy,attr"`
-	TlsPort      *int          `xml:"tlsPort,attr"`
+	TLSPort      *int          `xml:"tlsPort,attr"`
 	Type         string        `xml:"type,attr"`
 	Audio        *Audio        `xml:"audio"`
 	Channel      []Channel     `xml:"channel"`
 	Clipboard    *Clipboard    `xml:"clipboard"`
-	Filetransfer *Filetransfer `xml:"filetransfer"`
-	Gl           *Gl           `xml:"gl"`
+	FileTransfer *FileTransfer `xml:"filetransfer"`
+	GL           *GL           `xml:"gl"`
 	Image        *Image        `xml:"image"`
 	Listen       *Listen       `xml:"listen"`
 	Mouse        *Mouse        `xml:"mouse"`
@@ -669,12 +659,12 @@ type Graphics struct {
 }
 
 type Guest struct {
-	Csum string  `xml:"csum,attr"`
+	CSum string  `xml:"csum,attr"`
 	Dev  *string `xml:"dev,attr"`
-	Ecn  string  `xml:"ecn,attr"`
-	Tso4 string  `xml:"tso4,attr"`
-	Tso6 string  `xml:"tso6,attr"`
-	Ufo  string  `xml:"ufo,attr"`
+	ECN  string  `xml:"ecn,attr"`
+	TSO4 string  `xml:"tso4,attr"`
+	TSO6 string  `xml:"tso6,attr"`
+	UFO  string  `xml:"ufo,attr"`
 }
 
 type HardLimit struct {
@@ -691,39 +681,39 @@ type HintDedicated struct {
 }
 
 type Host struct {
-	Csum     *string `xml:"csum,attr"`
-	Ecn      *string `xml:"ecn,attr"`
-	Gso      *string `xml:"gso,attr"`
-	MrgRxbuf *string `xml:"mrg_rxbuf,attr"`
+	CSum     *string `xml:"csum,attr"`
+	ECN      *string `xml:"ecn,attr"`
+	GSO      *string `xml:"gso,attr"`
+	MrgRxBuf *string `xml:"mrg_rxbuf,attr"`
 	Name     string  `xml:"name,attr"`
 	Port     *int    `xml:"port,attr"`
-	Tso4     *string `xml:"tso4,attr"`
-	Tso6     *string `xml:"tso6,attr"`
-	Ufo      *string `xml:"ufo,attr"`
+	TSO4     *string `xml:"tso4,attr"`
+	TSO6     *string `xml:"tso6,attr"`
+	UFO      *string `xml:"ufo,attr"`
 }
 
-type Hostdev struct {
+type HostDev struct {
 	Managed  *string   `xml:"managed,attr"`
 	Mode     string    `xml:"mode,attr"`
 	Model    *string   `xml:"model,attr"`
-	Rawio    *string   `xml:"rawio,attr"`
+	RawIO    *string   `xml:"rawio,attr"`
 	Type     string    `xml:"type,attr"`
 	Address  *Address  `xml:"address"`
 	Boot     Boot      `xml:"boot"`
-	Ip       *Ip       `xml:"ip"`
+	IP       *IP       `xml:"ip"`
 	Readonly *struct{} `xml:"readonly"`
-	Rom      *Rom      `xml:"rom"`
+	ROM      *ROM      `xml:"rom"`
 	Route    []Route   `xml:"route"`
 	Source   Source    `xml:"source"`
 	Teaming  *Teaming  `xml:"teaming"`
 }
 
-type Hpt struct {
+type HPT struct {
 	Resizing    string      `xml:"resizing,attr"`
-	Maxpagesize Maxpagesize `xml:"maxpagesize"`
+	MaxPagesize MaxPagesize `xml:"maxpagesize"`
 }
 
-type Htm struct {
+type HTM struct {
 	State string `xml:"state,attr"`
 }
 
@@ -732,30 +722,30 @@ type Hub struct {
 }
 
 type Hugepages struct {
-	Page []Page `xml:"page"`
+	Pages []Page `xml:"page"`
 }
 
-type Hyperv struct {
+type HyperV struct {
 	Mode            string          `xml:"mode,attr"`
-	EmsrBitmap      EmsrBitmap      `xml:"emsr_bitmap"`
-	Evmcs           Evmcs           `xml:"evmcs"`
+	EMSRBitmap      EMSRBitmap      `xml:"emsr_bitmap"`
+	EVMCS           EVMCS           `xml:"evmcs"`
 	Frequencies     Frequencies     `xml:"frequencies"`
-	Ipi             Ipi             `xml:"ipi"`
+	IPI             IPI             `xml:"ipi"`
 	Reenlightenment Reenlightenment `xml:"reenlightenment"`
 	Relaxed         Relaxed         `xml:"relaxed"`
 	Reset           Reset           `xml:"reset"`
 	Runtime         Runtime         `xml:"runtime"`
 	Spinlocks       Spinlocks       `xml:"spinlocks"`
-	Stimer          Stimer          `xml:"stimer"`
+	STimer          STimer          `xml:"stimer"`
 	Synic           Synic           `xml:"synic"`
-	Tlbflush        Tlbflush        `xml:"tlbflush"`
-	Vapic           Vapic           `xml:"vapic"`
+	TLBFlush        TLBFlush        `xml:"tlbflush"`
+	Vapic           VAPIC           `xml:"vapic"`
 	VendorID        VendorID        `xml:"vendor_id"`
-	Vpindex         Vpindex         `xml:"vpindex"`
-	XmmInput        XmmInput        `xml:"xmm_input"`
+	VPIndex         VPIndex         `xml:"vpindex"`
+	XMMInput        XMMInput        `xml:"xmm_input"`
 }
 
-type Ibs struct {
+type IBS struct {
 	Value string `xml:"value,attr"`
 }
 
@@ -764,9 +754,9 @@ type Identity struct {
 	User  string `xml:"user,attr"`
 }
 
-type Idmap struct {
-	Gid Gid `xml:"gid"`
-	Uid Uid `xml:"uid"`
+type IDMAP struct {
+	GID GID `xml:"gid"`
+	UID UID `xml:"uid"`
 }
 
 type Image struct {
@@ -780,13 +770,13 @@ type Inbound struct {
 	Peak    int `xml:"peak,attr"`
 }
 
-type Initenv struct {
+type InitEnv struct {
 	Name     string `xml:"name,attr"`
 	CharData string `xml:",chardata"`
 }
 
 type Initiator struct {
-	Iqn Iqn `xml:"iqn"`
+	IQN IQN `xml:"iqn"`
 }
 
 type Input struct {
@@ -819,89 +809,85 @@ type Interface struct {
 	TrustGuestRxFilters *string        `xml:"trustGuestRxFilters,attr"`
 	Type                string         `xml:"type,attr,omitempty"`
 	CharData            string         `xml:",chardata"`
-	Acpi                *Acpi          `xml:"acpi"`
+	ACPI                *ACPI          `xml:"acpi"`
 	Alias               *Alias         `xml:"alias"`
 	Backend             *Backend       `xml:"backend"`
-	Backenddomain       *Backenddomain `xml:"backenddomain"`
+	BackendDomain       *BackendDomain `xml:"backenddomain"`
 	Bandwidth           *Bandwidth     `xml:"bandwidth"`
 	Boot                *Boot          `xml:"boot"`
 	Coalesce            *Coalesce      `xml:"coalesce"`
-	Downscript          *Downscript    `xml:"downscript"`
+	Downscript          *DownScript    `xml:"downscript"`
 	Driver              *Driver        `xml:"driver"`
-	Filterref           *Filterref     `xml:"filterref"`
+	FilterRef           *FilterRef     `xml:"filterref"`
 	Guest               *Guest         `xml:"guest"`
-	Ip                  []Ip           `xml:"ip"`
+	IP                  []IP           `xml:"ip"`
 	Link                *Link          `xml:"link"`
 	Mac                 *Mac           `xml:"mac"`
 	Model               *Model         `xml:"model"`
-	Mtu                 *Mtu           `xml:"mtu"`
+	MTU                 *MTU           `xml:"mtu"`
 	Port                *Port          `xml:"port"`
 	PortForward         []PortForward  `xml:"portForward"`
-	Rom                 *Rom           `xml:"rom"`
+	ROM                 *ROM           `xml:"rom"`
 	Route               []Route        `xml:"route"`
 	Script              *Script        `xml:"script"`
 	Source              *Source        `xml:"source"`
 	Target              *Target        `xml:"target"`
 	Teaming             *Teaming       `xml:"teaming"`
 	Tune                *Tune          `xml:"tune"`
-	Virtualport         *Virtualport   `xml:"virtualport"`
-	Vlan                *Vlan          `xml:"vlan"`
+	Virtualport         *VirtualPort   `xml:"virtualport"`
+	VLAN                *VLAN          `xml:"vlan"`
 }
 
-type Ioapic struct {
+type IOAPIC struct {
 	Driver string `xml:"driver,attr"`
 }
 
-type Iommu struct {
+type IOMMU struct {
 	Model  string `xml:"model,attr"`
 	Driver Driver `xml:"driver"`
 }
 
-type Iothread struct {
+type IOThread struct {
 	ID            int     `xml:"id,attr"`
 	ThreadPoolMax int     `xml:"thread_pool_max,attr"`
 	ThreadPoolMin int     `xml:"thread_pool_min,attr"`
 	Poll          Poll    `xml:"poll"`
 	Queue         []Queue `xml:"queue"`
+	CharData      string  `xml:",chardata"`
 }
 
-type Iothreadids struct {
-	Iothread []Iothread `xml:"iothread"`
+type IOThreadIDs struct {
+	IOThreads []IOThread `xml:"iothread"`
 }
 
-type Iothreadpin struct {
-	Cpuset   string `xml:"cpuset,attr"`
-	Iothread int    `xml:"iothread,attr"`
+type IOThreadPIN struct {
+	CPUSet   string `xml:"cpuset,attr"`
+	IOThread int    `xml:"iothread,attr"`
 }
 
-type Iothreads struct {
-	CharData string     `xml:",chardata"`
-	Iothread []Iothread `xml:"iothread"`
-}
-
-type Iothreadsched struct {
-	Iothreads int    `xml:"iothreads,attr"`
+type IOThreadSched struct {
+	IOThreads int    `xml:"iothreads,attr"`
 	Scheduler string `xml:"scheduler,attr"`
 }
 
-type Iotune struct {
-	ReadIopsSec   int `xml:"read_iops_sec"`
+type IOTune struct {
+	ReadIOPSSec   int `xml:"read_iops_sec"`
 	TotalBytesSec int `xml:"total_bytes_sec"`
-	WriteIopsSec  int `xml:"write_iops_sec"`
+	WriteIOPSSec  int `xml:"write_iops_sec"`
 }
 
-type Ip struct {
+type IP struct {
 	Address string  `xml:"address,attr"`
 	Family  string  `xml:"family,attr"`
 	Peer    *string `xml:"peer,attr"`
 	Prefix  *int    `xml:"prefix,attr"`
 }
 
-type Ipi struct {
+type IPI struct {
 	State string `xml:"state,attr"`
 }
 
-type Iqn struct {
+type IQN struct {
 	Name string `xml:"name,attr"`
 }
 
@@ -909,12 +895,12 @@ type Keywrap struct {
 	Cipher Cipher `xml:"cipher"`
 }
 
-type Kvm struct {
+type KVN struct {
 	DirtyRing     DirtyRing     `xml:"dirty-ring"`
 	Hidden        Hidden        `xml:"hidden"`
 	HintDedicated HintDedicated `xml:"hint-dedicated"`
 	PollControl   PollControl   `xml:"poll-control"`
-	PvIpi         PvIpi         `xml:"pv-ipi"`
+	PVIPI         PVIPI         `xml:"pv-ipi"`
 }
 
 type Label struct {
@@ -934,13 +920,13 @@ type LaunchSecurity struct {
 	AuthorKey               string  `xml:"authorKey,attr"`
 	KernelHashes            *string `xml:"kernelHashes,attr"`
 	Type                    string  `xml:"type,attr"`
-	Vcek                    string  `xml:"vcek,attr"`
-	Cbitpos                 int     `xml:"cbitpos"`
-	DhCert                  *string `xml:"dhCert"`
+	VCEK                    string  `xml:"vcek,attr"`
+	CBitPos                 int     `xml:"cbitpos"`
+	DHCert                  *string `xml:"dhCert"`
 	GuestVisibleWorkarounds string  `xml:"guestVisibleWorkarounds"`
 	HostData                string  `xml:"hostData"`
-	IdAuth                  string  `xml:"idAuth"`
-	IdBlock                 string  `xml:"idBlock"`
+	IDAuth                  string  `xml:"idAuth"`
+	IDBlock                 string  `xml:"idBlock"`
 	Policy                  string  `xml:"policy"`
 	ReducedPhysBits         int     `xml:"reducedPhysBits"`
 	Session                 *string `xml:"session"`
@@ -952,9 +938,9 @@ type Lease struct {
 	Target    Target `xml:"target"`
 }
 
-type Libosinfo struct {
-	Libosinfo string `xml:"xmlns:libosinfo,attr"`
-	Os        *Os    `xml:"libosinfo:os"`
+type LibOSInfo struct {
+	LibOSInfo string `xml:"xmlns:libosinfo,attr"`
+	OS        *OS    `xml:"libosinfo:os"`
 }
 
 type Line struct {
@@ -1014,26 +1000,26 @@ type MaxSize struct {
 	CharData string `xml:",chardata"`
 }
 
-type Maxpagesize struct {
+type MaxPagesize struct {
 	Unit     string `xml:"unit,attr"`
 	CharData string `xml:",chardata"`
 }
 
-type Maxphysaddr struct {
+type MaxPhysAddr struct {
 	Bits  int    `xml:"bits,attr"`
 	Limit *int   `xml:"limit,attr"`
 	Mode  string `xml:"mode,attr"`
 }
 
-type Memballoon struct {
+type MemBalloon struct {
 	Model   string   `xml:"model,attr"`
 	Address *Address `xml:"address"`
 	Driver  *Driver  `xml:"driver"`
 	Stats   *Stats   `xml:"stats"`
 }
 
-type Memnode struct {
-	Cellid  int    `xml:"cellid,attr"`
+type MemNode struct {
+	CellID  int    `xml:"cellid,attr"`
 	Mode    string `xml:"mode,attr"`
 	Nodeset int    `xml:"nodeset,attr"`
 }
@@ -1048,7 +1034,7 @@ type Memory struct {
 	CharData string  `xml:",chardata"`
 	Source   *Source `xml:"source"`
 	Target   *Target `xml:"target"`
-	Uuid     *string `xml:"uuid"`
+	UUID     *string `xml:"uuid"`
 }
 
 type MemoryBacking struct {
@@ -1061,8 +1047,8 @@ type MemoryBacking struct {
 	Source       Source     `xml:"source"`
 }
 
-type Memorytune struct {
-	Vcpus string `xml:"vcpus,attr"`
+type MemoryTune struct {
+	VCPUs string `xml:"vcpus,attr"`
 	Node  Node   `xml:"node"`
 }
 
@@ -1074,7 +1060,7 @@ type Memtune struct {
 }
 
 type Metadata struct {
-	Libosinfo *Libosinfo `xml:"libosinfo:libosinfo"`
+	LibOSInfo *LibOSInfo `xml:"libosinfo:libosinfo"`
 }
 
 type MetadataCache struct {
@@ -1091,30 +1077,30 @@ type Model struct {
 	Heads        *int          `xml:"heads,attr"`
 	Name         *string       `xml:"name,attr"`
 	Type         string        `xml:"type,attr"`
-	Vram         *int          `xml:"vram,attr"`
+	VRAM         *int          `xml:"vram,attr"`
 	CharData     string        `xml:",chardata"`
 	Acceleration *Acceleration `xml:"acceleration"`
 }
 
 type Monitor struct {
 	Level int    `xml:"level,attr"`
-	Vcpus string `xml:"vcpus,attr"`
+	VCPUs string `xml:"vcpus,attr"`
 }
 
 type Mouse struct {
 	Mode string `xml:"mode,attr"`
 }
 
-type Msi struct {
-	Ioeventfd string `xml:"ioeventfd,attr"`
+type MSI struct {
+	IOEventFD string `xml:"ioeventfd,attr"`
 	Vectors   int    `xml:"vectors,attr"`
 }
 
-type Msrs struct {
+type MSRS struct {
 	Unknown string `xml:"unknown,attr"`
 }
 
-type Mtu struct {
+type MTU struct {
 	Size int `xml:"size,attr"`
 }
 
@@ -1130,11 +1116,11 @@ type Numa struct {
 }
 
 type Numatune struct {
-	Memnode []Memnode `xml:"memnode"`
-	Memory  Memory    `xml:"memory"`
+	MemNodes []MemNode `xml:"memnode"`
+	Memory   Memory    `xml:"memory"`
 }
 
-type Nvram struct {
+type NVRAM struct {
 	Template *string  `xml:"template,attr"`
 	Type     string   `xml:"type,attr"`
 	CharData string   `xml:",chardata"`
@@ -1142,34 +1128,34 @@ type Nvram struct {
 	Source   Source   `xml:"source"`
 }
 
-type OemStrings struct {
-	Entry []Entry `xml:"entry"`
+type OEMStrings struct {
+	Entries []Entry `xml:"entry"`
 }
 
-type Os struct {
+type OS struct {
 	Firmware       *string   `xml:"firmware,attr"`
 	ID             string    `xml:"id,attr,omitempty"`
-	Acpi           *Acpi     `xml:"acpi"`
-	Bios           *Bios     `xml:"bios"`
+	ACPI           *ACPI     `xml:"acpi"`
+	BIOS           *BIOS     `xml:"bios"`
 	Boot           *Boot     `xml:"boot"`
 	Bootloader     *string   `xml:"bootloader"`
 	BootloaderArgs *string   `xml:"bootloader_args"`
-	Bootmenu       *Bootmenu `xml:"bootmenu"`
+	BootMenu       *BootMenu `xml:"bootmenu"`
 	Cmdline        string    `xml:"cmdline,omitempty"`
-	Dtb            *string   `xml:"dtb"`
-	Idmap          *Idmap    `xml:"idmap"`
+	DTB            *string   `xml:"dtb"`
+	IDMap          *IDMAP    `xml:"idmap"`
 	Init           *string   `xml:"init"`
-	Initarg        []string  `xml:"initarg"`
-	Initdir        *string   `xml:"initdir"`
-	Initenv        *Initenv  `xml:"initenv"`
-	Initgroup      *int      `xml:"initgroup"`
-	Initrd         string    `xml:"initrd,omitempty"`
-	Inituser       *string   `xml:"inituser"`
+	InitArgs       []string  `xml:"initarg"`
+	InitDir        *string   `xml:"initdir"`
+	InitEnv        *InitEnv  `xml:"initenv"`
+	InitGroup      *int      `xml:"initgroup"`
+	InitRD         string    `xml:"initrd,omitempty"`
+	InitUser       *string   `xml:"inituser"`
 	Kernel         string    `xml:"kernel,omitempty"`
 	Loader         *Loader   `xml:"loader"`
-	Nvram          *Nvram    `xml:"nvram"`
+	NVRAM          *NVRAM    `xml:"nvram"`
 	Shim           *string   `xml:"shim"`
-	Smbios         *Smbios   `xml:"smbios"`
+	SMBIOS         *SMBIOS   `xml:"smbios"`
 	Type           *Type     `xml:"type"`
 }
 
@@ -1229,12 +1215,12 @@ type Parameter struct {
 }
 
 type Parameters struct {
-	Instanceid    *string `xml:"instanceid,attr"`
-	Interfaceid   *string `xml:"interfaceid,attr"`
-	Managerid     *int    `xml:"managerid,attr"`
-	Profileid     *string `xml:"profileid,attr"`
-	Typeid        *int    `xml:"typeid,attr"`
-	Typeidversion *int    `xml:"typeidversion,attr"`
+	InstanceID    *string `xml:"instanceid,attr"`
+	InterfaceID   *string `xml:"interfaceid,attr"`
+	ManagerID     *int    `xml:"managerid,attr"`
+	ProfileID     *string `xml:"profileid,attr"`
+	TypeID        *int    `xml:"typeid,attr"`
+	TypeIDVersion *int    `xml:"typeidversion,attr"`
 }
 
 type Passthrough struct {
@@ -1243,10 +1229,10 @@ type Passthrough struct {
 }
 
 type Perf struct {
-	Event []Event `xml:"event"`
+	Events []Event `xml:"event"`
 }
 
-type Pm struct {
+type PM struct {
 	SuspendToDisk *SuspendToDisk `xml:"suspend-to-disk"`
 	SuspendToMem  *SuspendToMem  `xml:"suspend-to-mem"`
 }
@@ -1292,22 +1278,22 @@ type Protocol struct {
 	Type string `xml:"type,attr"`
 }
 
-type Ps2 struct {
+type PS2 struct {
 	State string `xml:"state,attr"`
 }
 
-type Pstore struct {
+type PStore struct {
 	Backend string  `xml:"backend,attr"`
 	Address Address `xml:"address"`
 	Path    string  `xml:"path"`
 	Size    Size    `xml:"size"`
 }
 
-type PvIpi struct {
+type PVIPI struct {
 	State string `xml:"state,attr"`
 }
 
-type Pvspinlock struct {
+type PVSPINLock struct {
 	State string `xml:"state,attr"`
 }
 
@@ -1322,7 +1308,7 @@ type Range struct {
 	To      *int    `xml:"to,attr"`
 }
 
-type Ras struct {
+type RAS struct {
 	State string `xml:"state,attr"`
 }
 
@@ -1340,15 +1326,15 @@ type Reconnect struct {
 	Timeout int    `xml:"timeout,attr"`
 }
 
-type Redirdev struct {
+type RedirDev struct {
 	Bus    string `xml:"bus,attr"`
 	Type   string `xml:"type,attr"`
 	Boot   Boot   `xml:"boot"`
 	Source Source `xml:"source"`
 }
 
-type Redirfilter struct {
-	Usbdev []Usbdev `xml:"usbdev"`
+type RedirFilter struct {
+	Usbdev []USBDev `xml:"usbdev"`
 }
 
 type Reenlightenment struct {
@@ -1374,17 +1360,17 @@ type Reset struct {
 }
 
 type Resource struct {
-	Fibrechannel Fibrechannel `xml:"fibrechannel"`
+	FiberChannel FibreChannel `xml:"fibrechannel"`
 	Partition    *string      `xml:"partition"`
 }
 
-type Rng struct {
+type RNG struct {
 	Model   string   `xml:"model,attr"`
 	Backend *Backend `xml:"backend"`
 	Rate    *Rate    `xml:"rate"`
 }
 
-type Rom struct {
+type ROM struct {
 	Bar  string  `xml:"bar,attr"`
 	File *string `xml:"file,attr"`
 }
@@ -1408,7 +1394,7 @@ type Sandbox struct {
 	Mode string `xml:"mode,attr"`
 }
 
-type Sbbc struct {
+type SBBC struct {
 	Value string `xml:"value,attr"`
 }
 
@@ -1416,7 +1402,7 @@ type Script struct {
 	Path string `xml:"path,attr"`
 }
 
-type Seclabel struct {
+type SecLabel struct {
 	Model     *string `xml:"model,attr"`
 	Relabel   *string `xml:"relabel,attr"`
 	Type      *string `xml:"type,attr"`
@@ -1448,11 +1434,11 @@ type Settings struct {
 	Frequency int    `xml:"frequency,attr"`
 }
 
-type Shmem struct {
+type SHMem struct {
 	Name   string  `xml:"name,attr"`
 	Role   *string `xml:"role,attr"`
 	Model  Model   `xml:"model"`
-	Msi    Msi     `xml:"msi"`
+	MSI    MSI     `xml:"msi"`
 	Server Server  `xml:"server"`
 	Size   Size    `xml:"size"`
 }
@@ -1479,20 +1465,20 @@ type Slices struct {
 }
 
 type Smartcard struct {
-	Mode        string    `xml:"mode,attr"`
-	Type        string    `xml:"type,attr"`
-	Address     *Address  `xml:"address"`
-	Certificate []string  `xml:"certificate"`
-	Database    *string   `xml:"database"`
-	Protocol    *Protocol `xml:"protocol"`
-	Source      *Source   `xml:"source"`
+	Mode         string    `xml:"mode,attr"`
+	Type         string    `xml:"type,attr"`
+	Address      *Address  `xml:"address"`
+	Certificates []string  `xml:"certificate"`
+	Database     *string   `xml:"database"`
+	Protocol     *Protocol `xml:"protocol"`
+	Source       *Source   `xml:"source"`
 }
 
-type Smbios struct {
+type SMBIOS struct {
 	Mode string `xml:"mode,attr"`
 }
 
-type Smm struct {
+type SMM struct {
 	State string `xml:"state,attr"`
 	Tseg  Tseg   `xml:"tseg"`
 }
@@ -1518,10 +1504,10 @@ type Source struct {
 	Append         *string       `xml:"append,attr"`
 	Bridge         *string       `xml:"bridge,attr"`
 	Channel        *string       `xml:"channel,attr"`
-	Connectionid   *int          `xml:"connectionid,attr"`
+	ConnectionID   *int          `xml:"connectionid,attr"`
 	Dev            *string       `xml:"dev,attr"`
 	Dir            *string       `xml:"dir,attr"`
-	Evdev          *string       `xml:"evdev,attr"`
+	EVDev          *string       `xml:"evdev,attr"`
 	File           string        `xml:"file,attr,omitempty"`
 	Grab           *string       `xml:"grab,attr"`
 	GrabToggle     *string       `xml:"grabToggle,attr"`
@@ -1535,25 +1521,25 @@ type Source struct {
 	Network        string        `xml:"network,attr,omitempty"`
 	Pool           *string       `xml:"pool,attr"`
 	Port           *int          `xml:"port,attr"`
-	Portgroup      *string       `xml:"portgroup,attr"`
-	Portgroupid    *string       `xml:"portgroupid,attr"`
-	Portid         *int          `xml:"portid,attr"`
+	PortGroup      *string       `xml:"portgroup,attr"`
+	PortGroupID    *string       `xml:"portgroupid,attr"`
+	PortID         *int          `xml:"portid,attr"`
 	Protocol       *string       `xml:"protocol,attr"`
 	Query          *string       `xml:"query,attr"`
 	Repeat         *string       `xml:"repeat,attr"`
 	Service        *int          `xml:"service,attr"`
 	Socket         *string       `xml:"socket,attr"`
 	StartupPolicy  *string       `xml:"startupPolicy,attr"`
-	Switchid       *string       `xml:"switchid,attr"`
-	Tls            *string       `xml:"tls,attr"`
+	SwitchID       *string       `xml:"switchid,attr"`
+	TLS            *string       `xml:"tls,attr"`
 	Type           *string       `xml:"type,attr"`
 	Volume         *string       `xml:"volume,attr"`
 	WriteFiltering *string       `xml:"writeFiltering,attr"`
-	Wwpn           *string       `xml:"wwpn,attr"`
+	WWPN           *string       `xml:"wwpn,attr"`
 	Adapter        *Adapter      `xml:"adapter"`
 	Address        *Address      `xml:"address"`
 	AddressAttr    *string       `xml:"address,attr"`
-	Alignsize      *Alignsize    `xml:"alignsize"`
+	AlignSize      *AlignSize    `xml:"alignsize"`
 	Auth           *Auth         `xml:"auth"`
 	Block          *Block        `xml:"block"`
 	Config         *Config       `xml:"config"`
@@ -1567,15 +1553,15 @@ type Source struct {
 	Pagesize       *Pagesize     `xml:"pagesize"`
 	Path           *string       `xml:"path"`
 	PathAttr       *string       `xml:"path,attr"`
-	Pmem           *struct{}     `xml:"pmem"`
+	PMem           *struct{}     `xml:"pmem"`
 	Product        *Product      `xml:"product"`
 	Readahead      *Readahead    `xml:"readahead"`
 	Reconnect      *Reconnect    `xml:"reconnect"`
 	Reservations   *Reservations `xml:"reservations"`
-	Seclabel       *Seclabel     `xml:"seclabel"`
+	SecLabel       *SecLabel     `xml:"seclabel"`
 	Slices         *Slices       `xml:"slices"`
 	Snapshot       *Snapshot     `xml:"snapshot"`
-	Ssl            *Ssl          `xml:"ssl"`
+	SSL            *SSL          `xml:"ssl"`
 	Timeout        *Timeout      `xml:"timeout"`
 	Vendor         *Vendor       `xml:"vendor"`
 }
@@ -1585,7 +1571,7 @@ type Spinlocks struct {
 	State   string `xml:"state,attr"`
 }
 
-type Ssl struct {
+type SSL struct {
 	Verify string `xml:"verify,attr"`
 }
 
@@ -1593,7 +1579,7 @@ type Stats struct {
 	Period int `xml:"period,attr"`
 }
 
-type Stimer struct {
+type STimer struct {
 	State  string `xml:"state,attr"`
 	Direct Direct `xml:"direct"`
 }
@@ -1622,15 +1608,15 @@ type Synic struct {
 type Sysinfo struct {
 	Type       string      `xml:"type,attr"`
 	BaseBoard  *BaseBoard  `xml:"baseBoard"`
-	Bios       *Bios       `xml:"bios"`
+	BIOS       *BIOS       `xml:"bios"`
 	Chassis    *Chassis    `xml:"chassis"`
-	Entry      []Entry     `xml:"entry"`
-	OemStrings *OemStrings `xml:"oemStrings"`
+	Entries    []Entry     `xml:"entry"`
+	OEMStrings *OEMStrings `xml:"oemStrings"`
 	System     *System     `xml:"system"`
 }
 
 type System struct {
-	Entry []Entry `xml:"entry"`
+	Entries []Entry `xml:"entry"`
 }
 
 type Table struct {
@@ -1668,13 +1654,13 @@ type Target struct {
 	Size         *Size      `xml:"size"`
 }
 
-type TbCache struct {
+type TBCache struct {
 	Unit     string `xml:"unit,attr"`
 	CharData string `xml:",chardata"`
 }
 
-type Tcg struct {
-	TbCache TbCache `xml:"tb-cache"`
+type TCG struct {
+	TBCache TBCache `xml:"tb-cache"`
 }
 
 type Teaming struct {
@@ -1686,23 +1672,23 @@ type ThreadPool struct {
 	Size int `xml:"size,attr"`
 }
 
-type Throttlefilter struct {
+type ThrottleFilter struct {
 	Group string `xml:"group,attr"`
 }
 
-type Throttlefilters struct {
-	Throttlefilter []Throttlefilter `xml:"throttlefilter"`
+type ThrottleFilters struct {
+	ThrottleFilters []ThrottleFilter `xml:"throttlefilter"`
 }
 
-type Throttlegroup struct {
+type ThrottleGroup struct {
 	GroupName     string `xml:"group_name"`
-	ReadIopsSec   int    `xml:"read_iops_sec"`
+	ReadIOPSSec   int    `xml:"read_iops_sec"`
 	TotalBytesSec int    `xml:"total_bytes_sec"`
-	WriteIopsSec  int    `xml:"write_iops_sec"`
+	WriteIOPSSec  int    `xml:"write_iops_sec"`
 }
 
-type Throttlegroups struct {
-	Throttlegroup Throttlegroup `xml:"throttlegroup"`
+type ThrottleGroups struct {
+	ThrottleGroup ThrottleGroup `xml:"throttlegroup"`
 }
 
 type Timeout struct {
@@ -1717,7 +1703,7 @@ type Timer struct {
 	Catchup    *Catchup `xml:"catchup"`
 }
 
-type Tlbflush struct {
+type TLBFlush struct {
 	State    string   `xml:"state,attr"`
 	Direct   Direct   `xml:"direct"`
 	Extended Extended `xml:"extended"`
@@ -1742,7 +1728,7 @@ type Tseg struct {
 }
 
 type Tune struct {
-	Sndbuf int `xml:"sndbuf"`
+	SNDBuf int `xml:"sndbuf"`
 }
 
 type Type struct {
@@ -1751,13 +1737,13 @@ type Type struct {
 	CharData string `xml:",chardata"`
 }
 
-type Uid struct {
+type UID struct {
 	Count  int `xml:"count,attr"`
 	Start  int `xml:"start,attr"`
 	Target int `xml:"target,attr"`
 }
 
-type Usbdev struct {
+type USBDev struct {
 	Allow   string   `xml:"allow,attr"`
 	Class   *string  `xml:"class,attr"`
 	Product *string  `xml:"product,attr"`
@@ -1765,12 +1751,12 @@ type Usbdev struct {
 	Version *float64 `xml:"version,attr"`
 }
 
-type Vapic struct {
+type VAPIC struct {
 	State string `xml:"state,attr"`
 }
 
-type Vcpu struct {
-	Cpuset       *string `xml:"cpuset,attr"`
+type VCPU struct {
+	CPUSet       *string `xml:"cpuset,attr"`
 	Current      *int    `xml:"current,attr"`
 	Enabled      *string `xml:"enabled,attr"`
 	Hotpluggable *string `xml:"hotpluggable,attr"`
@@ -1780,19 +1766,19 @@ type Vcpu struct {
 	CharData     string  `xml:",chardata"`
 }
 
-type Vcpupin struct {
-	Cpuset string `xml:"cpuset,attr"`
-	Vcpu   int    `xml:"vcpu,attr"`
+type VCPIPin struct {
+	CPUSet string `xml:"cpuset,attr"`
+	VCPU   int    `xml:"vcpu,attr"`
 }
 
-type Vcpus struct {
-	Vcpu []Vcpu `xml:"vcpu"`
+type VCPUs struct {
+	VCPUs []VCPU `xml:"vcpu"`
 }
 
-type Vcpusched struct {
+type VCPUSched struct {
 	Priority  int    `xml:"priority,attr"`
 	Scheduler string `xml:"scheduler,attr"`
-	Vcpus     string `xml:"vcpus,attr"`
+	VCPUs     string `xml:"vcpus,attr"`
 }
 
 type Vendor struct {
@@ -1810,27 +1796,27 @@ type Video struct {
 	Model  Model  `xml:"model"`
 }
 
-type Virtualport struct {
+type VirtualPort struct {
 	Type       *string    `xml:"type,attr"`
 	Parameters Parameters `xml:"parameters"`
 }
 
-type Vlan struct {
+type VLAN struct {
 	Trunk string `xml:"trunk,attr"`
 	Tag   []Tag  `xml:"tag"`
 }
 
-type Vmcoreinfo struct {
+type VMCoreInfo struct {
 	State string `xml:"state,attr"`
 }
 
-type Vpindex struct {
+type VPIndex struct {
 	State string `xml:"state,attr"`
 }
 
-type Vsock struct {
+type VSock struct {
 	Model string `xml:"model,attr"`
-	Cid   Cid    `xml:"cid"`
+	CID   CID    `xml:"cid"`
 }
 
 type Watchdog struct {
@@ -1843,6 +1829,6 @@ type Xen struct {
 	Passthrough Passthrough `xml:"passthrough"`
 }
 
-type XmmInput struct {
+type XMMInput struct {
 	State string `xml:"state,attr"`
 }

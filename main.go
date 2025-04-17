@@ -46,6 +46,8 @@ func main() {
 				{Name: "hpet", Present: "no"},
 			},
 		},
+		// TODO: figure out why it gets destroyed on shutdown from virt-manager
+		//        even though 'destroy' isn't set. Is it the default behaviour?
 		// OnPoweroff: "destroy",
 		OnReboot: domain.ON_EVENT_ACTION_RESTART,
 		// OnCrash:    "destroy",

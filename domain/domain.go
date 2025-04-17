@@ -84,7 +84,7 @@ type BIOS struct {
 
 type Boot struct {
 	Dev   string `xml:"dev,attr,omitempty"`
-	Order *int   `xml:"order,attr"`
+	Order int    `xml:"order,attr"`
 }
 
 type BootMenu struct {
@@ -152,6 +152,7 @@ type Disk struct {
 	Source   *Source    `xml:"source"`
 	Target   *Target    `xml:"target"`
 	Address  *Address   `xml:"address"`
+	Boot     *Boot      `xml:"boot"`
 	Readonly *Readonly  `xml:"readonly"`
 }
 

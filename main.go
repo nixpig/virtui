@@ -28,7 +28,6 @@ func main() {
 		VCPU:          &domain.VCPU{CharData: "2", Placement: "static"},
 		OS: &domain.OS{
 			Type:     &domain.Type{Arch: "x86_64", Machine: "q35", CharData: "hvm"},
-			Boot:     &domain.Boot{Dev: "cdrom"},
 			BootMenu: &domain.BootMenu{Enable: domain.FLAG_ENABLED_YES},
 			// Kernel:  "/var/lib/libvirt/boot/virtinst-c6kdm5b8-vmlinuz",
 			// InitRD:  "/var/lib/libvirt/boot/virtinst-ky336s4a-initrd",
@@ -60,10 +59,12 @@ func main() {
 				{
 					Type:   "file",
 					Device: "disk",
+					Boot:   &domain.Boot{Order: 1},
 					Driver: &domain.Driver{Name: "qemu", Type: "qcow2", Discard: "unmap"},
 					Source: &domain.Source{File: "/var/lib/libvirt/images/test-vm.qcow2"},
 					Target: &domain.Target{Dev: "vda", Bus: "virtio"},
-					Address: &domain.Address{Type: "pci",
+					Address: &domain.Address{
+						Type:     "pci",
 						Domain:   "0x0000",
 						Bus:      "0x03",
 						Slot:     "0x00",
@@ -73,18 +74,30 @@ func main() {
 				{
 					Type:     "file",
 					Device:   "cdrom",
+					Boot:     &domain.Boot{Order: 2},
 					Driver:   &domain.Driver{Name: "qemu", Type: "raw"},
 					Source:   &domain.Source{File: "/var/lib/libvirt/images/ubuntu-24.04.2-live-server-amd64.iso"},
 					Target:   &domain.Target{Dev: "sda", Bus: "sata"},
 					Readonly: &domain.Readonly{},
-					Address:  &domain.Address{Type: "drive", Controller: "0", Bus: "0", Target: "0", Unit: "0"},
+					Address: &domain.Address{
+						Type:       "drive",
+						Controller: "0",
+						Bus:        "0",
+						Target:     "0",
+						Unit:       "0",
+					},
 				},
 			},
 			Controllers: []domain.Controller{
-				{Type: "usb", Model: "qemu-xhci", Ports: &[]int{15}[0], Address: &domain.Address{
-					Type:   "pci",
-					Domain: "0x0000", Bus: "0x02", Slot: "0x00", Function: "0x0",
-				}},
+				{
+					Type:  "usb",
+					Model: "qemu-xhci",
+					Ports: &[]int{15}[0],
+					Address: &domain.Address{
+						Type:   "pci",
+						Domain: "0x0000", Bus: "0x02", Slot: "0x00", Function: "0x0",
+					},
+				},
 				{
 					Type:  "pci",
 					Model: "pcie-root",
@@ -241,8 +254,9 @@ func main() {
 				{
 					Source: &domain.Source{Network: "default"},
 					Mac:    &domain.Mac{Address: "52:54:00:66:21:bf"},
-					Model:  &domain.Model{Type: "virtio"},
-					Type:   "network",
+					Model: &domain.Model{
+						Type: "virtio"},
+					Type: "network",
 					Address: &domain.Address{Type: "pci",
 						Domain:   "0x0000",
 						Bus:      "0x01",
@@ -252,9 +266,10 @@ func main() {
 				},
 			},
 			Serials: []domain.Serial{
-				{Target: &domain.Target{Type: "isa-serial", Port: "0", Model: &domain.Model{
-					Name: "isa-serial",
-				}}},
+				{
+					Target: &domain.Target{Type: "isa-serial", Port: "0", Model: &domain.Model{
+						Name: "isa-serial",
+					}}},
 			},
 			Consoles: []domain.Console{{Type: "pty", Target: &domain.Target{Type: "serial", Port: "0"}}},
 			Channels: []domain.Channel{{
@@ -287,7 +302,8 @@ func main() {
 					Function: "0x0",
 				},
 			},
-			Watchdog: &domain.Watchdog{Model: "itco", Action: "reset"},
+			Watchdog: &domain.Watchdog{
+				Model: "itco", Action: "reset"},
 			MemBalloon: &domain.MemBalloon{Model: "virtio", Address: &domain.Address{
 				Type:     "pci",
 				Domain:   "0x0000",

@@ -27,7 +27,7 @@ func main() {
 		CurrentMemory: &domain.CurrentMemory{CharData: "2907152", Unit: "KiB"},
 		VCPU:          &domain.VCPU{CharData: "2", Placement: "static"},
 		OS: &domain.OS{
-			Type:     &domain.Type{Arch: "x86_64", Machine: "q35", CharData: "hvm"},
+			Type:     &domain.Type{Arch: "x86_64", Machine: "q35", CharData: domain.OS_TYPE_HVM},
 			BootMenu: &domain.BootMenu{Enable: domain.FLAG_ENABLED_YES},
 			// Kernel:  "/var/lib/libvirt/boot/virtinst-c6kdm5b8-vmlinuz",
 			// InitRD:  "/var/lib/libvirt/boot/virtinst-ky336s4a-initrd",

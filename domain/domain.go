@@ -8,6 +8,13 @@ func SerialiseHexInt(n any) error {
 
 type Readonly struct{}
 
+type OSType string
+
+const (
+	OS_TYPE_HVM   = "hvm"   // OS designed to run on bare metal
+	OS_TYPE_LINUX = "linux" // OS designed to run on Xen 3
+)
+
 type OnEventAction string
 
 const (
@@ -44,6 +51,15 @@ const (
 	DISK_DEVICE_DISK   DiskDevice = "disk"
 	DISK_DEVICE_CDROM  DiskDevice = "cdrom"
 	DISK_DEVICE_LUN    DiskDevice = "lun"
+)
+
+type BootDevice string
+
+const (
+	BOOT_DEVICE_FLOPPY  BootDevice = "fd"
+	BOOT_DEVICE_DISK    BootDevice = "hd"
+	BOOT_DEVICE_CDROM   BootDevice = "cdrom"
+	BOOT_DEVICE_NETWORK BootDevice = "network"
 )
 
 type ACPI struct{}
@@ -83,8 +99,8 @@ type BIOS struct {
 }
 
 type Boot struct {
-	Dev   string `xml:"dev,attr,omitempty"`
-	Order int    `xml:"order,attr"`
+	Dev   BootDevice `xml:"dev,attr,omitempty"`
+	Order int        `xml:"order,attr"`
 }
 
 type BootMenu struct {
@@ -308,9 +324,9 @@ type Timer struct {
 }
 
 type Type struct {
-	Arch     string `xml:"arch,attr"`
-	Machine  string `xml:"machine,attr"`
-	CharData string `xml:",chardata"`
+	Arch     string `xml:"arch,attr,omitempty"`
+	Machine  string `xml:"machine,attr,omitempty"`
+	CharData OSType `xml:",chardata"`
 }
 
 type VCPU struct {

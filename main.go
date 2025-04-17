@@ -5,42 +5,42 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/nixpig/virtui/domain"
+	"github.com/nixpig/virtui/vm"
 	"libvirt.org/go/libvirt"
 )
 
 func main() {
 
-	metadata := &domain.Metadata{
-		LibOSInfo: &domain.LibOSInfo{
-			LibOSInfo: "http://libosinfo.org/xmlns/libvirt/domain/1.0",
-			OS:        &domain.OS{ID: "http://ubuntu.com/ubuntu/24.04"},
+	metadata := &vm.Metadata{
+		LibOSInfo: &vm.LibOSInfo{
+			LibOSInfo: "http://libosinfo.org/xmlns/libvirt/vm/1.0",
+			OS:        &vm.OS{ID: "http://ubuntu.com/ubuntu/24.04"},
 		},
 	}
 
-	d := &domain.Domain{
+	d := &vm.Domain{
 		Type:          "kvm",
 		Name:          "another-test-vm",
 		UUID:          "bdf08434-d11e-4953-90fd-5728b75224cd",
 		Metadata:      metadata,
-		Memory:        &domain.Memory{CharData: "2907152", Unit: "KiB"},
-		CurrentMemory: &domain.CurrentMemory{CharData: "2907152", Unit: "KiB"},
-		VCPU:          &domain.VCPU{CharData: "2", Placement: "static"},
-		OS: &domain.OS{
-			Type:     &domain.Type{Arch: "x86_64", Machine: "q35", CharData: domain.OS_TYPE_HVM},
-			BootMenu: &domain.BootMenu{Enable: domain.FLAG_ENABLED_YES},
+		Memory:        &vm.Memory{CharData: "2907152", Unit: "KiB"},
+		CurrentMemory: &vm.CurrentMemory{CharData: "2907152", Unit: "KiB"},
+		VCPU:          &vm.VCPU{CharData: "2", Placement: "static"},
+		OS: &vm.OS{
+			Type:     &vm.Type{Arch: "x86_64", Machine: "q35", CharData: vm.OS_TYPE_HVM},
+			BootMenu: &vm.BootMenu{Enable: vm.FLAG_ENABLED_YES},
 			// Kernel:  "/var/lib/libvirt/boot/virtinst-c6kdm5b8-vmlinuz",
 			// InitRD:  "/var/lib/libvirt/boot/virtinst-ky336s4a-initrd",
 			// Cmdline: "console=ttys0",
 		},
-		Features: &domain.Features{
-			ACPI: &domain.ACPI{},
-			APIC: &domain.APIC{},
+		Features: &vm.Features{
+			ACPI: &vm.ACPI{},
+			APIC: &vm.APIC{},
 		},
-		Cpu: &domain.CPU{Mode: "host-passthrough", Check: "none", Migratable: "on"},
-		Clock: &domain.Clock{
+		Cpu: &vm.CPU{Mode: "host-passthrough", Check: "none", Migratable: "on"},
+		Clock: &vm.Clock{
 			Offset: "utc",
-			Timers: []domain.Timer{
+			Timers: []vm.Timer{
 				{Name: "rtc", Tickpolicy: "catchup"},
 				{Name: "pit", Tickpolicy: "delay"},
 				{Name: "hpet", Present: "no"},
@@ -49,23 +49,23 @@ func main() {
 		// TODO: figure out why it gets destroyed on shutdown from virt-manager
 		//        even though 'destroy' isn't set. Is it the default behaviour?
 		// OnPoweroff: "destroy",
-		OnReboot: domain.ON_EVENT_ACTION_RESTART,
+		OnReboot: vm.ON_EVENT_ACTION_RESTART,
 		// OnCrash:    "destroy",
-		PM: &domain.PM{
-			SuspendToMem:  &domain.SuspendToMem{Enabled: domain.FLAG_ENABLED_NO},
-			SuspendToDisk: &domain.SuspendToDisk{Enabled: domain.FLAG_ENABLED_NO},
+		PM: &vm.PM{
+			SuspendToMem:  &vm.SuspendToMem{Enabled: vm.FLAG_ENABLED_NO},
+			SuspendToDisk: &vm.SuspendToDisk{Enabled: vm.FLAG_ENABLED_NO},
 		},
-		Devices: &domain.Devices{
+		Devices: &vm.Devices{
 			Emulator: "/usr/bin/qemu-system-x86_64",
-			Disks: []domain.Disk{
+			Disks: []vm.Disk{
 				{
 					Type:   "file",
 					Device: "disk",
-					Boot:   &domain.Boot{Order: 1},
-					Driver: &domain.Driver{Name: "qemu", Type: "qcow2", Discard: "unmap"},
-					Source: &domain.Source{File: "/var/lib/libvirt/images/test-vm.qcow2"},
-					Target: &domain.Target{Dev: "vda", Bus: "virtio"},
-					Address: &domain.Address{
+					Boot:   &vm.Boot{Order: 1},
+					Driver: &vm.Driver{Name: "qemu", Type: "qcow2", Discard: "unmap"},
+					Source: &vm.Source{File: "/var/lib/libvirt/images/test-vm.qcow2"},
+					Target: &vm.Target{Dev: "vda", Bus: "virtio"},
+					Address: &vm.Address{
 						Type:     "pci",
 						Domain:   "0x0000",
 						Bus:      "0x03",
@@ -76,12 +76,12 @@ func main() {
 				{
 					Type:     "file",
 					Device:   "cdrom",
-					Boot:     &domain.Boot{Order: 2},
-					Driver:   &domain.Driver{Name: "qemu", Type: "raw"},
-					Source:   &domain.Source{File: "/var/lib/libvirt/images/ubuntu-24.04.2-live-server-amd64.iso"},
-					Target:   &domain.Target{Dev: "sda", Bus: "sata"},
-					Readonly: &domain.Readonly{},
-					Address: &domain.Address{
+					Boot:     &vm.Boot{Order: 2},
+					Driver:   &vm.Driver{Name: "qemu", Type: "raw"},
+					Source:   &vm.Source{File: "/var/lib/libvirt/images/ubuntu-24.04.2-live-server-amd64.iso"},
+					Target:   &vm.Target{Dev: "sda", Bus: "sata"},
+					Readonly: &vm.Readonly{},
+					Address: &vm.Address{
 						Type:       "drive",
 						Controller: "0",
 						Bus:        "0",
@@ -90,14 +90,17 @@ func main() {
 					},
 				},
 			},
-			Controllers: []domain.Controller{
+			Controllers: []vm.Controller{
 				{
 					Type:  "usb",
 					Model: "qemu-xhci",
 					Ports: &[]int{15}[0],
-					Address: &domain.Address{
-						Type:   "pci",
-						Domain: "0x0000", Bus: "0x02", Slot: "0x00", Function: "0x0",
+					Address: &vm.Address{
+						Type:     "pci",
+						Domain:   "0x0000",
+						Bus:      "0x02",
+						Slot:     "0x00",
+						Function: "0x0",
 					},
 				},
 				{
@@ -109,11 +112,11 @@ func main() {
 					Type:  "pci",
 					Model: "pcie-root-port",
 					Index: 1,
-					Target: &domain.Target{
+					Target: &vm.Target{
 						Chassis: 1,
 						Port:    "0x10",
 					},
-					Address: &domain.Address{
+					Address: &vm.Address{
 						Type:          "pci",
 						Domain:        "0x0000",
 						Bus:           "0x00",
@@ -126,11 +129,11 @@ func main() {
 					Type:  "pci",
 					Model: "pcie-root-port",
 					Index: 2,
-					Target: &domain.Target{
+					Target: &vm.Target{
 						Chassis: 2,
 						Port:    "0x11",
 					},
-					Address: &domain.Address{
+					Address: &vm.Address{
 						Type:     "pci",
 						Domain:   "0x0000",
 						Bus:      "0x00",
@@ -142,11 +145,11 @@ func main() {
 					Type:  "pci",
 					Model: "pcie-root-port",
 					Index: 3,
-					Target: &domain.Target{
+					Target: &vm.Target{
 						Chassis: 3,
 						Port:    "0x12",
 					},
-					Address: &domain.Address{
+					Address: &vm.Address{
 						Type:     "pci",
 						Domain:   "0x0000",
 						Bus:      "0x00",
@@ -158,11 +161,11 @@ func main() {
 					Type:  "pci",
 					Model: "pcie-root-port",
 					Index: 4,
-					Target: &domain.Target{
+					Target: &vm.Target{
 						Chassis: 4,
 						Port:    "0x13",
 					},
-					Address: &domain.Address{
+					Address: &vm.Address{
 						Type:     "pci",
 						Domain:   "0x0000",
 						Bus:      "0x00",
@@ -174,11 +177,11 @@ func main() {
 					Type:  "pci",
 					Model: "pcie-root-port",
 					Index: 5,
-					Target: &domain.Target{
+					Target: &vm.Target{
 						Chassis: 5,
 						Port:    "0x14",
 					},
-					Address: &domain.Address{
+					Address: &vm.Address{
 						Type:     "pci",
 						Domain:   "0x0000",
 						Bus:      "0x00",
@@ -190,11 +193,11 @@ func main() {
 					Type:  "pci",
 					Model: "pcie-root-port",
 					Index: 6,
-					Target: &domain.Target{
+					Target: &vm.Target{
 						Chassis: 6,
 						Port:    "0x15",
 					},
-					Address: &domain.Address{
+					Address: &vm.Address{
 						Type:     "pci",
 						Domain:   "0x0000",
 						Bus:      "0x00",
@@ -206,11 +209,11 @@ func main() {
 					Type:  "pci",
 					Model: "pcie-root-port",
 					Index: 7,
-					Target: &domain.Target{
+					Target: &vm.Target{
 						Chassis: 7,
 						Port:    "0x16",
 					},
-					Address: &domain.Address{
+					Address: &vm.Address{
 						Type:     "pci",
 						Domain:   "0x0000",
 						Bus:      "0x00",
@@ -222,11 +225,11 @@ func main() {
 					Type:  "pci",
 					Model: "pcie-root-port",
 					Index: 8,
-					Target: &domain.Target{
+					Target: &vm.Target{
 						Chassis: 8,
 						Port:    "0x17",
 					},
-					Address: &domain.Address{
+					Address: &vm.Address{
 						Type:     "pci",
 						Domain:   "0x0000",
 						Bus:      "0x00",
@@ -238,11 +241,11 @@ func main() {
 					Type:  "pci",
 					Model: "pcie-root-port",
 					Index: 9,
-					Target: &domain.Target{
+					Target: &vm.Target{
 						Chassis: 9,
 						Port:    "0x18",
 					},
-					Address: &domain.Address{
+					Address: &vm.Address{
 						Type:          "pci",
 						Domain:        "0x0000",
 						Bus:           "0x00",
@@ -252,14 +255,14 @@ func main() {
 					},
 				},
 			},
-			Interfaces: []domain.Interface{
+			Interfaces: []vm.Interface{
 				{
-					Source: &domain.Source{Network: "default"},
-					Mac:    &domain.Mac{Address: "52:54:00:66:21:bf"},
-					Model: &domain.Model{
+					Source: &vm.Source{Network: "default"},
+					Mac:    &vm.Mac{Address: "52:54:00:66:21:bf"},
+					Model: &vm.Model{
 						Type: "virtio"},
 					Type: "network",
-					Address: &domain.Address{Type: "pci",
+					Address: &vm.Address{Type: "pci",
 						Domain:   "0x0000",
 						Bus:      "0x01",
 						Slot:     "0x00",
@@ -267,36 +270,36 @@ func main() {
 					},
 				},
 			},
-			Serials: []domain.Serial{
+			Serials: []vm.Serial{
 				{
-					Target: &domain.Target{Type: "isa-serial", Port: "0", Model: &domain.Model{
+					Target: &vm.Target{Type: "isa-serial", Port: "0", Model: &vm.Model{
 						Name: "isa-serial",
 					}}},
 			},
-			Consoles: []domain.Console{{Type: "pty", Target: &domain.Target{Type: "serial", Port: "0"}}},
-			Channels: []domain.Channel{{
+			Consoles: []vm.Console{{Type: "pty", Target: &vm.Target{Type: "serial", Port: "0"}}},
+			Channels: []vm.Channel{{
 				Type: "unix",
-				Source: &domain.Source{
+				Source: &vm.Source{
 					Mode: "bind",
 				},
-				Target: &domain.Target{
+				Target: &vm.Target{
 					Type: "virtio",
 					Name: "org.qemu.guest_agent.0"},
 			}},
-			Graphics: []domain.Graphics{
+			Graphics: []vm.Graphics{
 				{
 					Type:     "vnc",
 					Port:     -1,
 					Autoport: "yes",
-					Listen: &domain.Listen{
+					Listen: &vm.Listen{
 						Type: "address",
 					},
 				},
 			},
-			Video: &domain.Video{
-				Model: &domain.Model{Type: "vga", VRAM: 16384, Heads: 1, Primary: "yes"},
-				Alias: &domain.Alias{Name: "video0"},
-				Address: &domain.Address{
+			Video: &vm.Video{
+				Model: &vm.Model{Type: "vga", VRAM: 16384, Heads: 1, Primary: "yes"},
+				Alias: &vm.Alias{Name: "video0"},
+				Address: &vm.Address{
 					Type:     "pci",
 					Domain:   "0x0000",
 					Bus:      "0x00",
@@ -304,22 +307,21 @@ func main() {
 					Function: "0x0",
 				},
 			},
-			Watchdog: &domain.Watchdog{
-				Model: "itco", Action: "reset"},
-			MemBalloon: &domain.MemBalloon{Model: "virtio", Address: &domain.Address{
+			Watchdog: &vm.Watchdog{Model: "itco", Action: "reset"},
+			MemBalloon: &vm.MemBalloon{Model: "virtio", Address: &vm.Address{
 				Type:     "pci",
 				Domain:   "0x0000",
 				Bus:      "0x05",
 				Slot:     "0x00",
 				Function: "0x0",
 			}},
-			RNG: &domain.RNG{
+			RNG: &vm.RNG{
 				Model: "virtio",
-				Backend: &domain.Backend{
+				Backend: &vm.Backend{
 					Model:    "random",
 					CharData: "/dev/urandom",
 				},
-				Address: &domain.Address{
+				Address: &vm.Address{
 					Type:     "pci",
 					Domain:   "0x0000",
 					Bus:      "0x06",
@@ -328,11 +330,6 @@ func main() {
 				},
 			},
 		},
-		// 	XMLName:         xml.Name{},
-		// 	Description:     new(string),
-		// 	Sysinfo:         []domain.Sysinfo{},
-		// 	ThrottleGroups:  &domain.ThrottleGroups{},
-		// 	Title:           "",
 	}
 
 	o, err := xml.MarshalIndent(d, "", "  ")
@@ -362,7 +359,7 @@ func main() {
 	fmt.Println("Name: ", name)
 
 	// create but not start
-	// conn.DomainDefineXML()
+	// conn.vmDefineXML()
 
 	// db, err := database.NewConnection("virtui.db")
 	// if err != nil {
@@ -399,14 +396,14 @@ func main() {
 	// }
 	// defer conn.Close()
 	//
-	// flags := libvirt.ConnectListAllDomainsFlags(libvirt.CONNECT_LIST_DOMAINS_ACTIVE | libvirt.CONNECT_LIST_DOMAINS_INACTIVE)
+	// flags := libvirt.ConnectListAllvmsFlags(libvirt.CONNECT_LIST_vmS_ACTIVE | libvirt.CONNECT_LIST_vmS_INACTIVE)
 	//
-	// domains, err := conn.ListAllDomains(flags)
+	// vms, err := conn.ListAllvms(flags)
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }
 	//
-	// for _, d := range domains {
+	// for _, d := range vms {
 	// 	id, err := d.GetUUIDString()
 	// 	if err != nil {
 	// 		log.Fatal(err)
@@ -426,14 +423,14 @@ func main() {
 	// // 3. Create a .qcow2 disk image in the pool
 	// // ...
 	// // n. Create XML definition
-	// // n. conn.DomainDefineXML() // conn.DomainCreateXML()
+	// // n. conn.vmDefineXML() // conn.vmCreateXML()
 	//
 	// x, err := os.ReadFile("test-vm.xml")
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }
 	//
-	// d, err := conn.DomainDefineXML(string(x))
+	// d, err := conn.vmDefineXML(string(x))
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }

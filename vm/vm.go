@@ -1,4 +1,4 @@
-package domain
+package vm
 
 import "encoding/xml"
 

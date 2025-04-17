@@ -46,9 +46,9 @@ func main() {
 				{Name: "hpet", Present: "no"},
 			},
 		},
-		OnPoweroff: "destroy",
-		OnReboot:   "restart",
-		OnCrash:    "destroy",
+		// OnPoweroff: "destroy",
+		OnReboot: domain.ON_EVENT_ACTION_RESTART,
+		// OnCrash:    "destroy",
 		PM: &domain.PM{
 			SuspendToMem:  &domain.SuspendToMem{Enabled: "no"},
 			SuspendToDisk: &domain.SuspendToDisk{Enabled: "no"},

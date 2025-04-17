@@ -6,6 +6,15 @@ func SerialiseHexInt(n any) error {
 	return nil
 }
 
+type OnEventAction string
+
+const (
+	ON_EVENT_ACTION_DESTROY        OnEventAction = "destroy"
+	ON_EVENT_ACTION_RESTART        OnEventAction = "restart"
+	ON_EVENT_ACTION_PRESERVE       OnEventAction = "preserve"
+	ON_EVENT_ACTION_RENAME_RESTART OnEventAction = "rename-restart"
+)
+
 type Acceleration struct {
 	Accel2d string `xml:"accel2d,attr"`
 	Accel3d string `xml:"accel3d,attr"`
@@ -464,10 +473,10 @@ type Domain struct {
 	Metadata        *Metadata        `xml:"metadata"`
 	Name            string           `xml:"name"`
 	NumaTune        *Numatune        `xml:"numatune"`
-	OnCrash         string           `xml:"on_crash,omitempty"`
-	OnLockFailure   *string          `xml:"on_lockfailure"`
-	OnPoweroff      string           `xml:"on_poweroff,omitempty"`
-	OnReboot        string           `xml:"on_reboot,omitempty"`
+	OnLockFailure   string           `xml:"on_lockfailure,omitempty"`
+	OnCrash         OnEventAction    `xml:"on_crash,omitempty"`
+	OnPoweroff      OnEventAction    `xml:"on_poweroff,omitempty"`
+	OnReboot        OnEventAction    `xml:"on_reboot,omitempty"`
 	OS              *OS              `xml:"os"`
 	Override        *Override        `xml:"override"`
 	Perf            *Perf            `xml:"perf"`

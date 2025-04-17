@@ -2,6 +2,10 @@ package domain
 
 import "encoding/xml"
 
+func SerialiseHexInt(n any) error {
+	return nil
+}
+
 type Acceleration struct {
 	Accel2d string `xml:"accel2d,attr"`
 	Accel3d string `xml:"accel3d,attr"`
@@ -27,23 +31,27 @@ type Adapter struct {
 }
 
 type Address struct {
-	Base          string `xml:"base,attr,omitempty"`
-	Bus           string `xml:"bus,attr,omitempty"`
-	Controller    string `xml:"controller,attr"`
-	CSSID         string `xml:"cssid,attr,omitempty"`
-	DevNo         string `xml:"devno,attr,omitempty"`
-	Domain        string `xml:"domain,attr,omitempty"`
+	Base string `xml:"base,attr,omitempty"`
+	// TODO: this should be hex, e.g. 0x0000
+	Bus        string `xml:"bus,attr,omitempty"`
+	Controller string `xml:"controller,attr,omitempty"`
+	CSSID      string `xml:"cssid,attr,omitempty"`
+	DevNo      string `xml:"devno,attr,omitempty"`
+	// TODO: this should be hex, e.g. 0x0000
+	Domain string `xml:"domain,attr,omitempty"`
+	// TODO: this should be hex, e.g. 0x0000
 	Function      string `xml:"function,attr,omitempty"`
 	IOBase        int    `xml:"iobase,attr,omitempty"`
 	Multifunction string `xml:"multifunction,attr,omitempty"`
 	Port          *int   `xml:"port,attr"`
 	Reg           string `xml:"reg,attr,omitempty"`
-	Slot          string `xml:"slot,attr,omitempty"`
-	SSID          string `xml:"ssid,attr,omitempty"`
-	Target        string `xml:"target,attr,omitempty"`
-	Type          string `xml:"type,attr,omitempty"`
-	Unit          string `xml:"unit,attr,omitempty"`
-	UUID          string `xml:"uuid,attr,omitempty"`
+	// TODO: this should be hex, e.g. 0x0000
+	Slot   string `xml:"slot,attr,omitempty"`
+	SSID   string `xml:"ssid,attr,omitempty"`
+	Target string `xml:"target,attr,omitempty"`
+	Type   string `xml:"type,attr,omitempty"`
+	Unit   string `xml:"unit,attr,omitempty"`
+	UUID   string `xml:"uuid,attr,omitempty"`
 }
 
 type AIA struct {
@@ -147,7 +155,7 @@ type BIOS struct {
 
 type BlkioTune struct {
 	Device *Device `xml:"device"`
-	Weight int     `xml:"weight"`
+	Weight int     `xml:"weight,omitzero"`
 }
 
 type Block struct {
@@ -1637,13 +1645,14 @@ type Tag struct {
 }
 
 type Target struct {
-	Bus          string     `xml:"bus,attr,omitempty"`
-	Dev          string     `xml:"dev,attr,omitempty"`
-	Dir          *string    `xml:"dir,attr"`
-	Managed      *string    `xml:"managed,attr"`
-	Name         string     `xml:"name,attr,omitempty"`
-	Offset       *int       `xml:"offset,attr"`
-	Path         *string    `xml:"path,attr"`
+	Bus     string  `xml:"bus,attr,omitempty"`
+	Dev     string  `xml:"dev,attr,omitempty"`
+	Dir     *string `xml:"dir,attr"`
+	Managed *string `xml:"managed,attr"`
+	Name    string  `xml:"name,attr,omitempty"`
+	Offset  *int    `xml:"offset,attr"`
+	Path    *string `xml:"path,attr"`
+	// TODO: this should be hex, e.g. 0x0000
 	Port         string     `xml:"port,attr,omitempty"`
 	RotationRate *int       `xml:"rotation_rate,attr"`
 	State        *string    `xml:"state,attr"`
@@ -1659,7 +1668,7 @@ type Target struct {
 	Readonly     *struct{}  `xml:"readonly"`
 	Requested    *Requested `xml:"requested"`
 	Size         *Size      `xml:"size"`
-	Chassis      int        `xml:"chassis,attr"`
+	Chassis      int        `xml:"chassis,attr,omitzero"`
 }
 
 type TBCache struct {

@@ -78,7 +78,7 @@ type Backend struct {
 }
 
 type BIOS struct {
-	RebootTimeout *uint       `xml:"rebootTimeout,attr"`
+	RebootTimeout int         `xml:"rebootTimeout,attr"`
 	UseSerial     EnabledFlag `xml:"useserial,attr,omitempty"`
 }
 
@@ -89,13 +89,7 @@ type Boot struct {
 
 type BootMenu struct {
 	Enable  EnabledFlag `xml:"enable,attr,omitempty"`
-	Timeout int         `xml:"timeout,attr,omitzero"`
-}
-
-type Catchup struct {
-	Limit     int `xml:"limit,attr"`
-	Slew      int `xml:"slew,attr"`
-	Threshold int `xml:"threshold,attr"`
+	Timeout *int        `xml:"timeout,attr"`
 }
 
 type Channel struct {
@@ -215,9 +209,8 @@ type LibOSInfo struct {
 }
 
 type Listen struct {
-	Address *string `xml:"address,attr"`
-	Network string  `xml:"network,attr"`
-	Type    string  `xml:"type,attr"`
+	Network string `xml:"network,attr"`
+	Type    string `xml:"type,attr"`
 }
 
 type Mac struct {
@@ -253,16 +246,16 @@ type OS struct {
 	ACPI           *ACPI     `xml:"acpi"`
 	BIOS           *BIOS     `xml:"bios"`
 	Boot           *Boot     `xml:"boot"`
-	Bootloader     *string   `xml:"bootloader"`
-	BootloaderArgs *string   `xml:"bootloader_args"`
+	Bootloader     string    `xml:"bootloader,omitempty"`
+	BootloaderArgs string    `xml:"bootloader_args,omitempty"`
 	BootMenu       *BootMenu `xml:"bootmenu"`
 	Cmdline        string    `xml:"cmdline,omitempty"`
-	Init           *string   `xml:"init"`
+	Init           string    `xml:"init,omitempty"`
 	InitArgs       []string  `xml:"initarg"`
-	InitDir        *string   `xml:"initdir"`
+	InitDir        string    `xml:"initdir,omitempty"`
 	InitGroup      *int      `xml:"initgroup"`
 	InitRD         string    `xml:"initrd,omitempty"`
-	InitUser       *string   `xml:"inituser"`
+	InitUser       string    `xml:"inituser,omitempty"`
 	Kernel         string    `xml:"kernel,omitempty"`
 	Type           *Type     `xml:"type"`
 }

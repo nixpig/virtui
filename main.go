@@ -1,11 +1,9 @@
 package main
 
 import (
-	"encoding/xml"
 	"fmt"
 	"log"
 	"net/url"
-	"runtime"
 
 	"github.com/digitalocean/go-libvirt"
 	"github.com/nixpig/virtui/vm"
@@ -13,69 +11,34 @@ import (
 
 func main() {
 
-	d := vm.NewDefaultDomainConfig("another-test-vm")
-
-	o, err := xml.MarshalIndent(d, "", "  ")
+	domain, err := vm.NewWithDefaults("another-new-vm")
 	if err != nil {
-		log.Fatal("out: " + err.Error())
+		log.Fatal("default domain: " + err.Error())
+	}
+
+	output, err := domain.ToXML()
+	if err != nil {
+		log.Fatal("to xml: " + err.Error())
 	}
 
 	uri, err := url.Parse("qemu:///system")
 	if err != nil {
 		log.Fatal(err)
 	}
-	l, err := libvirt.ConnectToURI(uri)
-	defer l.ConnectClose()
 
-	runtime.NumCPU()
+	conn, err := libvirt.ConnectToURI(uri)
+	defer conn.ConnectClose()
 
-	// conn, err := libvirt.NewConnect("qemu:///system")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// defer conn.Close()
-
-	dom, err := l.DomainDefineXML(string(o)) // create persistent
+	dom, err := conn.DomainDefineXML(string(output)) // create persistent
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// dom, err := conn.LookupDomainByName("another-test-vm")
-	// if err != nil {
-	// 	log.Fatal("lookup: ", err)
-	// }
-
 	fmt.Println("Name: ", dom.Name)
 
-	if err := l.DomainCreate(dom); err != nil {
+	if err := conn.DomainCreate(dom); err != nil {
 		log.Fatal("start domain: ", err)
 	}
-
-	// time.Sleep(10 * time.Second)
-	//
-	// w := bytes.Buffer{}
-	//
-	// opt := libvirt.OptString{}
-	//
-	// go func() {
-	// 	fmt.Println("opening console...")
-	// 	if err := l.DomainOpenConsole(dom, opt, &w, 0); err != nil {
-	// 		log.Fatal("open console: ", err)
-	// 	}
-	// }()
-	//
-	// time.Sleep(3 * time.Second)
-	//
-	// fmt.Println("apparently opened??")
-	//
-	// b := make([]byte, 1024)
-	// w.Read(b)
-	// fmt.Println("read: ", string(b))
-	//
-	// w.WriteString("foobarbaz")
-
-	// create but not start
-	// conn.DomainCreateXML() // create transient
 
 	// db, err := database.NewConnection("virtui.db")
 	// if err != nil {

@@ -1,6 +1,7 @@
 package vm
 
 import (
+	"encoding/xml"
 	"fmt"
 	"io"
 
@@ -26,9 +27,32 @@ func New(name string) (*DomainConfig, error) {
 	}
 
 	return &DomainConfig{
-		Name: name,
-		UUID: id.String(),
+		Name:     name,
+		UUID:     id.String(),
+		Metadata: &Metadata{LibOSInfo: &LibOSInfo{LibOSInfo: "", OS: &OS{}}},
+		OS:       &OS{},
+		Features: &Features{},
+		Clock:    &Clock{},
+		PM:       &PM{SuspendToDisk: &SuspendToDisk{}, SuspendToMem: &SuspendToMem{}},
+		Devices:  &Devices{},
 	}, nil
+
+}
+
+func (d *DomainConfig) ToXML() ([]byte, error) {
+	return xml.Marshal(d)
+}
+
+func (d *DomainConfig) ToXMLFormatted() ([]byte, error) {
+	return xml.MarshalIndent(d, "", "  ")
+}
+
+func (d *DomainConfig) SetName(n string) {
+	d.Name = n
+}
+
+func (d *DomainConfig) SetUUID(u string) {
+	d.UUID = u
 }
 
 func (d *DomainConfig) SetMetaData(m *Metadata) {

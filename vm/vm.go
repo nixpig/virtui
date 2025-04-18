@@ -1,12 +1,20 @@
 package vm
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+)
 
 func SerialiseHexInt(n any) error {
 	return nil
 }
 
 type Readonly struct{}
+
+type DomainArch string
+
+const (
+	ARCH_X86_64 = "x86_64"
+)
 
 type DomainType string
 
@@ -182,7 +190,7 @@ type Disk struct {
 	Readonly *Readonly  `xml:"readonly"`
 }
 
-type Domain struct {
+type DomainConfig struct {
 	XMLName       xml.Name       `xml:"domain"`
 	Title         string         `xml:"title,omitempty"`
 	Description   string         `xml:"description,omitempty"`

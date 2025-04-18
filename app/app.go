@@ -9,7 +9,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/nixpig/virtui/connection"
-	"github.com/nixpig/virtui/event"
 	"github.com/nixpig/virtui/keys"
 )
 
@@ -125,9 +124,9 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		}
 
-	case event.VM:
-		log.Debug("handle vm event", "id", msg.ID, "event", msg.Event)
-		// return m, tea.Batch(vmEventMsg(m.vmEventCh))
+	// case event.VM:
+	// 	log.Debug("handle vm event", "id", msg.ID, "event", msg.Event)
+	// 	// return m, tea.Batch(vmEventMsg(m.vmEventCh))
 
 	case tea.WindowSizeMsg:
 		m.width = msg.Width

@@ -13,7 +13,6 @@ import (
 	"github.com/nixpig/virtui/database"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"libvirt.org/go/libvirt"
 )
 
 const libvirtURI = "qemu:///system"
@@ -61,18 +60,20 @@ func main() {
 		}
 	}
 
-	if err := libvirt.EventRegisterDefaultImpl(); err != nil {
-		fatality("failed to register event loop", err)
-	}
+	// TODO: need to do the domain subscription from connection
 
-	go func() {
-		for {
-			if err := libvirt.EventRunDefaultImpl(); err != nil {
-				log.Error("run event loop", "err", err)
-				fatality("failed to run event loop", err)
-			}
-		}
-	}()
+	// if err := libvirt.EventRegisterDefaultImpl(); err != nil {
+	// 	fatality("failed to register event loop", err)
+	// }
+	//
+	// go func() {
+	// 	for {
+	// 		if err := libvirt.EventRunDefaultImpl(); err != nil {
+	// 			log.Error("run event loop", "err", err)
+	// 			fatality("failed to run event loop", err)
+	// 		}
+	// 	}
+	// }()
 
 	if _, err := tea.NewProgram(
 		app.InitModel(conn),

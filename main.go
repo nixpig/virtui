@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 	"log"
+	"net/url"
+	"time"
 
+	"github.com/digitalocean/go-libvirt"
 	"github.com/nixpig/virtui/vm"
-	"libvirt.org/go/libvirt"
 )
 
 func main() {
@@ -274,9 +277,8 @@ func main() {
 			},
 			Serials: []vm.Serial{
 				{
-					Target: &vm.Target{Type: "isa-serial", Port: "0", Model: &vm.Model{
-						Name: "isa-serial",
-					}}},
+					Target: &vm.Target{Type: "isa-serial", Port: "0", Model: &vm.Model{Name: "isa-serial"}},
+				},
 			},
 			Consoles: []vm.Console{{Type: "pty", Target: &vm.Target{Type: "serial", Port: "0"}}},
 			Channels: []vm.Channel{{
@@ -293,9 +295,7 @@ func main() {
 					Type:     "vnc",
 					Port:     -1,
 					Autoport: "yes",
-					Listen: &vm.Listen{
-						Type: "address",
-					},
+					Listen:   &vm.Listen{Type: "address"},
 				},
 			},
 			Video: &vm.Video{
@@ -339,13 +339,20 @@ func main() {
 		log.Fatal("out: " + err.Error())
 	}
 
-	conn, err := libvirt.NewConnect("qemu:///system")
+	uri, err := url.Parse("qemu:///system")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer conn.Close()
+	l, err := libvirt.ConnectToURI(uri)
+	defer l.ConnectClose()
 
-	dom, err := conn.DomainDefineXML(string(o)) // create persistent
+	// conn, err := libvirt.NewConnect("qemu:///system")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// defer conn.Close()
+
+	dom, err := l.DomainDefineXML(string(o)) // create persistent
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -355,12 +362,34 @@ func main() {
 	// 	log.Fatal("lookup: ", err)
 	// }
 
-	name, _ := dom.GetName()
-	fmt.Println("Name: ", name)
+	fmt.Println("Name: ", dom.Name)
 
-	if err := dom.Create(); err != nil {
+	if err := l.DomainCreate(dom); err != nil {
 		log.Fatal("start domain: ", err)
 	}
+
+	time.Sleep(10 * time.Second)
+
+	w := bytes.Buffer{}
+
+	opt := libvirt.OptString{}
+
+	go func() {
+		fmt.Println("opening console...")
+		if err := l.DomainOpenConsole(dom, opt, &w, 0); err != nil {
+			log.Fatal("open console: ", err)
+		}
+	}()
+
+	time.Sleep(3 * time.Second)
+
+	fmt.Println("apparently opened??")
+
+	b := make([]byte, 1024)
+	w.Read(b)
+	fmt.Println("read: ", string(b))
+
+	w.WriteString("foobarbaz")
 
 	// create but not start
 	// conn.DomainCreateXML() // create transient

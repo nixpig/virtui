@@ -13,7 +13,7 @@ import (
 
 func main() {
 
-	d := vm.NewDefaultDomainConfig()
+	d := vm.NewDefaultDomainConfig("another-test-vm")
 
 	o, err := xml.MarshalIndent(d, "", "  ")
 	if err != nil {

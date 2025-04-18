@@ -10,16 +10,23 @@ func SerialiseHexInt(n any) error {
 
 type Readonly struct{}
 
+type MachineType string
+
+const (
+	MACHINE_TYPE_Q35 MachineType = "q35"
+	// MACHINE_TYPE_I440FX MachineType = "pc-i440fx"
+)
+
 type DomainArch string
 
 const (
-	ARCH_X86_64 = "x86_64"
+	ARCH_X86_64 DomainArch = "x86_64"
 )
 
 type DomainType string
 
 const (
-	DOMAIN_TYPE_KVM = "kvm"
+	DOMAIN_TYPE_KVM DomainType = "kvm"
 	// DOMAIN_TYPE_XEN = "xen"
 	// DOMAIN_TYPE_QEMU = "qemu"
 	// DOMAIN_TYPE_HVF = "hvf"
@@ -29,8 +36,8 @@ const (
 type OSType string
 
 const (
-	OS_TYPE_HVM   = "hvm"   // OS designed to run on bare metal
-	OS_TYPE_LINUX = "linux" // OS designed to run on Xen 3
+	OS_TYPE_HVM   OSType = "hvm"   // OS designed to run on bare metal
+	OS_TYPE_LINUX        = "linux" // OS designed to run on Xen 3
 )
 
 type OnEventAction string
@@ -342,9 +349,9 @@ type Timer struct {
 }
 
 type Type struct {
-	Arch     string `xml:"arch,attr,omitempty"`
-	Machine  string `xml:"machine,attr,omitempty"`
-	CharData OSType `xml:",chardata"`
+	Arch     DomainArch  `xml:"arch,attr,omitempty"`
+	Machine  MachineType `xml:"machine,attr,omitempty"`
+	CharData OSType      `xml:",chardata"`
 }
 
 type VCPU struct {

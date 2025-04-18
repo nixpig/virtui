@@ -1,5 +1,7 @@
 package vm
 
+import "github.com/google/uuid"
+
 const (
 	defaultEmulator = "/usr/bin/qemu-system-x86_64"
 )
@@ -8,11 +10,13 @@ func NewDomainConfig() *DomainConfig {
 	return &DomainConfig{}
 }
 
-func NewDefaultDomainConfig() *DomainConfig {
-	return &DomainConfig{
+func NewDefaultDomainConfig(name string) DomainConfig {
+	id, _ := uuid.NewUUID()
+
+	return DomainConfig{
 		Type: DOMAIN_TYPE_KVM,
-		Name: "",
-		UUID: "",
+		Name: name,
+		UUID: id.String(),
 		Metadata: &Metadata{
 			LibOSInfo: &LibOSInfo{
 				LibOSInfo: "http://libosinfo.org/xmlns/libvirt/vm/1.0",
@@ -23,7 +27,7 @@ func NewDefaultDomainConfig() *DomainConfig {
 		CurrentMemory: &CurrentMemory{CharData: "2048", Unit: "MiB"},
 		VCPU:          &VCPU{CharData: "1", Placement: "static"},
 		OS: &OS{
-			Type:     &Type{Arch: ARCH_X86_64, CharData: OS_TYPE_HVM},
+			Type:     &Type{Arch: ARCH_X86_64, Machine: MACHINE_TYPE_Q35, CharData: OS_TYPE_HVM},
 			BootMenu: &BootMenu{Enable: FLAG_ENABLED_YES},
 		},
 		Features: &Features{ACPI: &ACPI{}, APIC: &APIC{}},
@@ -78,10 +82,16 @@ func NewDefaultDomainConfig() *DomainConfig {
 			},
 			Controllers: []Controller{
 				{
-					Type:    "usb",
-					Model:   "qemu-xhci",
-					Ports:   &[]int{15}[0],
-					Address: &Address{Type: "pci", Domain: "0x0000", Bus: "0x02", Slot: "0x00", Function: "0x0"},
+					Type:  "usb",
+					Model: "qemu-xhci",
+					Ports: &[]int{15}[0],
+					Address: &Address{
+						Type:     "pci",
+						Domain:   "0x0000",
+						Bus:      "0x02",
+						Slot:     "0x00",
+						Function: "0x0",
+					},
 				},
 				{
 					Type:  "pci",
@@ -89,67 +99,150 @@ func NewDefaultDomainConfig() *DomainConfig {
 					Index: 0,
 				},
 				{
-					Type:    "pci",
-					Model:   "pcie-root-port",
-					Index:   1,
-					Target:  &Target{Chassis: 1, Port: "0x10"},
-					Address: &Address{Type: "pci", Domain: "0x0000", Bus: "0x00", Slot: "0x02", Function: "0x0", Multifunction: "on"},
+					Type:  "pci",
+					Model: "pcie-root-port",
+					Index: 1,
+					Target: &Target{
+						Chassis: 1,
+						Port:    "0x10",
+					},
+					Address: &Address{
+						Type:          "pci",
+						Domain:        "0x0000",
+						Bus:           "0x00",
+						Slot:          "0x02",
+						Function:      "0x0",
+						Multifunction: "on",
+					},
 				},
 				{
-					Type:    "pci",
-					Model:   "pcie-root-port",
-					Index:   2,
-					Target:  &Target{Chassis: 2, Port: "0x11"},
-					Address: &Address{Type: "pci", Domain: "0x0000", Bus: "0x00", Slot: "0x02", Function: "0x1"},
+					Type:  "pci",
+					Model: "pcie-root-port",
+					Index: 2,
+					Target: &Target{
+						Chassis: 2,
+						Port:    "0x11",
+					},
+					Address: &Address{
+						Type:     "pci",
+						Domain:   "0x0000",
+						Bus:      "0x00",
+						Slot:     "0x02",
+						Function: "0x1",
+					},
 				},
 				{
-					Type:    "pci",
-					Model:   "pcie-root-port",
-					Index:   3,
-					Target:  &Target{Chassis: 3, Port: "0x12"},
-					Address: &Address{Type: "pci", Domain: "0x0000", Bus: "0x00", Slot: "0x02", Function: "0x2"},
+					Type:  "pci",
+					Model: "pcie-root-port",
+					Index: 3,
+					Target: &Target{
+						Chassis: 3,
+						Port:    "0x12",
+					},
+					Address: &Address{
+						Type:     "pci",
+						Domain:   "0x0000",
+						Bus:      "0x00",
+						Slot:     "0x02",
+						Function: "0x2",
+					},
 				},
 				{
-					Type:    "pci",
-					Model:   "pcie-root-port",
-					Index:   4,
-					Target:  &Target{Chassis: 4, Port: "0x13"},
-					Address: &Address{Type: "pci", Domain: "0x0000", Bus: "0x00", Slot: "0x02", Function: "0x3"},
+					Type:  "pci",
+					Model: "pcie-root-port",
+					Index: 4,
+					Target: &Target{
+						Chassis: 4,
+						Port:    "0x13",
+					},
+					Address: &Address{
+						Type:     "pci",
+						Domain:   "0x0000",
+						Bus:      "0x00",
+						Slot:     "0x02",
+						Function: "0x3",
+					},
 				},
 				{
-					Type:    "pci",
-					Model:   "pcie-root-port",
-					Index:   5,
-					Target:  &Target{Chassis: 5, Port: "0x14"},
-					Address: &Address{Type: "pci", Domain: "0x0000", Bus: "0x00", Slot: "0x02", Function: "0x4"},
+					Type:  "pci",
+					Model: "pcie-root-port",
+					Index: 5,
+					Target: &Target{
+						Chassis: 5,
+						Port:    "0x14",
+					},
+					Address: &Address{
+						Type:     "pci",
+						Domain:   "0x0000",
+						Bus:      "0x00",
+						Slot:     "0x02",
+						Function: "0x4",
+					},
 				},
 				{
-					Type:    "pci",
-					Model:   "pcie-root-port",
-					Index:   6,
-					Target:  &Target{Chassis: 6, Port: "0x15"},
-					Address: &Address{Type: "pci", Domain: "0x0000", Bus: "0x00", Slot: "0x02", Function: "0x5"},
+					Type:  "pci",
+					Model: "pcie-root-port",
+					Index: 6,
+					Target: &Target{
+						Chassis: 6,
+						Port:    "0x15",
+					},
+					Address: &Address{
+						Type:     "pci",
+						Domain:   "0x0000",
+						Bus:      "0x00",
+						Slot:     "0x02",
+						Function: "0x5",
+					},
 				},
 				{
-					Type:    "pci",
-					Model:   "pcie-root-port",
-					Index:   7,
-					Target:  &Target{Chassis: 7, Port: "0x16"},
-					Address: &Address{Type: "pci", Domain: "0x0000", Bus: "0x00", Slot: "0x02", Function: "0x6"},
+					Type:  "pci",
+					Model: "pcie-root-port",
+					Index: 7,
+					Target: &Target{
+						Chassis: 7,
+						Port:    "0x16",
+					},
+					Address: &Address{
+						Type:     "pci",
+						Domain:   "0x0000",
+						Bus:      "0x00",
+						Slot:     "0x02",
+						Function: "0x6",
+					},
 				},
 				{
-					Type:    "pci",
-					Model:   "pcie-root-port",
-					Index:   8,
-					Target:  &Target{Chassis: 8, Port: "0x17"},
-					Address: &Address{Type: "pci", Domain: "0x0000", Bus: "0x00", Slot: "0x02", Function: "0x7"},
+					Type:  "pci",
+					Model: "pcie-root-port",
+					Index: 8,
+					Target: &Target{
+						Chassis: 8,
+						Port:    "0x17",
+					},
+					Address: &Address{
+						Type:     "pci",
+						Domain:   "0x0000",
+						Bus:      "0x00",
+						Slot:     "0x02",
+						Function: "0x7",
+					},
 				},
 				{
-					Type:    "pci",
-					Model:   "pcie-root-port",
-					Index:   9,
-					Target:  &Target{Chassis: 9, Port: "0x18"},
-					Address: &Address{Type: "pci", Domain: "0x0000", Bus: "0x00", Slot: "0x03", Function: "0x0", Multifunction: "on"},
+					Type:  "pci",
+					Model: "pcie-root-port",
+					Index: 9,
+					Target: &Target{
+						Chassis: 9,
+						Port:    "0x18",
+					},
+					Address: &Address{
+						Type:          "pci",
+						Domain:        "0x0000",
+						Bus:           "0x00",
+						Slot:          "0x03",
+						Function:      "0x0",
+						Multifunction: "on",
+					},
 				},
 			},
 			Interfaces: []Interface{

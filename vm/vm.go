@@ -210,7 +210,7 @@ type DomainConfig struct {
 	VCPU          *VCPU          `xml:"vcpu"`
 	OS            *OS            `xml:"os"`
 	Features      *Features      `xml:"features"`
-	Cpu           *CPU           `xml:"cpu"`
+	CPU           *CPU           `xml:"cpu"`
 	Clock         *Clock         `xml:"clock"`
 	Devices       *Devices       `xml:"devices"`
 	OnCrash       OnEventAction  `xml:"on_crash,omitempty"`

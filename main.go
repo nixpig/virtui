@@ -11,7 +11,7 @@ import (
 
 func main() {
 
-	domain, err := vm.NewWithDefaults("another-new-vm")
+	domain, err := vm.NewDomainWithDefaults("another-new-vm")
 	if err != nil {
 		log.Fatal("default domain: " + err.Error())
 	}

@@ -5,18 +5,10 @@ An interactive Terminal UI (TUI) for managing QEMU/KVM virtual machines via libv
 ## 🎯 Initial project goals
 
 - [ ] Connect to default `qemu:///system` hypervisor
-- [ ] Create an Ubuntu 24.04 VM from `iso` image
-    - Using default vnet, pool, and manually created volume
-- [ ] Boot VM + shutdown/pause/resume/poweroff/reset
-
----
-
-- [ ] Create a `NAT` virtual network on IPv4 with DHCP
-
----
-
-- [ ] Create `dir` (filesystem directory) storage pool
-- [ ] Create `qcow2` storage volume in storage pool
+- [ ] Create a storage volume
+- [ ] Create a virtual network
+- [ ] Create an Ubuntu 24.04 VM from ISO image
+- [ ] Boot VM + get a console
 
 
 ## Notes

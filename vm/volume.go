@@ -2,6 +2,6 @@ package vm
 
 type Volume struct{}
 
-func NewStorage() (*Volume, error) {
+func NewVolume() (*Volume, error) {
 	return &Volume{}, nil
 }

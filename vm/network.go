@@ -2,6 +2,6 @@ package vm
 
 type Network struct{}
 
-func NewVNet() (*Network, error) {
+func NewNetwork() (*Network, error) {
 	return &Network{}, nil
 }

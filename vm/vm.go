@@ -8,6 +8,16 @@ func SerialiseHexInt(n any) error {
 
 type Readonly struct{}
 
+type DomainType string
+
+const (
+	DOMAIN_TYPE_KVM = "kvm"
+	// DOMAIN_TYPE_XEN = "xen"
+	// DOMAIN_TYPE_QEMU = "qemu"
+	// DOMAIN_TYPE_HVF = "hvf"
+	// DOMAIN_TYPE_LXC = "lxc"
+)
+
 type OSType string
 
 const (
@@ -176,7 +186,7 @@ type Domain struct {
 	XMLName       xml.Name       `xml:"domain"`
 	Title         string         `xml:"title,omitempty"`
 	Description   string         `xml:"description,omitempty"`
-	Type          string         `xml:"type,attr,omitempty"`
+	Type          DomainType     `xml:"type,attr,omitempty"`
 	Name          string         `xml:"name"`
 	UUID          string         `xml:"uuid,omitempty"`
 	Metadata      *Metadata      `xml:"metadata"`

@@ -19,7 +19,7 @@ func main() {
 	}
 
 	d := &vm.Domain{
-		Type:          "kvm",
+		Type:          vm.DOMAIN_TYPE_KVM,
 		Name:          "another-test-vm",
 		UUID:          "bdf08434-d11e-4953-90fd-5728b75224cd",
 		Metadata:      metadata,
@@ -29,8 +29,10 @@ func main() {
 		OS: &vm.OS{
 			Type:     &vm.Type{Arch: "x86_64", Machine: "q35", CharData: vm.OS_TYPE_HVM},
 			BootMenu: &vm.BootMenu{Enable: vm.FLAG_ENABLED_YES},
-			// Kernel:  "/var/lib/libvirt/boot/virtinst-c6kdm5b8-vmlinuz",
-			// InitRD:  "/var/lib/libvirt/boot/virtinst-ky336s4a-initrd",
+			// Kernel:   "/var/lib/libvirt/boot/virtinst-c6kdm5b8-vmlinuz",
+			// InitRD:   "/var/lib/libvirt/boot/virtinst-ky336s4a-initrd",
+			// InitRD:  "casper/initrd",
+			// Kernel:  "casper/vmlinuz",
 			// Cmdline: "console=ttys0",
 		},
 		Features: &vm.Features{
@@ -337,29 +339,31 @@ func main() {
 		log.Fatal("out: " + err.Error())
 	}
 
-	// fmt.Println(string(o))
-
-	// o, err := os.ReadFile("orig.xml")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
 	conn, err := libvirt.NewConnect("qemu:///system")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer conn.Close()
 
-	dom, err := conn.DomainCreateXML(string(o), libvirt.DomainCreateFlags(0))
+	dom, err := conn.DomainDefineXML(string(o)) // create persistent
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// dom, err := conn.LookupDomainByName("another-test-vm")
+	// if err != nil {
+	// 	log.Fatal("lookup: ", err)
+	// }
+
 	name, _ := dom.GetName()
 	fmt.Println("Name: ", name)
 
+	if err := dom.Create(); err != nil {
+		log.Fatal("start domain: ", err)
+	}
+
 	// create but not start
-	// conn.vmDefineXML()
+	// conn.DomainCreateXML() // create transient
 
 	// db, err := database.NewConnection("virtui.db")
 	// if err != nil {

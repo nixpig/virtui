@@ -2,7 +2,6 @@ package vm
 
 import (
 	"encoding/xml"
-	"io"
 
 	"github.com/google/uuid"
 )
@@ -317,12 +316,14 @@ type Watchdog struct {
 	Model  string `xml:"model,attr,omitempty"`
 }
 
-func NewDomainFromXML(xml string) (*Domain, error) {
-	return nil, nil
-}
+func NewDomainFromXML(b []byte) (*Domain, error) {
+	d := &Domain{}
 
-func NewDomainFromFile(r io.Reader) (*Domain, error) {
-	return nil, nil
+	if err := xml.Unmarshal(b, d); err != nil {
+		return nil, err
+	}
+
+	return d, nil
 }
 
 func NewDomain(name string) *Domain {

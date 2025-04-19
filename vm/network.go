@@ -2,8 +2,8 @@ package vm
 
 import (
 	"encoding/xml"
-	"io"
 
+	"github.com/digitalocean/go-libvirt"
 	"github.com/google/uuid"
 )
 
@@ -14,12 +14,27 @@ func NewNetwork(name string) *Network {
 	}
 }
 
-func NewNetworkFromXML(xml string) (*Network, error) {
-	return nil, nil
+func NewNetworkFromXML(b []byte) (*Network, error) {
+	n := &Network{}
+
+	if err := xml.Unmarshal(b, n); err != nil {
+		return nil, err
+	}
+
+	return n, nil
 }
 
-func NewNetworkFromFile(r io.Reader) (*Network, error) {
-	return nil, nil
+func (n *Network) Apply(c *libvirt.Libvirt) error {
+	b, err := n.ToXML()
+	if err != nil {
+		return err
+	}
+
+	if _, err := c.NetworkDefineXML(string(b)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (n *Network) ToXML() ([]byte, error) {

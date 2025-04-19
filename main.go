@@ -19,6 +19,24 @@ func main() {
 	conn, err := libvirt.ConnectToURI(uri)
 	defer conn.ConnectClose()
 
+	x, err := conn.NetworkLookupByName("default")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	s, err := conn.NetworkGetXMLDesc(x, 0)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	y, err := vm.NewNetworkFromXML([]byte(s))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("%+v", y)
+
+	return
 	// --- CREATE VOLUME
 
 	volume := vm.NewVolumeWithDefaults("default-vm.qcow2")

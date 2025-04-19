@@ -6,6 +6,16 @@ func NewVolume(name string) *Volume {
 	return &Volume{Name: name}
 }
 
+func NewVolumeFromXML(b []byte) (*Volume, error) {
+	v := &Volume{}
+
+	if err := xml.Unmarshal(b, v); err != nil {
+		return nil, err
+	}
+
+	return v, nil
+}
+
 func NewVolumeWithDefaults(name string) *Volume {
 	v := NewVolume(name)
 

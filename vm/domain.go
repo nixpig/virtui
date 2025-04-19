@@ -2,7 +2,6 @@ package vm
 
 import (
 	"encoding/xml"
-	"fmt"
 	"io"
 
 	"github.com/google/uuid"
@@ -198,25 +197,25 @@ type Disk struct {
 }
 
 type Domain struct {
-	XMLName       xml.Name       `xml:"domain"`
-	Title         string         `xml:"title,omitempty"`
-	Description   string         `xml:"description,omitempty"`
-	Type          DomainType     `xml:"type,attr,omitempty"`
-	Name          string         `xml:"name"`
-	UUID          string         `xml:"uuid,omitempty"`
-	Metadata      *Metadata      `xml:"metadata"`
-	Memory        *Memory        `xml:"memory"`
-	CurrentMemory *CurrentMemory `xml:"currentMemory"`
-	VCPU          *VCPU          `xml:"vcpu"`
-	OS            *OS            `xml:"os"`
-	Features      *Features      `xml:"features"`
-	CPU           *CPU           `xml:"cpu"`
-	Clock         *Clock         `xml:"clock"`
-	Devices       *Devices       `xml:"devices"`
-	OnCrash       OnEventAction  `xml:"on_crash,omitempty"`
-	OnPoweroff    OnEventAction  `xml:"on_poweroff,omitempty"`
-	OnReboot      OnEventAction  `xml:"on_reboot,omitempty"`
-	PM            *PM            `xml:"pm"`
+	XMLName       xml.Name        `xml:"domain"`
+	Title         string          `xml:"title,omitempty"`
+	Description   string          `xml:"description,omitempty"`
+	Type          DomainType      `xml:"type,attr,omitempty"`
+	Name          string          `xml:"name"`
+	UUID          string          `xml:"uuid,omitempty"`
+	Metadata      *DomainMetadata `xml:"metadata"`
+	Memory        *Memory         `xml:"memory"`
+	CurrentMemory *CurrentMemory  `xml:"currentMemory"`
+	VCPU          *VCPU           `xml:"vcpu"`
+	OS            *OS             `xml:"os"`
+	Features      *Features       `xml:"features"`
+	CPU           *CPU            `xml:"cpu"`
+	Clock         *Clock          `xml:"clock"`
+	Devices       *Devices        `xml:"devices"`
+	OnCrash       OnEventAction   `xml:"on_crash,omitempty"`
+	OnPoweroff    OnEventAction   `xml:"on_poweroff,omitempty"`
+	OnReboot      OnEventAction   `xml:"on_reboot,omitempty"`
+	PM            *PM             `xml:"pm"`
 }
 
 type Driver struct {
@@ -270,7 +269,7 @@ type Memory struct {
 	Unit     string `xml:"unit,attr,omitempty"`
 }
 
-type Metadata struct {
+type DomainMetadata struct {
 	LibOSInfo *LibOSInfo `xml:"libosinfo:libosinfo"`
 }
 
@@ -378,23 +377,17 @@ func NewDomainFromFile(r io.Reader) (*Domain, error) {
 	return nil, nil
 }
 
-func NewDomain(name string) (*Domain, error) {
-	id, err := uuid.NewUUID()
-	if err != nil {
-		return nil, fmt.Errorf("generate uuid: %w", err)
-	}
-
+func NewDomain(name string) *Domain {
 	return &Domain{
 		Name:     name,
-		UUID:     id.String(),
-		Metadata: &Metadata{LibOSInfo: &LibOSInfo{LibOSInfo: "", OS: &OS{}}},
+		UUID:     uuid.NewString(),
+		Metadata: &DomainMetadata{LibOSInfo: &LibOSInfo{LibOSInfo: "", OS: &OS{}}},
 		OS:       &OS{},
 		Features: &Features{},
 		Clock:    &Clock{},
 		PM:       &PM{SuspendToDisk: &SuspendToDisk{}, SuspendToMem: &SuspendToMem{}},
 		Devices:  &Devices{},
-	}, nil
-
+	}
 }
 
 func (d *Domain) ToXML() ([]byte, error) {
@@ -413,7 +406,7 @@ func (d *Domain) SetUUID(u string) {
 	d.UUID = u
 }
 
-func (d *Domain) SetMetaData(m *Metadata) {
+func (d *Domain) SetMetaData(m *DomainMetadata) {
 	d.Metadata = m
 }
 
@@ -573,11 +566,8 @@ func (d *Domain) SetLibOSID(l string) {
 	d.Metadata.LibOSInfo.OS.ID = l
 }
 
-func NewDomainWithDefaults(name string) (*Domain, error) {
-	c, err := NewDomain(name)
-	if err != nil {
-		return nil, err
-	}
+func NewDomainWithDefaults(name string) *Domain {
+	c := NewDomain(name)
 
 	c.Type = DOMAIN_TYPE_KVM
 
@@ -813,8 +803,7 @@ func NewDomainWithDefaults(name string) (*Domain, error) {
 	)
 
 	c.AddInterface(Interface{
-		Source: &Source{Network: "default"},
-		// Mac:    &Mac{Address: "52:54:00:66:21:bf"},
+		Source:  &Source{Network: "default1"},
 		Model:   &Model{Type: "virtio"},
 		Type:    "network",
 		Address: &Address{Type: "pci", Domain: "0x0000", Bus: "0x01", Slot: "0x00", Function: "0x0"},
@@ -858,5 +847,5 @@ func NewDomainWithDefaults(name string) (*Domain, error) {
 
 	c.SetOnReboot(ON_EVENT_ACTION_RESTART)
 
-	return c, nil
+	return c
 }

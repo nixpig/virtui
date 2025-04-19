@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/url"
 
@@ -11,16 +10,6 @@ import (
 
 func main() {
 
-	domain, err := vm.NewDomainWithDefaults("another-new-vm")
-	if err != nil {
-		log.Fatal("default domain: " + err.Error())
-	}
-
-	output, err := domain.ToXML()
-	if err != nil {
-		log.Fatal("to xml: " + err.Error())
-	}
-
 	uri, err := url.Parse("qemu:///system")
 	if err != nil {
 		log.Fatal(err)
@@ -29,16 +18,43 @@ func main() {
 	conn, err := libvirt.ConnectToURI(uri)
 	defer conn.ConnectClose()
 
+	// --- CREATE NETWORK
+
+	network := vm.NewNetworkWithDefaults("default1")
+	netXML, err := network.ToXML()
+	if err != nil {
+		log.Fatal("network to xml: " + err.Error())
+	}
+
+	n, err := conn.NetworkDefineXML(string(netXML))
+	if err != nil {
+		log.Fatal("define network: " + err.Error())
+	}
+
+	if err := conn.NetworkCreate(n); err != nil {
+		log.Fatal("start network: " + err.Error())
+	}
+
+	// ------------------------------------------------
+
+	// --- CREATE DOMAIN
+	//
+	domain := vm.NewDomainWithDefaults("network-test-vm")
+
+	output, err := domain.ToXML()
+	if err != nil {
+		log.Fatal("domain to xml: " + err.Error())
+	}
+
 	dom, err := conn.DomainDefineXML(string(output)) // create persistent
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("define domain: " + err.Error())
 	}
-
-	fmt.Println("Name: ", dom.Name)
 
 	if err := conn.DomainCreate(dom); err != nil {
-		log.Fatal("start domain: ", err)
+		log.Fatal("start domain: " + err.Error())
 	}
+	// ------------------------------------------------
 
 	// db, err := database.NewConnection("virtui.db")
 	// if err != nil {

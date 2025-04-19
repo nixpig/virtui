@@ -7,8 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type Readonly struct{}
-
 const (
 	MACHINE_TYPE_Q35 = "q35"
 	ARCH_X86_64      = "x86_64"
@@ -33,6 +31,8 @@ const (
 	BOOT_DEVICE_CDROM   = "cdrom"
 	BOOT_DEVICE_NETWORK = "network"
 )
+
+type Readonly struct{}
 
 type ACPI struct{}
 

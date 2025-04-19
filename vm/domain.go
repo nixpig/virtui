@@ -9,81 +9,29 @@ import (
 
 type Readonly struct{}
 
-type MachineType string
-
 const (
-	MACHINE_TYPE_Q35 MachineType = "q35"
-	// MACHINE_TYPE_I440FX MachineType = "pc-i440fx"
-)
+	MACHINE_TYPE_Q35 = "q35"
+	ARCH_X86_64      = "x86_64"
+	DOMAIN_TYPE_KVM  = "kvm"
+	OS_TYPE_HVM      = "hvm"
 
-type DomainArch string
+	ON_EVENT_ACTION_DESTROY        = "destroy"
+	ON_EVENT_ACTION_RESTART        = "restart"
+	ON_EVENT_ACTION_PRESERVE       = "preserve"
+	ON_EVENT_ACTION_RENAME_RESTART = "rename-restart"
 
-const (
-	ARCH_X86_64 DomainArch = "x86_64"
-)
+	FLAG_ENABLED_YES = "yes"
+	FLAG_ENABLED_NO  = "no"
 
-type DomainType string
+	DISK_DEVICE_FLOPPY = "floppy"
+	DISK_DEVICE_DISK   = "disk"
+	DISK_DEVICE_CDROM  = "cdrom"
+	DISK_DEVICE_LUN    = "lun"
 
-const (
-	DOMAIN_TYPE_KVM DomainType = "kvm"
-	// DOMAIN_TYPE_XEN = "xen"
-	// DOMAIN_TYPE_QEMU = "qemu"
-	// DOMAIN_TYPE_HVF = "hvf"
-	// DOMAIN_TYPE_LXC = "lxc"
-)
-
-type OSType string
-
-const (
-	OS_TYPE_HVM   OSType = "hvm"   // OS designed to run on bare metal
-	OS_TYPE_LINUX        = "linux" // OS designed to run on Xen 3
-)
-
-type OnEventAction string
-
-const (
-	ON_EVENT_ACTION_DESTROY        OnEventAction = "destroy"
-	ON_EVENT_ACTION_RESTART        OnEventAction = "restart"
-	ON_EVENT_ACTION_PRESERVE       OnEventAction = "preserve"
-	ON_EVENT_ACTION_RENAME_RESTART OnEventAction = "rename-restart"
-)
-
-type EnabledFlag string
-
-const (
-	FLAG_ENABLED_YES EnabledFlag = "yes"
-	FLAG_ENABLED_NO  EnabledFlag = "no"
-)
-
-type DiskType string
-
-const (
-	DISK_TYPE_FILE       DiskType = "file"
-	DISK_TYPE_BLOCK      DiskType = "block"
-	DISK_TYPE_NETWORK    DiskType = "network"
-	DISK_TYPE_VOLUME     DiskType = "volume"
-	DISK_TYPE_DIR        DiskType = "dir"
-	DISK_TYPE_NVME       DiskType = "nvme"
-	DISK_TYPE_VHOST_USER DiskType = "vhostuser"
-	DISK_TYPE_VHOST_VDPA DiskType = "vhostvdpa"
-)
-
-type DiskDevice string
-
-const (
-	DISK_DEVICE_FLOPPY DiskDevice = "floppy"
-	DISK_DEVICE_DISK   DiskDevice = "disk"
-	DISK_DEVICE_CDROM  DiskDevice = "cdrom"
-	DISK_DEVICE_LUN    DiskDevice = "lun"
-)
-
-type BootDevice string
-
-const (
-	BOOT_DEVICE_FLOPPY  BootDevice = "fd"
-	BOOT_DEVICE_DISK    BootDevice = "hd"
-	BOOT_DEVICE_CDROM   BootDevice = "cdrom"
-	BOOT_DEVICE_NETWORK BootDevice = "network"
+	BOOT_DEVICE_FLOPPY  = "fd"
+	BOOT_DEVICE_DISK    = "hd"
+	BOOT_DEVICE_CDROM   = "cdrom"
+	BOOT_DEVICE_NETWORK = "network"
 )
 
 type ACPI struct{}
@@ -118,18 +66,18 @@ type Backend struct {
 }
 
 type BIOS struct {
-	RebootTimeout int         `xml:"rebootTimeout,attr"`
-	UseSerial     EnabledFlag `xml:"useserial,attr,omitempty"`
+	RebootTimeout int    `xml:"rebootTimeout,attr"`
+	UseSerial     string `xml:"useserial,attr,omitempty"`
 }
 
 type Boot struct {
-	Dev   BootDevice `xml:"dev,attr,omitempty"`
-	Order int        `xml:"order,attr"`
+	Dev   string `xml:"dev,attr,omitempty"`
+	Order int    `xml:"order,attr"`
 }
 
 type BootMenu struct {
-	Enable  EnabledFlag `xml:"enable,attr,omitempty"`
-	Timeout *int        `xml:"timeout,attr"`
+	Enable  string `xml:"enable,attr,omitempty"`
+	Timeout *int   `xml:"timeout,attr"`
 }
 
 type Channel struct {
@@ -186,21 +134,21 @@ type Devices struct {
 }
 
 type Disk struct {
-	Type     DiskType   `xml:"type,attr"`
-	Device   DiskDevice `xml:"device,attr"`
-	Driver   *Driver    `xml:"driver"`
-	Source   *Source    `xml:"source"`
-	Target   *Target    `xml:"target"`
-	Address  *Address   `xml:"address"`
-	Boot     *Boot      `xml:"boot"`
-	Readonly *Readonly  `xml:"readonly"`
+	Type     string    `xml:"type,attr"`
+	Device   string    `xml:"device,attr"`
+	Driver   *Driver   `xml:"driver"`
+	Source   *Source   `xml:"source"`
+	Target   *Target   `xml:"target"`
+	Address  *Address  `xml:"address"`
+	Boot     *Boot     `xml:"boot"`
+	Readonly *Readonly `xml:"readonly"`
 }
 
 type Domain struct {
 	XMLName       xml.Name        `xml:"domain"`
 	Title         string          `xml:"title,omitempty"`
 	Description   string          `xml:"description,omitempty"`
-	Type          DomainType      `xml:"type,attr,omitempty"`
+	Type          string          `xml:"type,attr,omitempty"`
 	Name          string          `xml:"name"`
 	UUID          string          `xml:"uuid,omitempty"`
 	Metadata      *DomainMetadata `xml:"metadata"`
@@ -212,9 +160,9 @@ type Domain struct {
 	CPU           *CPU            `xml:"cpu"`
 	Clock         *Clock          `xml:"clock"`
 	Devices       *Devices        `xml:"devices"`
-	OnCrash       OnEventAction   `xml:"on_crash,omitempty"`
-	OnPoweroff    OnEventAction   `xml:"on_poweroff,omitempty"`
-	OnReboot      OnEventAction   `xml:"on_reboot,omitempty"`
+	OnCrash       string          `xml:"on_crash,omitempty"`
+	OnPoweroff    string          `xml:"on_poweroff,omitempty"`
+	OnReboot      string          `xml:"on_reboot,omitempty"`
 	PM            *PM             `xml:"pm"`
 }
 
@@ -323,11 +271,11 @@ type Source struct {
 }
 
 type SuspendToDisk struct {
-	Enabled EnabledFlag `xml:"enabled,attr"`
+	Enabled string `xml:"enabled,attr"`
 }
 
 type SuspendToMem struct {
-	Enabled EnabledFlag `xml:"enabled,attr"`
+	Enabled string `xml:"enabled,attr"`
 }
 
 type Target struct {
@@ -348,9 +296,9 @@ type Timer struct {
 }
 
 type Type struct {
-	Arch     DomainArch  `xml:"arch,attr,omitempty"`
-	Machine  MachineType `xml:"machine,attr,omitempty"`
-	CharData OSType      `xml:",chardata"`
+	Arch     string `xml:"arch,attr,omitempty"`
+	Machine  string `xml:"machine,attr,omitempty"`
+	CharData string `xml:",chardata"`
 }
 
 type VCPU struct {
@@ -546,15 +494,15 @@ func (d *Domain) SetMemBalloon(m *MemBalloon) {
 	d.Devices.MemBalloon = m
 }
 
-func (d *Domain) SetOnReboot(o OnEventAction) {
+func (d *Domain) SetOnReboot(o string) {
 	d.OnReboot = o
 }
 
-func (d *Domain) SetOnPoweroff(o OnEventAction) {
+func (d *Domain) SetOnPoweroff(o string) {
 	d.OnPoweroff = o
 }
 
-func (d *Domain) SetOnCrash(o OnEventAction) {
+func (d *Domain) SetOnCrash(o string) {
 	d.OnCrash = o
 }
 

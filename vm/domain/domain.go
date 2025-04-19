@@ -408,9 +408,7 @@ func (d *Domain) AddClockTimer(t Timer) {
 }
 
 func (d *Domain) AddClockTimers(t ...Timer) {
-	for _, x := range t {
-		d.Clock.Timers = append(d.Clock.Timers, x)
-	}
+	d.Clock.Timers = append(d.Clock.Timers, t...)
 }
 
 func (d *Domain) EnableSuspendToMemory() {
@@ -438,9 +436,7 @@ func (d *Domain) AddDisk(s Disk) {
 }
 
 func (d *Domain) AddDisks(s ...Disk) {
-	for _, x := range s {
-		d.Devices.Disks = append(d.Devices.Disks, x)
-	}
+	d.Devices.Disks = append(d.Devices.Disks, s...)
 }
 
 func (d *Domain) AddController(c Controller) {
@@ -448,9 +444,7 @@ func (d *Domain) AddController(c Controller) {
 }
 
 func (d *Domain) AddControllers(c ...Controller) {
-	for _, x := range c {
-		d.Devices.Controllers = append(d.Devices.Controllers, x)
-	}
+	d.Devices.Controllers = append(d.Devices.Controllers, c...)
 }
 
 func (d *Domain) AddInterface(i Interface) {

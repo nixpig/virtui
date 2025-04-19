@@ -89,4 +89,71 @@ Saved -> Restore, Clone, Delete
 
 ---
 
+### Connect to QEMU
 
+```go
+	uri, err := url.Parse("qemu:///system")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	conn, err := libvirt.ConnectToURI(uri)
+	defer conn.ConnectClose()
+```
+
+### Create storage volume
+
+```go
+	vol := volume.NewWithDefaults("default-vm.qcow2")
+	volXML, err := vol.ToXML()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	pool, err := conn.StoragePoolLookupByName("default")
+	if err != nil {
+		log.Fatal("get storage pool: ", err.Error())
+	}
+
+	if _, err := conn.StorageVolCreateXML(pool, string(volXML), 0); err != nil {
+		log.Fatal("create storage volume: " + err.Error())
+	}
+```
+
+### Create and start network
+
+```go
+	vnet := network.NewWithDefaults("default1")
+	vnetXML, err := vnet.ToXML()
+	if err != nil {
+		log.Fatal("network to xml: " + err.Error())
+	}
+
+	if n, err := conn.NetworkDefineXML(string(vnetXML)); err != nil {
+		log.Fatal("define network: " + err.Error())
+	} else {
+		if err := conn.NetworkCreate(n); err != nil {
+			log.Fatal("start network: " + err.Error())
+		}
+	}
+
+```
+
+### Create and start VM
+
+```go
+	dom := domain.NewWithDefaults("network-test-vm")
+
+	domXML, err := dom.ToXML()
+	if err != nil {
+		log.Fatal("domain to xml: " + err.Error())
+	}
+
+	if d, err := conn.DomainDefineXML(string(domXML)); err != nil {
+		log.Fatal("define domain: " + err.Error())
+	} else {
+		if err := conn.DomainCreate(d); err != nil {
+			log.Fatal("start domain: " + err.Error())
+		}
+	}
+```

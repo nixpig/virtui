@@ -556,7 +556,7 @@ func NewDomainWithDefaults(name string) *Domain {
 			Device: "disk",
 			Boot:   &Boot{Order: 1},
 			Driver: &Driver{Name: "qemu", Type: "qcow2", Discard: "unmap"},
-			Source: &Source{File: "/var/lib/libvirt/images/test-vm.qcow2"},
+			Source: &Source{File: "/var/lib/libvirt/images/default-vm.qcow2"},
 			Target: &Target{Dev: "vda", Bus: "virtio"},
 			Address: &Address{
 				Type:     "pci",

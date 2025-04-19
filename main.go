@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/url"
 
@@ -17,6 +18,28 @@ func main() {
 
 	conn, err := libvirt.ConnectToURI(uri)
 	defer conn.ConnectClose()
+
+	// --- CREATE VOLUME
+
+	volume := vm.NewVolumeWithDefaults("default-vm.qcow2")
+	volXML, err := volume.ToXMLFormatted()
+	if err != nil {
+		log.Fatal("volume to xml: " + err.Error())
+	}
+
+	fmt.Println(string(volXML))
+
+	pool, err := conn.StoragePoolLookupByName("default")
+	if err != nil {
+		log.Fatal("get storage pool: ", err.Error())
+	}
+
+	v, err := conn.StorageVolCreateXML(pool, string(volXML), 0)
+	if err != nil {
+		log.Fatal("create storage volume: " + err.Error())
+	}
+
+	fmt.Println("created volume: ", v.Name)
 
 	// --- CREATE NETWORK
 
@@ -35,10 +58,12 @@ func main() {
 		log.Fatal("start network: " + err.Error())
 	}
 
+	fmt.Println("created network: ", n.Name)
+
 	// ------------------------------------------------
 
 	// --- CREATE DOMAIN
-	//
+
 	domain := vm.NewDomainWithDefaults("network-test-vm")
 
 	output, err := domain.ToXML()
@@ -54,6 +79,9 @@ func main() {
 	if err := conn.DomainCreate(dom); err != nil {
 		log.Fatal("start domain: " + err.Error())
 	}
+
+	fmt.Println("created domain: ", dom.Name)
+
 	// ------------------------------------------------
 
 	// db, err := database.NewConnection("virtui.db")

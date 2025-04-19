@@ -2,11 +2,17 @@ package vm
 
 import (
 	"encoding/xml"
-
 	"io"
 
 	"github.com/google/uuid"
 )
+
+func NewNetwork(name string) *Network {
+	return &Network{
+		Name: name,
+		UUID: uuid.NewString(),
+	}
+}
 
 func NewNetworkFromXML(xml string) (*Network, error) {
 	return nil, nil
@@ -14,13 +20,6 @@ func NewNetworkFromXML(xml string) (*Network, error) {
 
 func NewNetworkFromFile(r io.Reader) (*Network, error) {
 	return nil, nil
-}
-
-func NewNetwork(name string) *Network {
-	return &Network{
-		Name: name,
-		UUID: uuid.NewString(),
-	}
 }
 
 func (n *Network) ToXML() ([]byte, error) {

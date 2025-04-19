@@ -1,4 +1,4 @@
-package vm
+package network
 
 import (
 	"encoding/xml"
@@ -7,14 +7,14 @@ import (
 	"github.com/google/uuid"
 )
 
-func NewNetwork(name string) *Network {
+func New(name string) *Network {
 	return &Network{
 		Name: name,
 		UUID: uuid.NewString(),
 	}
 }
 
-func NewNetworkFromXML(b []byte) (*Network, error) {
+func NewFromXML(b []byte) (*Network, error) {
 	n := &Network{}
 
 	if err := xml.Unmarshal(b, n); err != nil {
@@ -95,8 +95,8 @@ type AddressRange struct {
 	End   string `xml:"end,attr,omitempty"`
 }
 
-func NewNetworkWithDefaults(name string) *Network {
-	n := NewNetwork(name)
+func NewWithDefaults(name string) *Network {
+	n := New(name)
 
 	n.Forward = &Forward{
 		Mode: "nat",

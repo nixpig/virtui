@@ -6,7 +6,9 @@ import (
 	"net/url"
 
 	"github.com/digitalocean/go-libvirt"
-	"github.com/nixpig/virtui/vm"
+	"github.com/nixpig/virtui/vm/domain"
+	"github.com/nixpig/virtui/vm/network"
+	"github.com/nixpig/virtui/vm/volume"
 )
 
 func main() {
@@ -19,86 +21,59 @@ func main() {
 	conn, err := libvirt.ConnectToURI(uri)
 	defer conn.ConnectClose()
 
-	x, err := conn.NetworkLookupByName("default")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	s, err := conn.NetworkGetXMLDesc(x, 0)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	y, err := vm.NewNetworkFromXML([]byte(s))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Printf("%+v", y)
-
-	return
 	// --- CREATE VOLUME
 
-	volume := vm.NewVolumeWithDefaults("default-vm.qcow2")
-	volXML, err := volume.ToXMLFormatted()
+	vol := volume.NewWithDefaults("default-vm.qcow2")
+	volXML, err := vol.ToXML()
 	if err != nil {
-		log.Fatal("volume to xml: " + err.Error())
+		log.Fatal(err)
 	}
-
-	fmt.Println(string(volXML))
 
 	pool, err := conn.StoragePoolLookupByName("default")
 	if err != nil {
 		log.Fatal("get storage pool: ", err.Error())
 	}
 
-	v, err := conn.StorageVolCreateXML(pool, string(volXML), 0)
-	if err != nil {
+	if _, err := conn.StorageVolCreateXML(pool, string(volXML), 0); err != nil {
 		log.Fatal("create storage volume: " + err.Error())
 	}
 
-	fmt.Println("created volume: ", v.Name)
-
 	// --- CREATE NETWORK
 
-	network := vm.NewNetworkWithDefaults("default1")
-	netXML, err := network.ToXML()
+	vnet := network.NewWithDefaults("default1")
+	vnetXML, err := vnet.ToXML()
 	if err != nil {
 		log.Fatal("network to xml: " + err.Error())
 	}
 
-	n, err := conn.NetworkDefineXML(string(netXML))
-	if err != nil {
+	if n, err := conn.NetworkDefineXML(string(vnetXML)); err != nil {
 		log.Fatal("define network: " + err.Error())
+	} else {
+		if err := conn.NetworkCreate(n); err != nil {
+			log.Fatal("start network: " + err.Error())
+		}
 	}
-
-	if err := conn.NetworkCreate(n); err != nil {
-		log.Fatal("start network: " + err.Error())
-	}
-
-	fmt.Println("created network: ", n.Name)
 
 	// ------------------------------------------------
 
 	// --- CREATE DOMAIN
 
-	domain := vm.NewDomainWithDefaults("network-test-vm")
+	dom := domain.NewWithDefaults("network-test-vm")
 
-	output, err := domain.ToXML()
+	domXML, err := dom.ToXML()
 	if err != nil {
 		log.Fatal("domain to xml: " + err.Error())
 	}
 
-	dom, err := conn.DomainDefineXML(string(output)) // create persistent
-	if err != nil {
+	if d, err := conn.DomainDefineXML(string(domXML)); err != nil {
 		log.Fatal("define domain: " + err.Error())
+	} else {
+		if err := conn.DomainCreate(d); err != nil {
+			log.Fatal("start domain: " + err.Error())
+		}
 	}
 
-	if err := conn.DomainCreate(dom); err != nil {
-		log.Fatal("start domain: " + err.Error())
-	}
-
-	fmt.Println("created domain: ", dom.Name)
+	fmt.Println("done!")
 
 	// ------------------------------------------------
 

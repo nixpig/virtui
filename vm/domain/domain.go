@@ -1,4 +1,4 @@
-package vm
+package domain
 
 import (
 	"encoding/xml"
@@ -316,7 +316,7 @@ type Watchdog struct {
 	Model  string `xml:"model,attr,omitempty"`
 }
 
-func NewDomainFromXML(b []byte) (*Domain, error) {
+func NewFromXML(b []byte) (*Domain, error) {
 	d := &Domain{}
 
 	if err := xml.Unmarshal(b, d); err != nil {
@@ -326,7 +326,7 @@ func NewDomainFromXML(b []byte) (*Domain, error) {
 	return d, nil
 }
 
-func NewDomain(name string) *Domain {
+func New(name string) *Domain {
 	return &Domain{
 		Name:     name,
 		UUID:     uuid.NewString(),
@@ -515,8 +515,8 @@ func (d *Domain) SetLibOSID(l string) {
 	d.Metadata.LibOSInfo.OS.ID = l
 }
 
-func NewDomainWithDefaults(name string) *Domain {
-	c := NewDomain(name)
+func NewWithDefaults(name string) *Domain {
+	c := New(name)
 
 	c.Type = DOMAIN_TYPE_KVM
 

@@ -1,12 +1,12 @@
-package vm
+package volume
 
 import "encoding/xml"
 
-func NewVolume(name string) *Volume {
+func New(name string) *Volume {
 	return &Volume{Name: name}
 }
 
-func NewVolumeFromXML(b []byte) (*Volume, error) {
+func NewFromXML(b []byte) (*Volume, error) {
 	v := &Volume{}
 
 	if err := xml.Unmarshal(b, v); err != nil {
@@ -16,8 +16,8 @@ func NewVolumeFromXML(b []byte) (*Volume, error) {
 	return v, nil
 }
 
-func NewVolumeWithDefaults(name string) *Volume {
-	v := NewVolume(name)
+func NewWithDefaults(name string) *Volume {
+	v := New(name)
 
 	v.Type = "file"
 	v.Allocation = 0

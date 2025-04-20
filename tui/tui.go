@@ -137,8 +137,10 @@ func (m appModel) View() string {
 
 	// help
 	helpStyle := lipgloss.NewStyle().
-		Width(containerWidth - lipgloss.ASCIIBorder().GetRightSize() - lipgloss.ASCIIBorder().GetLeftSize()).
-		BorderStyle(lipgloss.NormalBorder())
+		Width(containerWidth - lipgloss.ASCIIBorder().GetLeftSize() - lipgloss.ASCIIBorder().GetRightSize()).
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderTop(true).
+		BorderForeground(lipgloss.Color("#555555"))
 
 	helpView := helpStyle.Render(m.help.View(m.keys))
 	helpHeight := lipgloss.Height(helpView)
@@ -147,12 +149,14 @@ func (m appModel) View() string {
 	content := m.tabs[m.activeTab]
 	contentStyle := lipgloss.NewStyle().
 		BorderStyle(lipgloss.NormalBorder()).
-		Height(containerHeight - helpHeight - tabHeight - lipgloss.ASCIIBorder().GetBottomSize() - lipgloss.ASCIIBorder().GetTopSize()).
+		Height(containerHeight - tabHeight - lipgloss.ASCIIBorder().GetBottomSize() - lipgloss.ASCIIBorder().GetTopSize()).
 		Width(containerWidth - lipgloss.ASCIIBorder().GetLeftSize() - lipgloss.ASCIIBorder().GetRightSize())
 
-	contentView := contentStyle.Render(content)
+	padding := lipgloss.NewStyle().Height(contentStyle.GetHeight() - helpHeight - 1).Render("")
+
+	contentView := contentStyle.Render(lipgloss.JoinVertical(lipgloss.Top, content, padding, helpView))
 
 	return containerStyle.Render(
-		lipgloss.JoinVertical(lipgloss.Top, renderedTabRow, contentView, helpView),
+		lipgloss.JoinVertical(lipgloss.Top, renderedTabRow, contentView),
 	)
 }

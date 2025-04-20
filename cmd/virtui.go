@@ -8,9 +8,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/nixpig/virtui/app"
 	"github.com/nixpig/virtui/config"
+	"github.com/nixpig/virtui/connection"
 	"github.com/nixpig/virtui/database"
+	"github.com/nixpig/virtui/tui"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
@@ -42,14 +43,14 @@ func main() {
 
 	log.SetOutput(f)
 
-	db := v.GetString(config.DatabaseKey)
-	conn, err := database.NewConnection(db)
+	dbName := v.GetString(config.DatabaseKey)
+	dbConn, err := database.NewConnection(dbName)
 	if err != nil {
 		fatality("failed to open database connection", err)
 	}
-	defer conn.Close()
+	defer dbConn.Close()
 
-	mig, err := database.NewMigration(conn, database.Migrations)
+	mig, err := database.NewMigration(dbConn, database.Migrations)
 	if err != nil {
 		fatality("failed to create migration", err)
 	}
@@ -60,23 +61,10 @@ func main() {
 		}
 	}
 
-	// TODO: need to do the domain subscription from connection
-
-	// if err := libvirt.EventRegisterDefaultImpl(); err != nil {
-	// 	fatality("failed to register event loop", err)
-	// }
-	//
-	// go func() {
-	// 	for {
-	// 		if err := libvirt.EventRunDefaultImpl(); err != nil {
-	// 			log.Error("run event loop", "err", err)
-	// 			fatality("failed to run event loop", err)
-	// 		}
-	// 	}
-	// }()
+	store := connection.NewConnectionStoreImpl(dbConn)
 
 	if _, err := tea.NewProgram(
-		app.InitModel(conn),
+		tui.InitModel(store),
 		tea.WithAltScreen(),
 	).Run(); err != nil {
 		fatality("failed to run virtui", err)

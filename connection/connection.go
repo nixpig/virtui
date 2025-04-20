@@ -6,7 +6,7 @@ import (
 
 type Connection struct {
 	ID          int
-	URL         string
+	URI         string
 	Autoconnect bool
 }
 
@@ -15,6 +15,7 @@ type ConnectionStore interface {
 	InsertConnection(connection *Connection) error
 	GetConnections() ([]Connection, error)
 	GetConnectionByID(id int) (*Connection, error)
+	GetConnectionByURI(uri string) (*Connection, error)
 	DeleteConnectionByID(id int) error
 }
 
@@ -40,16 +41,16 @@ func (c ConnectionStoreImpl) HasConnections() (bool, error) {
 
 func (c ConnectionStoreImpl) InsertConnection(connection *Connection) error {
 	query := `insert into connections_ (
-		url_,
+		uri_,
 		autoconnect_
 	) values (
-		$url,
+		$uri,
 		$autoconnect
 	);`
 
 	if _, err := c.db.Exec(
 		query,
-		sql.Named("url", connection.URL),
+		sql.Named("uri", connection.URI),
 		sql.Named("autoconnect", connection.Autoconnect),
 	); err != nil {
 		return err
@@ -59,7 +60,7 @@ func (c ConnectionStoreImpl) InsertConnection(connection *Connection) error {
 }
 
 func (c ConnectionStoreImpl) GetConnections() ([]Connection, error) {
-	query := `select id_, url_, autoconnect_ from connections_;`
+	query := `select id_, uri_, autoconnect_ from connections_;`
 
 	rows, err := c.db.Query(query)
 	if err != nil {
@@ -71,7 +72,7 @@ func (c ConnectionStoreImpl) GetConnections() ([]Connection, error) {
 		var connection Connection
 		if err := rows.Scan(
 			&connection.ID,
-			&connection.URL,
+			&connection.URI,
 			&connection.Autoconnect,
 		); err != nil {
 			return nil, err
@@ -83,15 +84,32 @@ func (c ConnectionStoreImpl) GetConnections() ([]Connection, error) {
 	return connections, nil
 }
 
+func (c ConnectionStoreImpl) GetConnectionByURI(uri string) (*Connection, error) {
+	query := `select id_, uri_, autoconnect_ from connections_ where uri_ = $uri;`
+
+	row := c.db.QueryRow(query, sql.Named("uri", uri))
+
+	var connection Connection
+	if err := row.Scan(
+		&connection.ID,
+		&connection.URI,
+		&connection.Autoconnect,
+	); err != nil {
+		return nil, err
+	}
+
+	return &connection, nil
+}
+
 func (c ConnectionStoreImpl) GetConnectionByID(id int) (*Connection, error) {
-	query := `select id_, url_, autoconnect_ from connections_ where id_ = $id;`
+	query := `select id_, uri_, autoconnect_ from connections_ where id_ = $id;`
 
 	row := c.db.QueryRow(query, sql.Named("id", id))
 
 	var connection Connection
 	if err := row.Scan(
 		&connection.ID,
-		&connection.URL,
+		&connection.URI,
 		&connection.Autoconnect,
 	); err != nil {
 		return nil, err

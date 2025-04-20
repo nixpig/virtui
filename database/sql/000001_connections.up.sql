@@ -1,5 +1,5 @@
 create table if not exists connections_ (
   id_ integer primary key autoincrement,
-  url_ varchar(2048) not null,
+  uri_ varchar(2048) not null,
   autoconnect_ boolean default false
 );

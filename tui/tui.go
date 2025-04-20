@@ -25,7 +25,7 @@ type appModel struct {
 	keys  keys.GlobalMap
 
 	activeModel tea.Model
-	connections []*libvirt.Libvirt
+	connections map[string]*libvirt.Libvirt
 
 	width  int
 	height int
@@ -43,7 +43,7 @@ func InitTUI(store connection.ConnectionStore) appModel {
 		help:  help.New(),
 		keys:  keys.Global,
 
-		connections: []*libvirt.Libvirt{},
+		connections: make(map[string]*libvirt.Libvirt),
 
 		tabs:      []string{"(1) Virtual Machines", "(2) Networks", "(3) Storage"},
 		activeTab: 0,
@@ -86,7 +86,7 @@ func InitTUI(store connection.ConnectionStore) appModel {
 			continue
 		}
 
-		model.connections = append(model.connections, lv)
+		model.connections[c.URI] = lv
 	}
 
 	model.activeModel = initDashboard(model.connections)
@@ -100,7 +100,7 @@ func (m appModel) Init() tea.Cmd {
 
 func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// var cmd tea.Cmd
-	var cmds []tea.Cmd
+	// var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -128,7 +128,7 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	return m, tea.Batch(cmds...)
+	return m, nil
 }
 
 func (m appModel) View() string {

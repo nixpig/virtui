@@ -8,23 +8,32 @@ import (
 	"github.com/digitalocean/go-libvirt"
 )
 
+type dashboardData map[string]map[libvirt.UUID]libvirt.Domain
+
 type dashboardModel struct {
-	connections []*libvirt.Libvirt
-	domains     []libvirt.Domain
+	connections map[string]*libvirt.Libvirt
+	data        dashboardData
 }
 
-func initDashboard(connections []*libvirt.Libvirt) dashboardModel {
+func initDashboard(connections map[string]*libvirt.Libvirt) dashboardModel {
 	model := dashboardModel{
 		connections: connections,
+		data:        make(dashboardData),
 	}
 
-	for _, c := range model.connections {
-		d, _, err := c.ConnectListAllDomains(1, 0)
+	for k, c := range model.connections {
+		m := make(map[libvirt.UUID]libvirt.Domain)
+
+		domains, _, err := c.ConnectListAllDomains(1, 0)
 		if err != nil {
 			continue
 		}
 
-		model.domains = append(model.domains, d...)
+		for _, d := range domains {
+			m[d.UUID] = d
+		}
+
+		model.data[k] = m
 	}
 
 	return model
@@ -41,8 +50,13 @@ func (m dashboardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m dashboardModel) View() string {
 	var v strings.Builder
 
-	for i, d := range m.domains {
-		v.WriteString(fmt.Sprintf("%d - %s\n", i, d.Name))
+	for k, c := range m.data {
+		v.WriteString(fmt.Sprintf("Connection: %s\n", k))
+
+		for _, d := range c {
+			s, _, _ := m.connections[k].DomainGetState(d, 0)
+			v.WriteString(fmt.Sprintf("- %s - %d\n", d.Name, s))
+		}
 	}
 
 	return v.String()

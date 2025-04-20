@@ -10,12 +10,12 @@ import (
 )
 
 type storageModel struct {
-	connections []*libvirt.Libvirt
+	connections map[string]*libvirt.Libvirt
 	pools       []libvirt.StoragePool
 	volumes     []string
 }
 
-func initStorage(connections []*libvirt.Libvirt) storageModel {
+func initStorage(connections map[string]*libvirt.Libvirt) storageModel {
 	model := storageModel{
 		connections: connections,
 	}

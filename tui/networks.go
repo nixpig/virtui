@@ -10,11 +10,11 @@ import (
 )
 
 type networkModel struct {
-	connections []*libvirt.Libvirt
+	connections map[string]*libvirt.Libvirt
 	networks    []libvirt.Network
 }
 
-func initNetwork(connections []*libvirt.Libvirt) networkModel {
+func initNetwork(connections map[string]*libvirt.Libvirt) networkModel {
 	model := networkModel{
 		connections: connections,
 	}

@@ -1,10 +1,15 @@
 package keys
 
-import "github.com/charmbracelet/bubbles/key"
+import (
+	"github.com/charmbracelet/bubbles/key"
+)
 
 type GlobalMap struct {
-	Help key.Binding
-	Quit key.Binding
+	Help      key.Binding
+	Quit      key.Binding
+	Dashboard key.Binding
+	Networks  key.Binding
+	Storage   key.Binding
 }
 
 func (k GlobalMap) ShortHelp() []key.Binding {
@@ -25,5 +30,14 @@ var Global = GlobalMap{
 	Quit: key.NewBinding(
 		key.WithKeys("q", "Q", "ctrl+c"),
 		key.WithHelp("q", "quit"),
+	),
+	Dashboard: key.NewBinding(
+		key.WithKeys("1"),
+	),
+	Networks: key.NewBinding(
+		key.WithKeys("2"),
+	),
+	Storage: key.NewBinding(
+		key.WithKeys("3"),
 	),
 }

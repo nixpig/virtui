@@ -23,6 +23,12 @@ type appModel struct {
 
 	width  int
 	height int
+
+	helpModels map[string][]tea.Model
+	keyMaps    map[string]map[string]key.Binding
+
+	tabs      []string
+	activeTab int
 }
 
 func InitModel(store connection.ConnectionStore) appModel {
@@ -30,6 +36,9 @@ func InitModel(store connection.ConnectionStore) appModel {
 		store: store,
 		help:  help.New(),
 		keys:  keys.Global,
+
+		tabs:      []string{"(1) Virtual Machines", "(2) Networks", "(3) Storage"},
+		activeTab: 0,
 	}
 
 	return model
@@ -72,7 +81,12 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case key.Matches(msg, keys.Global.Help):
 			m.help.ShowAll = !m.help.ShowAll
-			return m, nil
+		case key.Matches(msg, keys.Global.Dashboard):
+			m.activeTab = 0
+		case key.Matches(msg, m.keys.Networks):
+			m.activeTab = 1
+		case key.Matches(msg, keys.Global.Storage):
+			m.activeTab = 2
 		}
 	}
 
@@ -80,37 +94,65 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m appModel) View() string {
+	// tabs
+	renderedTabs := make([]string, len(m.tabs))
+
+	for i, t := range m.tabs {
+
+		borderForeground := lipgloss.Color("#999999")
+		borderBottom := true
+
+		if m.activeTab == i {
+			borderForeground = lipgloss.Color("#ffffff")
+			// borderBottom = false
+		}
+
+		tabStyle := lipgloss.NewStyle().
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderTop(true).
+			BorderRight(true).
+			BorderBottom(borderBottom).
+			BorderLeft(true).
+			Margin(0).
+			BorderForeground(borderForeground)
+
+		renderedTabs[i] = tabStyle.Render(t)
+	}
+
+	renderedTabRow := lipgloss.NewStyle().
+		Padding(0).
+		Margin(0).
+		Render(lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs...))
+	tabHeight := lipgloss.Height(renderedTabRow)
+
 	// container
-	containerBorderStyle := lipgloss.RoundedBorder()
-	containerBorderColor := lipgloss.Color("63")
 
-	containerWidth :=
-		m.width - (containerBorderStyle.GetLeftSize() + containerBorderStyle.GetRightSize())
-
-	containerHeight :=
-		m.height - (containerBorderStyle.GetTopSize() + containerBorderStyle.GetBottomSize())
+	containerWidth := m.width
+	containerHeight := m.height
 
 	containerStyle := lipgloss.NewStyle().
-		BorderStyle(containerBorderStyle).
-		BorderForeground(containerBorderColor).
 		Width(containerWidth).
-		Height(containerHeight)
+		Height(containerHeight).
+		Margin(0)
 
 	// help
 	helpStyle := lipgloss.NewStyle().
-		Width(containerWidth)
+		Width(containerWidth - lipgloss.ASCIIBorder().GetRightSize() - lipgloss.ASCIIBorder().GetLeftSize()).
+		BorderStyle(lipgloss.NormalBorder())
 
 	helpView := helpStyle.Render(m.help.View(m.keys))
 	helpHeight := lipgloss.Height(helpView)
 
 	// content
-	content := "some content in here"
+	content := m.tabs[m.activeTab]
 	contentStyle := lipgloss.NewStyle().
-		Height(containerHeight - helpHeight)
+		BorderStyle(lipgloss.NormalBorder()).
+		Height(containerHeight - helpHeight - tabHeight - lipgloss.ASCIIBorder().GetBottomSize() - lipgloss.ASCIIBorder().GetTopSize()).
+		Width(containerWidth - lipgloss.ASCIIBorder().GetLeftSize() - lipgloss.ASCIIBorder().GetRightSize())
 
 	contentView := contentStyle.Render(content)
 
 	return containerStyle.Render(
-		lipgloss.JoinVertical(lipgloss.Top, contentView, helpView),
+		lipgloss.JoinVertical(lipgloss.Top, renderedTabRow, contentView, helpView),
 	)
 }

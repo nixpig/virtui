@@ -64,7 +64,7 @@ func main() {
 	store := connection.NewConnectionStoreImpl(dbConn)
 
 	if _, err := tea.NewProgram(
-		tui.InitModel(store),
+		tui.InitTUI(store),
 		tea.WithAltScreen(),
 	).Run(); err != nil {
 		fatality("failed to run virtui", err)

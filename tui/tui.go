@@ -16,10 +16,62 @@ func (e errMsg) Error() string {
 	return e.error.Error()
 }
 
+type qemuConnection struct {
+	name        string
+	uri         string
+	autoconnect string
+
+	domains  []qemuDomain
+	networks []qemuNetwork
+	storage  []qemuStorage
+}
+
+type qemuDomain struct {
+	id     int
+	uuid   string
+	name   string
+	status string
+
+	cpuUsage []int
+	memUsage []int
+	diskIO   []int
+	netIO    []int
+}
+
+type qemuNetwork struct {
+	id        int
+	name      string
+	device    string
+	state     string
+	autostart bool
+	network   string
+	dhcp      string
+}
+
+type qemuStorage struct {
+	id       int
+	name     string
+	poolType string
+	path     string
+	volumes  []qemuVolume
+}
+
+type qemuVolume struct {
+	id     int
+	name   string
+	size   int
+	unit   string
+	format string
+	usedBy []string
+}
+
 type appModel struct {
 	store connection.ConnectionStore
 	help  help.Model
 	keys  keys.GlobalMap
+
+	activeModel tea.Model
+	connections []qemuConnection
 
 	width  int
 	height int
@@ -31,7 +83,42 @@ type appModel struct {
 	activeTab int
 }
 
-func InitModel(store connection.ConnectionStore) appModel {
+func InitTUI(store connection.ConnectionStore) appModel {
+	connections := []qemuConnection{
+		{
+			domains: []qemuDomain{
+				{
+					name: "domain1",
+				},
+				{
+					name: "domain2",
+				},
+				{
+					name: "domain3",
+				},
+			},
+			networks: []qemuNetwork{
+				{
+					name: "net1",
+				},
+				{
+					name: "net2",
+				},
+				{
+					name: "net3",
+				},
+			},
+			storage: []qemuStorage{
+				{
+					name: "storage1",
+				},
+				{
+					name: "storage2",
+				},
+			},
+		},
+	}
+
 	model := appModel{
 		store: store,
 		help:  help.New(),
@@ -39,6 +126,10 @@ func InitModel(store connection.ConnectionStore) appModel {
 
 		tabs:      []string{"(1) Virtual Machines", "(2) Networks", "(3) Storage"},
 		activeTab: 0,
+
+		connections: connections,
+
+		activeModel: initDashboard(connections),
 	}
 
 	return model
@@ -83,10 +174,13 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.help.ShowAll = !m.help.ShowAll
 		case key.Matches(msg, keys.Global.Dashboard):
 			m.activeTab = 0
+			m.activeModel = initDashboard(m.connections)
 		case key.Matches(msg, m.keys.Networks):
 			m.activeTab = 1
+			m.activeModel = initNetwork(m.connections)
 		case key.Matches(msg, keys.Global.Storage):
 			m.activeTab = 2
+			m.activeModel = initStorage(m.connections)
 		}
 	}
 
@@ -146,13 +240,14 @@ func (m appModel) View() string {
 	helpHeight := lipgloss.Height(helpView)
 
 	// content
-	content := m.tabs[m.activeTab]
+	content := m.activeModel.View()
+
 	contentStyle := lipgloss.NewStyle().
 		BorderStyle(lipgloss.NormalBorder()).
 		Height(containerHeight - tabHeight - lipgloss.ASCIIBorder().GetBottomSize() - lipgloss.ASCIIBorder().GetTopSize()).
 		Width(containerWidth - lipgloss.ASCIIBorder().GetLeftSize() - lipgloss.ASCIIBorder().GetRightSize())
 
-	padding := lipgloss.NewStyle().Height(contentStyle.GetHeight() - helpHeight - 1).Render("")
+	padding := lipgloss.NewStyle().Height(contentStyle.GetHeight() - lipgloss.Height(content) - helpHeight).Render("")
 
 	contentView := contentStyle.Render(lipgloss.JoinVertical(lipgloss.Top, content, padding, helpView))
 

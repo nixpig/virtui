@@ -1,18 +1,32 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/log"
+	"github.com/digitalocean/go-libvirt"
 )
 
 type storageModel struct {
-	connections []qemuConnection
+	connections []*libvirt.Libvirt
+	pools       []libvirt.StoragePool
 }
 
-func initStorage(connections []qemuConnection) storageModel {
+func initStorage(connections []*libvirt.Libvirt) storageModel {
 	model := storageModel{
 		connections: connections,
+	}
+
+	for _, c := range model.connections {
+		p, _, err := c.ConnectListAllStoragePools(1, 0)
+		if err != nil {
+			log.Error("failed to list storage pools", "err", err)
+			continue
+		}
+
+		model.pools = append(model.pools, p...)
 	}
 
 	return model
@@ -29,10 +43,8 @@ func (m storageModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m storageModel) View() string {
 	var v strings.Builder
 
-	for _, c := range m.connections {
-		for _, s := range c.storage {
-			v.WriteString(s.name + "\n")
-		}
+	for i, p := range m.pools {
+		v.WriteString(fmt.Sprintf("%d - %s\n", i, p.Name))
 	}
 
 	return v.String()

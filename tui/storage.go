@@ -12,6 +12,7 @@ import (
 type storageModel struct {
 	connections []*libvirt.Libvirt
 	pools       []libvirt.StoragePool
+	volumes     []string
 }
 
 func initStorage(connections []*libvirt.Libvirt) storageModel {
@@ -27,6 +28,17 @@ func initStorage(connections []*libvirt.Libvirt) storageModel {
 		}
 
 		model.pools = append(model.pools, p...)
+
+		for _, p := range model.pools {
+			v, err := c.StoragePoolListVolumes(p, 1024)
+			if err != nil {
+				log.Error("failed to list volumes", "err", err)
+				continue
+			}
+
+			model.volumes = append(model.volumes, v...)
+		}
+
 	}
 
 	return model
@@ -43,8 +55,14 @@ func (m storageModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m storageModel) View() string {
 	var v strings.Builder
 
+	v.WriteString("Pools\n")
 	for i, p := range m.pools {
 		v.WriteString(fmt.Sprintf("%d - %s\n", i, p.Name))
+	}
+
+	v.WriteString("\nVolumes\n")
+	for i, x := range m.volumes {
+		v.WriteString(fmt.Sprintf("%d - %s\n", i, x))
 	}
 
 	return v.String()

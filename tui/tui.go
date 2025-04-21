@@ -99,7 +99,7 @@ func (m appModel) Init() tea.Cmd {
 }
 
 func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	// var cmd tea.Cmd
+	var cmd tea.Cmd
 	// var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
@@ -128,7 +128,9 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	return m, nil
+	m.activeModel, cmd = m.activeModel.Update(msg)
+
+	return m, cmd
 }
 
 func (m appModel) View() string {

@@ -10,6 +10,8 @@ type GlobalMap struct {
 	Dashboard key.Binding
 	Networks  key.Binding
 	Storage   key.Binding
+	Up        key.Binding
+	Down      key.Binding
 }
 
 func (k GlobalMap) ShortHelp() []key.Binding {
@@ -39,5 +41,11 @@ var Global = GlobalMap{
 	),
 	Storage: key.NewBinding(
 		key.WithKeys("3"),
+	),
+	Up: key.NewBinding(
+		key.WithKeys("up", "k"),
+	),
+	Down: key.NewBinding(
+		key.WithKeys("down", "j"),
 	),
 }

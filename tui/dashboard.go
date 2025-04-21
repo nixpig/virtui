@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/digitalocean/go-libvirt"
+	"github.com/nixpig/virtui/vm/domain"
 )
 
 type dashboardData map[string]map[libvirt.UUID]libvirt.Domain
@@ -55,7 +56,7 @@ func (m dashboardModel) View() string {
 
 		for _, d := range c {
 			s, _, _ := m.connections[k].DomainGetState(d, 0)
-			v.WriteString(fmt.Sprintf("- %s - %d\n", d.Name, s))
+			v.WriteString(fmt.Sprintf("- %s - %s\n", d.Name, domain.PresentableState(libvirt.DomainState(s))))
 		}
 	}
 

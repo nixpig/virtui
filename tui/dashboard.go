@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
+	"github.com/charmbracelet/x/term"
 	"github.com/digitalocean/go-libvirt"
 	"github.com/nixpig/virtui/vm/domain"
 )
@@ -78,14 +79,27 @@ func initDashboard(connections map[string]*libvirt.Libvirt) dashboardModel {
 
 	// ---
 
+	w, _, _ := term.GetSize(0)
+
+	hostW := 10
+	stateW := 10
+	cpuW := 5
+	memW := 5
+	diskW := 5
+	netW := 5
+
+	baselineW := 8 + 8
+
+	nameW := w - baselineW - hostW - stateW - cpuW - memW - diskW - netW
+
 	columns := []table.Column{
-		{Title: "Host", Width: 10},
-		{Title: "State", Width: 10},
-		{Title: "Name", Width: 25},
-		{Title: "CPU", Width: 5},
-		{Title: "Mem", Width: 5},
-		{Title: "Disk", Width: 9},
-		{Title: "Net", Width: 9},
+		{Title: "Host", Width: hostW},
+		{Title: "State", Width: stateW},
+		{Title: "Name", Width: nameW},
+		{Title: "CPU", Width: cpuW},
+		{Title: "Mem", Width: memW},
+		{Title: "Disk", Width: diskW},
+		{Title: "Net", Width: netW},
 	}
 
 	var rows []table.Row
@@ -102,10 +116,10 @@ func initDashboard(connections map[string]*libvirt.Libvirt) dashboardModel {
 			d.host,
 			d.status,
 			d.name,
-			d.cpu,
-			d.mem,
-			d.net,
-			d.disk,
+			"⣾⣷⣷⣷⣷",
+			"⣷⣾⣤⣷⣤",
+			"▄▄ ▆▆",
+			"▇▇ ▃▃",
 		})
 	}
 

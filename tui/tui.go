@@ -30,9 +30,6 @@ type appModel struct {
 	width  int
 	height int
 
-	helpModels map[string][]tea.Model
-	keyMaps    map[string]map[string]key.Binding
-
 	tabs      []string
 	activeTab int
 }
@@ -113,8 +110,8 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
-		case key.Matches(msg, keys.Global.Help):
-			m.help.ShowAll = !m.help.ShowAll
+		// case key.Matches(msg, keys.Global.Help):
+		// 	m.help.ShowAll = !m.help.ShowAll
 		case key.Matches(msg, keys.Global.Dashboard):
 			m.activeTab = 0
 			m.activeModel = initDashboard(m.connections)
@@ -187,8 +184,8 @@ func (m appModel) View() string {
 	// help
 	helpStyle := lipgloss.NewStyle().
 		Width(containerWidth - lipgloss.ASCIIBorder().GetLeftSize() - lipgloss.ASCIIBorder().GetRightSize()).
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderTop(true).
+		// BorderStyle(lipgloss.NormalBorder()).
+		// BorderTop(true).
 		BorderForeground(lipgloss.Color("#555555"))
 
 	helpView := helpStyle.Render(m.help.View(m.keys))

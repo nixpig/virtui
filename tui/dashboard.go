@@ -4,12 +4,16 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/x/term"
 	"github.com/digitalocean/go-libvirt"
+	"github.com/google/uuid"
+	"github.com/nixpig/virtui/keys"
 	"github.com/nixpig/virtui/vm/domain"
 )
 
@@ -20,7 +24,7 @@ type dashboardData map[string]map[libvirt.UUID]libvirt.Domain
 type dashboardDomain struct {
 	conn   string
 	name   string
-	uuid   libvirt.UUID
+	uuid   string
 	id     int
 	status string
 	host   string
@@ -36,14 +40,15 @@ type dashboardModel struct {
 	height      int
 	data        []dashboardDomain
 	table       table.Model
-	// keys        keys.GlobalMap
+	keys        keys.DashboardMap
+	help        help.Model
 }
 
 func initDashboard(connections map[string]*libvirt.Libvirt) dashboardModel {
 	model := dashboardModel{
 		connections: connections,
-		// keys:        keys.Global,
-
+		help:        help.New(),
+		keys:        keys.Dashboard,
 	}
 
 	// ---
@@ -64,10 +69,11 @@ func initDashboard(connections map[string]*libvirt.Libvirt) dashboardModel {
 
 		for _, d := range domains {
 			state, _, _ := c.DomainGetState(d, 0)
+			uuid, _ := uuid.FromBytes(d.UUID[:])
 
 			data = append(data, dashboardDomain{
 				name:   d.Name,
-				uuid:   d.UUID,
+				uuid:   uuid.String(),
 				id:     int(d.ID),
 				status: domain.PresentableState(libvirt.DomainState(state)),
 				host:   u.Host + u.Path,
@@ -93,6 +99,7 @@ func initDashboard(connections map[string]*libvirt.Libvirt) dashboardModel {
 	nameW := w - baselineW - hostW - stateW - cpuW - memW - diskW - netW
 
 	columns := []table.Column{
+		{Title: "UUID", Width: 0},
 		{Title: "Host", Width: hostW},
 		{Title: "State", Width: stateW},
 		{Title: "Name", Width: nameW},
@@ -113,6 +120,7 @@ func initDashboard(connections map[string]*libvirt.Libvirt) dashboardModel {
 
 	for _, d := range model.data {
 		rows = append(rows, table.Row{
+			d.uuid,
 			d.host,
 			d.status,
 			d.name,
@@ -146,6 +154,16 @@ func (m dashboardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
+
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, m.keys.Enter):
+			// selectedRow := m.table.SelectedRow()
+			// uuid := selectedRow[0]
+
+		case key.Matches(msg, m.keys.Help):
+			m.help.ShowAll = !m.help.ShowAll
+		}
 	}
 
 	m.table, cmd = m.table.Update(msg)
@@ -159,6 +177,7 @@ func (m dashboardModel) View() string {
 	var v strings.Builder
 
 	v.WriteString(baseStyle.Render(m.table.View()))
+	v.WriteString(m.help.View(m.keys))
 
 	return v.String()
 }

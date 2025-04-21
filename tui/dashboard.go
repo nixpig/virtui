@@ -19,6 +19,7 @@ type dashboardData map[string]map[libvirt.UUID]libvirt.Domain
 type dashboardModel struct {
 	connections map[string]*libvirt.Libvirt
 	table       table.Model
+	width       int
 	// keys        keys.GlobalMap
 }
 
@@ -38,7 +39,7 @@ func initDashboard(connections map[string]*libvirt.Libvirt) dashboardModel {
 	columns := []table.Column{
 		{Title: "Host", Width: 10},
 		{Title: "State", Width: 10},
-		{Title: "Name", Width: 50},
+		{Title: "Name", Width: 30},
 		{Title: "CPU", Width: 5},
 		{Title: "Mem", Width: 5},
 		{Title: "Disk", Width: 9},
@@ -93,15 +94,16 @@ func (m dashboardModel) Init() tea.Cmd {
 
 func (m dashboardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-	// switch msg := msg.(type) {
-	// case tea.KeyMsg:
-	// switch {
-	// 	case key.Matches(msg, m.keys.Down):
-	// }
-	// }
-	m.table, cmd = m.table.Update(msg)
+	var cmds []tea.Cmd
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.table.SetWidth(msg.Width)
+	}
 
-	return m, cmd
+	m.table, cmd = m.table.Update(msg)
+	cmds = append(cmds, cmd)
+
+	return m, tea.Batch(cmds...)
 }
 
 func (m dashboardModel) View() string {

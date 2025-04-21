@@ -100,12 +100,14 @@ func (m appModel) Init() tea.Cmd {
 
 func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-	// var cmds []tea.Cmd
+	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		m.activeModel, cmd = m.activeModel.Update(msg)
+		cmds = append(cmds, cmd)
 
 	case tea.KeyMsg:
 		switch {
@@ -125,12 +127,16 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.activeTab = 2
 			m.activeModel = initStorage(m.connections)
 			m.activeModel.Init()
+		default:
+			m.activeModel, cmd = m.activeModel.Update(msg)
+			cmds = append(cmds, cmd)
 		}
+	default:
+		m.activeModel, cmd = m.activeModel.Update(msg)
+		cmds = append(cmds, cmd)
 	}
 
-	m.activeModel, cmd = m.activeModel.Update(msg)
-
-	return m, cmd
+	return m, tea.Batch(cmds...)
 }
 
 func (m appModel) View() string {
@@ -140,20 +146,23 @@ func (m appModel) View() string {
 	for i, t := range m.tabs {
 
 		borderForeground := lipgloss.Color("#999999")
-		borderBottom := true
+		// borderBottom := true
 
-		if m.activeTab == i {
-			borderForeground = lipgloss.Color("#ffffff")
-			// borderBottom = false
-		}
+		// if m.activeTab == i {
+		// 	borderForeground = lipgloss.Color("#ffffff")
+		// 	// borderBottom = false
+		// }
 
 		tabStyle := lipgloss.NewStyle().
-			BorderStyle(lipgloss.NormalBorder()).
-			BorderTop(true).
 			BorderRight(true).
-			BorderBottom(borderBottom).
-			BorderLeft(true).
-			Margin(0).
+			BorderStyle(lipgloss.NormalBorder()).
+			// BorderTop(true).
+			// BorderRight(true).
+			// BorderBottom(borderBottom).
+			// BorderLeft(true).
+			// Margin(0).
+			PaddingLeft(1).
+			PaddingRight(1).
 			BorderForeground(borderForeground)
 
 		renderedTabs[i] = tabStyle.Render(t)

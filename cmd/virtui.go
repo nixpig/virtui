@@ -25,6 +25,8 @@ func main() {
 	var debug bool
 	pflag.BoolVarP(&debug, "debug", "v", false, "set log level to debug")
 
+	pflag.Parse()
+
 	v := viper.New()
 	if err := config.Initialise(configPath, v); err != nil {
 		fatality("failed to initialise config", err)

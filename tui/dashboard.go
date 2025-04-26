@@ -4,7 +4,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
@@ -13,6 +12,7 @@ import (
 	"github.com/charmbracelet/x/term"
 	"github.com/digitalocean/go-libvirt"
 	"github.com/google/uuid"
+	"github.com/nixpig/virtui/commander"
 	"github.com/nixpig/virtui/keys"
 	"github.com/nixpig/virtui/vm/domain"
 )
@@ -22,7 +22,8 @@ var baseStyle = lipgloss.NewStyle()
 type dashboardData map[string]map[libvirt.UUID]libvirt.Domain
 
 type dashboardDomain struct {
-	conn   string
+	lvdom  *libvirt.Domain
+	conn   *libvirt.Libvirt
 	name   string
 	uuid   string
 	id     int
@@ -36,18 +37,14 @@ type dashboardDomain struct {
 
 type dashboardModel struct {
 	connections map[string]*libvirt.Libvirt
-	width       int
-	height      int
 	data        []dashboardDomain
 	table       table.Model
 	keys        keys.DashboardMap
-	help        help.Model
 }
 
 func initDashboard(connections map[string]*libvirt.Libvirt) dashboardModel {
 	model := dashboardModel{
 		connections: connections,
-		help:        help.New(),
 		keys:        keys.Dashboard,
 	}
 
@@ -72,6 +69,8 @@ func initDashboard(connections map[string]*libvirt.Libvirt) dashboardModel {
 			uuid, _ := uuid.FromBytes(d.UUID[:])
 
 			data = append(data, dashboardDomain{
+				lvdom:  &d,
+				conn:   c,
 				name:   d.Name,
 				uuid:   uuid.String(),
 				id:     int(d.ID),
@@ -151,18 +150,85 @@ func (m dashboardModel) Init() tea.Cmd {
 func (m dashboardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
+
+	d := m.data[m.table.Cursor()]
+	s, _, _ := d.conn.DomainGetState(*d.lvdom, 0)
+	state := libvirt.DomainState(s)
+	c := commander.NewCommander(d.conn)
+
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.width, m.height = msg.Width, msg.Height
 
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Enter):
-			// selectedRow := m.table.SelectedRow()
-			// uuid := selectedRow[0]
+			return m, func() tea.Msg {
+				selectedRow := m.table.SelectedRow()
+				uuid := selectedRow[0]
+				log.Debug("select domain", "uuid", uuid)
+				return selectDomainMsg{uuid}
+			}
 
-		case key.Matches(msg, m.keys.Help):
-			m.help.ShowAll = !m.help.ShowAll
+		case key.Matches(msg, m.keys.AddConnection):
+			log.Debug("add connection")
+
+		case key.Matches(msg, m.keys.NewVM):
+			log.Debug("new vm")
+
+		case key.Matches(msg, m.keys.Start):
+			if err := c.StartDomain(d.lvdom); err != nil {
+				log.Error("start domain", "err", err)
+			}
+
+		case key.Matches(msg, m.keys.PauseResume):
+			switch state {
+			case libvirt.DomainRunning:
+				if err := c.PauseDomain(d.lvdom); err != nil {
+					log.Error("pause domain", "err", err)
+				}
+			case libvirt.DomainPaused:
+				if err := c.ResumeDomain(d.lvdom); err != nil {
+					log.Error("resume domain", "err", err)
+				}
+			default:
+				// TODO: noop
+			}
+
+		case key.Matches(msg, m.keys.Shutdown):
+			if state == libvirt.DomainRunning {
+				if err := c.ShutdownDomain(d.lvdom); err != nil {
+					log.Error("shutdown domain", "err", err)
+				}
+			} else {
+				// TODO: noop
+			}
+
+		case key.Matches(msg, m.keys.Reboot):
+			if state == libvirt.DomainRunning {
+				if err := c.RebootDomain(d.lvdom); err != nil {
+					log.Error("reboot domain", "err", err)
+				}
+			} else {
+				// TODO: noop
+			}
+
+		case key.Matches(msg, m.keys.Reset):
+			if err := c.ResetDomain(d.lvdom); err != nil {
+				log.Error("reset domain", "err", err)
+			}
+
+		case key.Matches(msg, m.keys.PowerOff):
+			if err := c.PoweroffDomain(d.lvdom); err != nil {
+				log.Error("poweroff domain", "err", err)
+			}
+
+		case key.Matches(msg, m.keys.SaveRestore):
+			log.Debug("save/restore vm")
+
+		case key.Matches(msg, m.keys.Delete):
+			if err := c.DeleteDomain(d.lvdom); err != nil {
+				log.Error("delete domain", "err", err)
+			}
+
 		}
 	}
 
@@ -177,7 +243,6 @@ func (m dashboardModel) View() string {
 	var v strings.Builder
 
 	v.WriteString(baseStyle.Render(m.table.View()))
-	v.WriteString(m.help.View(m.keys))
 
 	return v.String()
 }

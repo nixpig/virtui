@@ -18,7 +18,25 @@ func (k GlobalMap) ShortHelp() []key.Binding {
 
 func (k GlobalMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Help, k.Quit},
+		{
+			Dashboard.Enter,
+			Dashboard.Up,
+			Dashboard.Down,
+			Global.Help,
+			Global.Quit,
+		},
+		{
+			Dashboard.AddConnection,
+			Dashboard.NewVM,
+			Dashboard.Start,
+			Dashboard.PauseResume,
+			Dashboard.Shutdown,
+			Dashboard.Reboot,
+			Dashboard.Reset,
+			Dashboard.PowerOff,
+			Dashboard.SaveRestore,
+			Dashboard.Delete,
+		},
 	}
 }
 

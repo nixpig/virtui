@@ -19,6 +19,12 @@ func (e errMsg) Error() string {
 	return e.error.Error()
 }
 
+type selectDomainMsg struct{ uuid string }
+
+func (u selectDomainMsg) String() string {
+	return u.uuid
+}
+
 type appModel struct {
 	store connection.ConnectionStore
 	help  help.Model
@@ -100,6 +106,11 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
+	case selectDomainMsg:
+		m.activeModel = initVM(m.connections, msg.uuid)
+		m.activeModel.Init()
+		return m, nil
+
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
@@ -110,27 +121,35 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
-		// case key.Matches(msg, keys.Global.Help):
-		// 	m.help.ShowAll = !m.help.ShowAll
+
+		case key.Matches(msg, keys.Global.Help):
+			m.help.ShowAll = !m.help.ShowAll
+
 		case key.Matches(msg, keys.Global.Dashboard):
 			m.activeTab = 0
 			m.activeModel = initDashboard(m.connections)
 			m.activeModel.Init()
+
 		case key.Matches(msg, m.keys.Networks):
 			m.activeTab = 1
 			m.activeModel = initNetwork(m.connections)
 			m.activeModel.Init()
+
 		case key.Matches(msg, keys.Global.Storage):
 			m.activeTab = 2
 			m.activeModel = initStorage(m.connections)
 			m.activeModel.Init()
+
 		default:
 			m.activeModel, cmd = m.activeModel.Update(msg)
 			cmds = append(cmds, cmd)
+
 		}
+
 	default:
 		m.activeModel, cmd = m.activeModel.Update(msg)
 		cmds = append(cmds, cmd)
+
 	}
 
 	return m, tea.Batch(cmds...)
@@ -193,6 +212,9 @@ func (m appModel) View() string {
 
 	// content
 	content := m.activeModel.View()
+	if m.help.ShowAll {
+		content = ""
+	}
 
 	contentStyle := lipgloss.NewStyle().
 		BorderStyle(lipgloss.NormalBorder()).

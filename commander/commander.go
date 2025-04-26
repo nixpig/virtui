@@ -8,10 +8,6 @@ type Commander struct {
 	conn *libvirt.Libvirt
 }
 
-type connection interface {
-	DomainCreate()
-}
-
 func NewCommander(conn *libvirt.Libvirt) *Commander {
 	return &Commander{conn}
 }

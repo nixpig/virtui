@@ -40,12 +40,14 @@ type dashboardModel struct {
 	data        []dashboardDomain
 	table       table.Model
 	keys        keys.DashboardMap
+	events      []<-chan libvirt.DomainEventLifecycleMsg
 }
 
 func initDashboard(connections map[string]*libvirt.Libvirt) dashboardModel {
 	model := dashboardModel{
 		connections: connections,
 		keys:        keys.Dashboard,
+		events:      make([]<-chan libvirt.DomainEventLifecycleMsg, len(connections)),
 	}
 
 	// ---

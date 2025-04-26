@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"context"
 	"net/url"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -25,6 +26,12 @@ func (u selectDomainMsg) String() string {
 	return u.uuid
 }
 
+func listenForEvent(sub chan libvirt.DomainEventLifecycleMsg) tea.Cmd {
+	return func() tea.Msg {
+		return <-sub
+	}
+}
+
 type appModel struct {
 	store connection.ConnectionStore
 	help  help.Model
@@ -38,6 +45,8 @@ type appModel struct {
 
 	tabs      []string
 	activeTab int
+
+	sub chan libvirt.DomainEventLifecycleMsg
 }
 
 func InitTUI(store connection.ConnectionStore) appModel {
@@ -50,10 +59,12 @@ func InitTUI(store connection.ConnectionStore) appModel {
 
 		tabs:      []string{"(1) Virtual Machines", "(2) Networks", "(3) Storage"},
 		activeTab: 0,
+
+		sub: make(chan libvirt.DomainEventLifecycleMsg),
 	}
 
 	if _, err := model.store.GetConnectionByURI(string(libvirt.QEMUSystem)); err != nil {
-		log.Debug("system connection not found; insert")
+		log.Debug("system connection not found; insert new")
 		if err := model.store.InsertConnection(&connection.Connection{
 			URI: string(libvirt.QEMUSystem),
 		}); err != nil {
@@ -92,13 +103,25 @@ func InitTUI(store connection.ConnectionStore) appModel {
 		model.connections[c.URI] = lv
 	}
 
+	for _, c := range model.connections {
+		e, _ := c.LifecycleEvents(context.Background())
+
+		go func() {
+			for {
+				sub, ok := <-e
+				log.Debug("reading from libvirt", "sub", sub, "ok", ok)
+				model.sub <- sub
+			}
+		}()
+	}
+
 	model.activeModel = initDashboard(model.connections)
 
 	return model
 }
 
 func (m appModel) Init() tea.Cmd {
-	return nil
+	return tea.Batch(listenForEvent(m.sub))
 }
 
 func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -106,6 +129,9 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
+	case libvirt.DomainEventLifecycleMsg:
+		log.Debug("MSG", "MSG", msg)
+
 	case selectDomainMsg:
 		m.activeModel = initVM(m.connections, msg.uuid)
 		m.activeModel.Init()

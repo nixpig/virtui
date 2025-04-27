@@ -232,6 +232,10 @@ func (m dashboardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		}
+
+	default:
+		// FIXME: no way this is a good idea just to update the state :/
+		m = initDashboard(m.connections)
 	}
 
 	m.table, cmd = m.table.Update(msg)

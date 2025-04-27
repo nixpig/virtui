@@ -109,7 +109,10 @@ func InitTUI(store connection.ConnectionStore) appModel {
 		go func() {
 			for {
 				sub, ok := <-e
-				log.Debug("reading from libvirt", "sub", sub, "ok", ok)
+				if !ok {
+					log.Error("failed to read lifecycle event")
+					continue
+				}
 				model.sub <- sub
 			}
 		}()
@@ -130,7 +133,8 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case libvirt.DomainEventLifecycleMsg:
-		log.Debug("MSG", "MSG", msg)
+		m.activeModel, cmd = m.activeModel.Update(msg)
+		cmds = append(cmds, cmd, listenForEvent(m.sub))
 
 	case selectDomainMsg:
 		m.activeModel = initVM(m.connections, msg.uuid)

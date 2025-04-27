@@ -46,8 +46,8 @@ func (k DashboardMap) FullHelp() [][]key.Binding {
 
 var Dashboard = DashboardMap{
 	Quit: key.NewBinding(
-		key.WithKeys("q", "Q", "ctrl+c"),
-		key.WithHelp("q", "quit"),
+		key.WithKeys("ctrl+c"),
+		key.WithHelp("ctrl+c", "quit"),
 	),
 	Help: key.NewBinding(
 		key.WithKeys("?"),

@@ -46,8 +46,8 @@ var Global = GlobalMap{
 		key.WithHelp("?", "toggle help"),
 	),
 	Quit: key.NewBinding(
-		key.WithKeys("q", "Q", "ctrl+c"),
-		key.WithHelp("q", "quit"),
+		key.WithKeys("ctrl+c"),
+		key.WithHelp("ctrl+c", "quit"),
 	),
 	Dashboard: key.NewBinding(
 		key.WithKeys("1"),

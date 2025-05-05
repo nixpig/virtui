@@ -76,6 +76,22 @@ func initDashboard(connections map[string]*libvirt.Libvirt) dashboardModel {
 				}
 			}
 
+			memStats, err := c.DomainMemoryStats(d, uint32(libvirt.DomainMemoryStatNr), 0)
+			if err != nil {
+				log.Error("failed to get mem stats", "domain", d.Name, "err", err)
+			} else {
+				for _, s := range memStats {
+					tag := libvirt.DomainMemoryStatTags(s.Tag)
+
+					// a'la https://github.com/free4inno/prometheus-libvirt-exporter/blob/9da210267ae14300fdd4d2036294e66bbecaa03b/collector/memory.go#L183
+					switch tag {
+					case libvirt.DomainMemoryStatAvailable:
+						log.Info("available memory", "domain", d.Name, "mem", s.Val)
+					}
+
+				}
+			}
+
 			state, _, _ := c.DomainGetState(d, 0)
 			uuid, _ := uuid.FromBytes(d.UUID[:])
 

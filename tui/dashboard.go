@@ -67,6 +67,15 @@ func initDashboard(connections map[string]*libvirt.Libvirt) dashboardModel {
 		}
 
 		for _, d := range domains {
+			cpuStats, _, err := c.DomainGetCPUStats(d, 1, -1, 1, 0)
+			if err != nil {
+				log.Error("failed to get cpu stats", "domain", d.Name, "err", err)
+			} else {
+				for i, s := range cpuStats {
+					log.Info("cpustats", "iter", i, "domain", d.Name, "stat", s)
+				}
+			}
+
 			state, _, _ := c.DomainGetState(d, 0)
 			uuid, _ := uuid.FromBytes(d.UUID[:])
 

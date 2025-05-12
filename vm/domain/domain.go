@@ -3,6 +3,8 @@ package domain
 import (
 	"encoding/xml"
 
+	"github.com/charmbracelet/log"
+	"github.com/digitalocean/go-libvirt"
 	"github.com/google/uuid"
 )
 
@@ -791,4 +793,23 @@ func NewWithDefaults(name string) *Domain {
 	c.SetOnReboot(ON_EVENT_ACTION_RESTART)
 
 	return c
+}
+
+func ToLibvirt(d *Domain) *libvirt.Domain {
+	// TODO: implement conversion
+	log.Warn("DO THE CONVERSION!!!")
+
+	b, _ := uuid.FromBytes([]byte(d.UUID))
+
+	return &libvirt.Domain{
+		Name: d.Name,
+		UUID: libvirt.UUID(b),
+		ID:   0, // FIXME: !!!
+	}
+}
+
+func FromLibvirt(d *libvirt.Domain) *Domain {
+	// TODO: implement conversion
+	log.Warn("DO THE CONVERSION!!!")
+	return &Domain{}
 }

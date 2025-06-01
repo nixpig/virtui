@@ -1,8 +1,7 @@
 package api
 
 import (
-	"fmt"
-
+	"github.com/charmbracelet/log"
 	"github.com/digitalocean/go-libvirt"
 	"github.com/google/uuid"
 	"github.com/nixpig/virtui/vm/domain"
@@ -15,7 +14,7 @@ type API struct {
 	conn *libvirt.Libvirt
 }
 
-func (a *API) NewAPI(conn *libvirt.Libvirt) *API {
+func NewAPI(conn *libvirt.Libvirt) *API {
 	return &API{conn}
 }
 
@@ -112,19 +111,32 @@ func (a *API) CreatePool(p *pool.Pool) (*pool.Pool, error) {
 	return &pool.Pool{}, nil
 }
 
-func (a *API) GetPools() ([]pool.Pool, error) {
-	p, _, err := a.conn.ConnectListAllStoragePools(1, 0)
+func (a *API) GetPools() ([]*pool.Pool, error) {
+	pools, _, err := a.conn.ConnectListAllStoragePools(1, 0)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println(p)
+	r := []*pool.Pool{}
 
-	return []pool.Pool{}, nil
-}
+	for _, p := range pools {
+		x, err := a.conn.StoragePoolGetXMLDesc(p, 0)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
 
-func (a *API) GetPoolByUUID(u string) (*pool.Pool, error) {
-	return &pool.Pool{}, nil
+		d, err := pool.NewFromXML([]byte(x))
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+
+		r = append(r, d)
+
+	}
+
+	return r, nil
 }
 
 func (a *API) UpdatePool(p *pool.Pool) (*pool.Pool, error) {

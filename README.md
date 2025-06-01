@@ -10,6 +10,17 @@ An interactive Terminal UI (TUI) for managing QEMU/KVM virtual machines via libv
 - [ ] Create an Ubuntu 24.04 VM from ISO image
 - [ ] Boot VM + connect console to host stdio
 
+## 🗒️ To do
+
+- [ ] Create storage pool
+- [ ] Create storage volume
+- [ ] Create network
+- [ ] Create VM (default settings)
+- [ ] Boot/Shutdown/Etc... VM
+- [ ] Handle VM events
+- [ ] TUI
+- [ ] Stats
+
 ## 👑 Longer-term goals
 
 - [ ] Feature parity with GUI tools like <a href="https://virt-manager.org/" target="_blank">virt-manager</a>

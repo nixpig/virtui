@@ -8,8 +8,8 @@ type Newable[T any] interface {
 	NewFromXML(b []byte) (*T, error)
 }
 
-type Applicable interface {
-	Apply(c *libvirt.Libvirt) error
+type Savable interface {
+	Save(c *libvirt.Libvirt) error
 }
 
 type XMLable interface {

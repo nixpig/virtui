@@ -2,6 +2,12 @@ package volume
 
 import "encoding/xml"
 
+var (
+	defaultType     = "file"
+	defaultCapacity = &Capacity{Unit: "G", CharData: 10}
+	defaultTarget   = &VolumeTarget{Format: &Format{Type: "qcow2"}}
+)
+
 func New(name string) *Volume {
 	return &Volume{Name: name}
 }
@@ -19,10 +25,10 @@ func NewFromXML(b []byte) (*Volume, error) {
 func NewWithDefaults(name string) *Volume {
 	v := New(name)
 
-	v.Type = "file"
+	v.Type = defaultType
 	v.Allocation = 0
-	v.Capacity = &Capacity{Unit: "G", CharData: 10}
-	v.Target = &VolumeTarget{Format: &Format{Type: "qcow2"}}
+	v.Capacity = defaultCapacity
+	v.Target = defaultTarget
 
 	return v
 }
@@ -33,6 +39,11 @@ func (v *Volume) ToXML() ([]byte, error) {
 
 func (v *Volume) ToXMLFormatted() ([]byte, error) {
 	return xml.MarshalIndent(v, "", "  ")
+}
+
+func (v *Volume) Save() error {
+	// TODO: implement saving of changes
+	return nil
 }
 
 type Volume struct {

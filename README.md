@@ -4,7 +4,7 @@ An interactive Terminal UI (TUI) for managing QEMU/KVM virtual machines via libv
 
 ## 🎯 Initial project goals
 
-- [ ] Connect to `qemu:///system` hypervisor
+- [x] Connect to `qemu:///system` hypervisor
 - [ ] Create a filesystem directory storage pool
 - [ ] Create storage volume in storage pool
 - [ ] Create virtual network and connect to bridge

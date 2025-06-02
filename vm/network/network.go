@@ -24,7 +24,7 @@ func NewFromXML(b []byte) (*Network, error) {
 	return n, nil
 }
 
-func (n *Network) Apply(c *libvirt.Libvirt) error {
+func (n *Network) Save(c *libvirt.Libvirt) error {
 	b, err := n.ToXML()
 	if err != nil {
 		return err

@@ -11,11 +11,15 @@ type Pool struct {
 	Type       string      `xml:"type,attr"`
 	Name       string      `xml:"name"`
 	UUID       string      `xml:"uuid"`
+	Source     Source      `xml:"source"`
 	Capacity   *Capacity   `xml:"capacity,omitempty"`
 	Allocation *Allocation `xml:"allocation,omitempty"`
 	Available  *Available  `xml:"available,omitempty"`
-	Source     string      `xml:"source"`
 	Target     *Target     `xml:"target,omitempty"`
+}
+
+type Source struct {
+	Value string `xml:",innerxml"`
 }
 
 type Target struct {
@@ -45,7 +49,7 @@ type Available struct {
 }
 
 func New(name string) *Pool {
-	return &Pool{}
+	return &Pool{Name: name}
 }
 
 func NewFromXML(b []byte) (*Pool, error) {
@@ -58,14 +62,15 @@ func NewFromXML(b []byte) (*Pool, error) {
 	return p, nil
 }
 
-func (p *Pool) Apply(c *libvirt.Libvirt) error {
+func (p *Pool) Save(c *libvirt.Libvirt) error {
+	// TODO: implement saving of changes
 	return nil
 }
 
 func (p *Pool) ToXML() ([]byte, error) {
-	return []byte{}, nil
+	return xml.Marshal(p)
 }
 
 func (p *Pool) ToXMLFormatted() ([]byte, error) {
-	return []byte{}, nil
+	return xml.MarshalIndent(p, "", "  ")
 }

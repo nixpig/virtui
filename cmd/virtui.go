@@ -10,6 +10,7 @@ import (
 	"github.com/digitalocean/go-libvirt"
 	"github.com/nixpig/virtui/api"
 	"github.com/nixpig/virtui/vm/pool"
+	"github.com/nixpig/virtui/vm/volume"
 )
 
 func main() {
@@ -41,19 +42,47 @@ func main() {
 		return p.Name == "default"
 	})]
 
+	fmt.Println(" -- 🍱 default pool:")
 	fmt.Println(defaultPool)
+	fmt.Println("")
 
 	// 2. Get volumes
 
-	v, err := a.GetVolumes(*defaultPool)
+	v, err := a.GetVolumes(defaultPool)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
 	}
 
-	fmt.Println(v)
+	fmt.Println(" -- 💽 volumes:")
+	for _, x := range v {
+		fmt.Printf("%+v\n", x)
+	}
+	fmt.Println("")
 
 	// 3. Create volume in pool
+
+	fmt.Println(" -- 🚀 create volume")
+	vol := volume.NewWithDefaults("FOO-VOLUME")
+
+	vx, err := a.CreateVolume(vol, defaultPool)
+	if err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
+	fmt.Println("created:", vx)
+
+	vn, err := a.GetVolumes(defaultPool)
+	if err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
+
+	fmt.Println(" -- 💽 volumes:")
+	for _, x := range vn {
+		fmt.Printf("%+v\n", x)
+	}
+	fmt.Println("")
 
 	// 4. Get networks
 

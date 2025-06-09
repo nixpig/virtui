@@ -2,7 +2,9 @@
 
 An interactive Terminal UI (TUI) for managing QEMU/KVM virtual machines via libvirt.
 
-## 🎯 Initial project goals
+Why...?
+
+### 🎯 Initial project goals
 
 - [x] Connect to `qemu:///system` hypervisor
 - [ ] Create a filesystem directory storage pool
@@ -11,9 +13,19 @@ An interactive Terminal UI (TUI) for managing QEMU/KVM virtual machines via libv
 - [ ] Create an Ubuntu VM from ISO (default settings)
 - [ ] Boot VM + connect console to host stdio
 
-## 👑 Longer-term goals
+### 👑 Longer-term goals
 
 - [ ] Feature parity with GUI tools like <a href="https://virt-manager.org/" target="_blank">virt-manager</a>
+
+
+## 🚀 Quick start
+
+
+## 👩‍💻 Usage
+
+
+## 🤝 Contributing
+
 
 ## Notes
 

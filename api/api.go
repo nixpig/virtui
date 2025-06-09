@@ -1,8 +1,6 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/charmbracelet/log"
 	"github.com/digitalocean/go-libvirt"
 	"github.com/google/uuid"
@@ -21,10 +19,12 @@ func NewAPI(conn *libvirt.Libvirt) *API {
 }
 
 func (a *API) CreateNetwork(n *network.Network) (*network.Network, error) {
+	// TODO:
 	return &network.Network{}, nil
 }
 
 func (a *API) GetNetworks() []network.Network {
+	// TODO:
 	// n, _, err := c.ConnectListAllNetworks(1, 0)
 	// if err != nil {
 	// 	log.Error("failed to list networks", "err", err)
@@ -33,27 +33,85 @@ func (a *API) GetNetworks() []network.Network {
 	return []network.Network{}
 }
 
-func (a *API) CreateVolume(v *volume.Volume) (*volume.Volume, error) {
-	return &volume.Volume{}, nil
-}
-
-func (a *API) GetVolumes(p pool.Pool) ([]volume.Volume, error) {
+func (a *API) CreateVolume(v *volume.Volume, p *pool.Pool) (*volume.Volume, error) {
 	u, err := uuid.Parse(p.UUID)
 	if err != nil {
 		return nil, err
 	}
-	v, err := a.conn.StoragePoolListVolumes(libvirt.StoragePool{
+
+	sp, err := a.conn.StoragePoolLookupByUUID(libvirt.UUID(u))
+	if err != nil {
+		return nil, err
+	}
+
+	x, err := v.ToXML()
+	if err != nil {
+		return nil, err
+	}
+
+	vol, err := a.conn.StorageVolCreateXML(sp, string(x), 0)
+	if err != nil {
+		return nil, err
+	}
+
+	ox, err := a.conn.StorageVolGetXMLDesc(vol, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	rv, err := volume.NewFromXML([]byte(ox))
+
+	return rv, nil
+}
+
+func (a *API) GetVolumes(p *pool.Pool) ([]*volume.Volume, error) {
+	u, err := uuid.Parse(p.UUID)
+	if err != nil {
+		return nil, err
+	}
+	volumes, err := a.conn.StoragePoolListVolumes(libvirt.StoragePool{
 		Name: p.Name,
 		UUID: libvirt.UUID(u),
 	}, 1024)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(v)
-	return []volume.Volume{}, nil
+
+	r := []*volume.Volume{}
+
+	for _, v := range volumes {
+		vol, err := a.conn.StorageVolLookupByName(
+			libvirt.StoragePool{
+				Name: p.Name,
+				UUID: libvirt.UUID(u),
+			},
+			v,
+		)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+
+		x, err := a.conn.StorageVolGetXMLDesc(vol, 0)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+
+		f, err := volume.NewFromXML([]byte(x))
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+
+		r = append(r, f)
+	}
+
+	return r, nil
 }
 
 func (a *API) GetDomains() []domain.Domain {
+	// TODO:
 	// domains, _, err := c.ConnectListAllDomains(1, 0)
 	// if err != nil {
 	// 	continue
@@ -139,6 +197,7 @@ func (a *API) PauseDomainByUUID(u string) error {
 }
 
 func (a *API) ResumeDomainByUUID(u string) error {
+	// TODO:
 	return nil
 }
 

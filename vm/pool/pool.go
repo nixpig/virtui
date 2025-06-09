@@ -3,7 +3,10 @@ package pool
 import (
 	"encoding/xml"
 
+	"github.com/charmbracelet/log"
 	"github.com/digitalocean/go-libvirt"
+	"github.com/google/uuid"
+	"github.com/nixpig/virtui/vm/volume"
 )
 
 type Pool struct {
@@ -73,4 +76,80 @@ func (p *Pool) ToXML() ([]byte, error) {
 
 func (p *Pool) ToXMLFormatted() ([]byte, error) {
 	return xml.MarshalIndent(p, "", "  ")
+}
+
+func (p *Pool) GetVolumes(c *libvirt.Libvirt) ([]volume.Volume, error) {
+	u, err := uuid.Parse(p.UUID)
+	if err != nil {
+		return nil, err
+	}
+
+	volumes, err := c.StoragePoolListVolumes(
+		libvirt.StoragePool{
+			Name: p.Name,
+			UUID: libvirt.UUID(u),
+		},
+		1024,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	volumeList := make([]volume.Volume, len(volumes))
+
+	for i, v := range volumes {
+		n, err := c.StorageVolLookupByName(
+			libvirt.StoragePool{
+				Name: p.Name,
+				UUID: libvirt.UUID(u),
+			},
+			v,
+		)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+
+		s, err := c.StorageVolGetXMLDesc(n, 0)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+
+		x, err := volume.NewFromXML([]byte(s))
+		if err != nil {
+			return nil, err
+		}
+
+		volumeList[i] = *x
+	}
+
+	return volumeList, nil
+}
+
+func List(c *libvirt.Libvirt) ([]Pool, error) {
+	pools, _, err := c.ConnectListAllStoragePools(1, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	poolList := make([]Pool, len(pools))
+
+	for i, p := range pools {
+		s, err := c.StoragePoolGetXMLDesc(p, 0)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+
+		x, err := NewFromXML([]byte(s))
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+
+		poolList[i] = *x
+	}
+
+	return poolList, nil
 }

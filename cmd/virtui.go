@@ -32,13 +32,13 @@ func main() {
 
 	// 1. Get pools
 
-	pools, err := a.GetPools()
+	pools, err := pool.List(conn)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
 	}
 
-	defaultPool := pools[slices.IndexFunc(pools, func(p *pool.Pool) bool {
+	defaultPool := pools[slices.IndexFunc(pools, func(p pool.Pool) bool {
 		return p.Name == "default"
 	})]
 
@@ -48,7 +48,7 @@ func main() {
 
 	// 2. Get volumes
 
-	v, err := a.GetVolumes(defaultPool)
+	v, err := defaultPool.GetVolumes(conn)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
@@ -65,24 +65,12 @@ func main() {
 	fmt.Println(" -- 🚀 create volume")
 	vol := volume.NewWithDefaults("FOO-VOLUME")
 
-	vx, err := a.CreateVolume(vol, defaultPool)
+	vx, err := a.CreateVolume(vol, &defaultPool)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
 	}
 	fmt.Println("created:", vx)
-
-	vn, err := a.GetVolumes(defaultPool)
-	if err != nil {
-		log.Error(err)
-		os.Exit(1)
-	}
-
-	fmt.Println(" -- 💽 volumes:")
-	for _, x := range vn {
-		fmt.Printf("%+v\n", x)
-	}
-	fmt.Println("")
 
 	// 4. Get networks
 

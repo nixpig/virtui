@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/charmbracelet/log"
 	"github.com/digitalocean/go-libvirt"
 	"github.com/google/uuid"
 	"github.com/nixpig/virtui/vm/domain"
@@ -64,52 +63,6 @@ func (a *API) CreateVolume(v *volume.Volume, p *pool.Pool) (*volume.Volume, erro
 	return rv, nil
 }
 
-func (a *API) GetVolumes(p *pool.Pool) ([]*volume.Volume, error) {
-	u, err := uuid.Parse(p.UUID)
-	if err != nil {
-		return nil, err
-	}
-	volumes, err := a.conn.StoragePoolListVolumes(libvirt.StoragePool{
-		Name: p.Name,
-		UUID: libvirt.UUID(u),
-	}, 1024)
-	if err != nil {
-		return nil, err
-	}
-
-	r := []*volume.Volume{}
-
-	for _, v := range volumes {
-		vol, err := a.conn.StorageVolLookupByName(
-			libvirt.StoragePool{
-				Name: p.Name,
-				UUID: libvirt.UUID(u),
-			},
-			v,
-		)
-		if err != nil {
-			log.Error(err)
-			continue
-		}
-
-		x, err := a.conn.StorageVolGetXMLDesc(vol, 0)
-		if err != nil {
-			log.Error(err)
-			continue
-		}
-
-		f, err := volume.NewFromXML([]byte(x))
-		if err != nil {
-			log.Error(err)
-			continue
-		}
-
-		r = append(r, f)
-	}
-
-	return r, nil
-}
-
 func (a *API) GetDomains() []domain.Domain {
 	// TODO:
 	// domains, _, err := c.ConnectListAllDomains(1, 0)
@@ -140,34 +93,6 @@ func (a *API) DeleteDomainByUUID(u string) error {
 	}
 
 	return nil
-}
-
-func (a *API) GetPools() ([]*pool.Pool, error) {
-	pools, _, err := a.conn.ConnectListAllStoragePools(1, 0)
-	if err != nil {
-		return nil, err
-	}
-
-	r := []*pool.Pool{}
-
-	for _, p := range pools {
-		x, err := a.conn.StoragePoolGetXMLDesc(p, 0)
-		if err != nil {
-			log.Error(err)
-			continue
-		}
-
-		d, err := pool.NewFromXML([]byte(x))
-		if err != nil {
-			log.Error(err)
-			continue
-		}
-
-		r = append(r, d)
-
-	}
-
-	return r, nil
 }
 
 func (a *API) StartDomainByUUID(u string) error {

@@ -2,88 +2,102 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
+	"github.com/nixpig/virtui/internal/guest"
+	"github.com/nixpig/virtui/internal/manager"
+	"libvirt.org/go/libvirt"
 )
 
-type model struct {
-	connections []connection
+type state int
+
+const (
+	managerView state = iota // table that shows connections and domains under each
+	guestView                // view of an individual domain
+)
+
+type MainModel struct {
+	state         state
+	managerModel  tea.Model
+	guestModel    tea.Model
+	lv            *libvirt.Connect
+	activeGuestID uint
 }
 
-type connection struct {
-	name               string
-	uri                string
-	connected          bool
-	autoconnect        bool
-	domains            []domain
-	networkConnections []networkConnection
-	storagePools       []storagePool
-}
+func initialModel(lv *libvirt.Connect) MainModel {
+	managerModel := manager.New(lv)
 
-type domain struct {
-	name  string
-	uuid  string
-	state string
-}
-
-type networkConnection struct{}
-
-type storagePool struct{}
-
-func initialModel() model {
-	return model{
-		connections: []connection{
-			{
-				name:        "first",
-				uri:         "hsdaofsadoifs",
-				connected:   true,
-				autoconnect: false,
-				domains: []domain{
-					{
-						name:  "some domain",
-						uuid:  "some-uuid-in-this-place",
-						state: "Running",
-					},
-				},
-			},
-		},
+	return MainModel{
+		state:        managerView,
+		managerModel: managerModel,
+		lv:           lv,
 	}
 }
 
-func (m model) Init() tea.Cmd {
+func (m MainModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	var cmds []tea.Cmd
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		}
+
+	case guest.BackMsg:
+		m.state = managerView
+
+	case manager.SelectMsg:
+		m.activeGuestID = msg.ActiveGuestId
+		m.state = guestView
+
 	}
 
-	return m, nil
+	switch m.state {
+	case managerView:
+		managerModel, newCmd := m.managerModel.Update(msg)
+		m.managerModel = managerModel
+		cmd = newCmd
+
+	case guestView:
+		guestModel, newCmd := m.guestModel.Update(msg)
+		m.guestModel = guestModel
+		cmd = newCmd
+
+	}
+
+	cmds = append(cmds, cmd)
+	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() string {
-	var s strings.Builder
-
-	for _, c := range m.connections {
-		s.WriteString(c.name)
+func (m MainModel) View() string {
+	switch m.state {
+	case managerView:
+		return m.managerModel.View()
+	case guestView:
+		return m.guestModel.View()
+	default:
+		return m.managerModel.View()
 	}
-
-	return fmt.Sprintf("%s\n", s.String())
 }
 
 func main() {
 	ctx := context.Background()
 
+	uri := "qemu:///system"
+	lv, err := libvirt.NewConnect(uri)
+	if err != nil {
+		log.Fatal("failed to connect to libvirt", "uri", uri, "err", err)
+	}
+
 	p := tea.NewProgram(
-		initialModel(),
+		initialModel(lv),
 		tea.WithAltScreen(),
 		tea.WithContext(ctx),
 	)

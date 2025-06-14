@@ -1,11 +1,16 @@
 package storage
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+	"libvirt.org/go/libvirt"
+)
 
-type Model struct{}
+type Model struct {
+	lv *libvirt.Connect
+}
 
-func New() tea.Model {
-	return Model{}
+func New(lv *libvirt.Connect) tea.Model {
+	return Model{lv}
 }
 
 func (m Model) Init() tea.Cmd {

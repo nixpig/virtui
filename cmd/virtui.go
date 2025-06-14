@@ -10,7 +10,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/x/term"
-	"github.com/nixpig/virtui/internal/guest"
 	"github.com/nixpig/virtui/internal/keys"
 	"github.com/nixpig/virtui/internal/manager"
 	"github.com/nixpig/virtui/internal/network"
@@ -42,12 +41,7 @@ type MainModel struct {
 }
 
 func initialModel(lv *libvirt.Connect) MainModel {
-	domains, err := lv.ListAllDomains(0)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	managerModel := manager.New(domains)
+	defaultModel := manager.New(lv)
 
 	width, height, err := term.GetSize(os.Stdin.Fd())
 	if err != nil {
@@ -58,7 +52,7 @@ func initialModel(lv *libvirt.Connect) MainModel {
 		state:        managerView,
 		keys:         keys.Keys,
 		help:         help.New(),
-		managerModel: managerModel,
+		managerModel: defaultModel,
 		lv:           lv,
 		width:        width,
 		height:       height,
@@ -81,28 +75,19 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Manager):
-			// TODO: initialise managerView?
+			m.managerModel = manager.New(m.lv)
 			m.state = managerView
 		case key.Matches(msg, m.keys.Network):
-			m.networkModel = network.New()
+			m.networkModel = network.New(m.lv)
 			m.state = networkView
 		case key.Matches(msg, m.keys.Storage):
-			m.storageModel = storage.New()
+			m.storageModel = storage.New(m.lv)
 			m.state = storageView
 		case key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
 		}
-
-	case guest.BackMsg:
-		m.state = managerView
-
-	case manager.SelectMsg:
-		m.activeGuestID = msg.ActiveGuestId
-		m.guestModel = guest.New(m.activeGuestID)
-		m.state = guestView
-
 	}
 
 	switch m.state {

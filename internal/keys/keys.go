@@ -12,7 +12,8 @@ type Keymap struct {
 	Left  key.Binding
 	Right key.Binding
 
-	Back key.Binding
+	Select key.Binding
+	Back   key.Binding
 
 	Help key.Binding
 	Quit key.Binding
@@ -26,7 +27,7 @@ func (k Keymap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Manager, k.Network, k.Storage},
 		{k.Up, k.Down, k.Left, k.Right},
-		{k.Back, k.Help, k.Quit},
+		{k.Select, k.Back, k.Help, k.Quit},
 	}
 }
 
@@ -61,6 +62,10 @@ var Keys = Keymap{
 		key.WithHelp("l/→", "Right"),
 	),
 
+	Select: key.NewBinding(
+		key.WithKeys("o", "enter"),
+		key.WithHelp("o/↵", "Select"),
+	),
 	Back: key.NewBinding(
 		key.WithKeys("esc"),
 		key.WithHelp("esc", "Back"),

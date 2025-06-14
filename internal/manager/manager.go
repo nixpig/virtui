@@ -2,24 +2,52 @@ package manager
 
 import (
 	"fmt"
-	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/nixpig/virtui/internal/entity"
+	"github.com/nixpig/virtui/internal/keys"
 	"libvirt.org/go/libvirt"
 )
 
-type SelectMsg struct {
-	ActiveGuestId uint
+var columns = []table.Column{
+	// UUID is hidden as it's only used for identification
+	{Title: "UUID", Width: 0},
+	{Title: "ID", Width: 4},
+	{Title: "Name", Width: 30},
+	{Title: "State", Width: 10},
 }
 
 type Model struct {
 	domains []libvirt.Domain
+	lv      *libvirt.Connect
+	keys    keys.Keymap
+	table   table.Model
 }
 
-func New(domains []libvirt.Domain) tea.Model {
+func New(lv *libvirt.Connect) tea.Model {
+	domains, _ := lv.ListAllDomains(0)
+
+	rows := make([]table.Row, len(domains))
+
+	for i, d := range domains {
+		x, _ := entity.ToDomainStruct(&d)
+		state, _, _ := d.GetState()
+		rows[i] = table.Row{x.UUID, fmt.Sprintf("%d", x.ID), x.Name, fmt.Sprintf("%v", state)}
+	}
+
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithFocused(true),
+		table.WithRows(rows),
+	)
+
 	return Model{
 		domains: domains,
+		table:   t,
+		keys:    keys.Keys,
+		lv:      lv,
 	}
 }
 
@@ -28,26 +56,30 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	return m, nil
+	var cmd tea.Cmd
+	var cmds []tea.Cmd
+
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+	// TODO: resize the table and stuff
+
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, m.keys.Select):
+			uuid := m.table.SelectedRow()[0]
+			// how do we bubble this up to the main model??
+			fmt.Println(uuid)
+
+		}
+
+	}
+
+	m.table, cmd = m.table.Update(msg)
+
+	cmds = append(cmds, cmd)
+	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
-	var view strings.Builder
-
-	for i, d := range m.domains {
-		if i != 0 {
-			view.WriteString("\n")
-		}
-
-		x, err := entity.ToDomainStruct(&d)
-		if err != nil {
-			view.WriteString("invalid domain: " + err.Error())
-		}
-
-		state, _, _ := d.GetState()
-
-		view.WriteString(fmt.Sprintf("%s: %s (%s)", x.Name, state, x.UUID))
-	}
-
-	return view.String()
+	return m.table.View() + "\n"
 }

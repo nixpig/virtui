@@ -6,16 +6,13 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type BackMsg struct {
-}
-
 type Model struct {
-	activeGuestID uint
+	activeGuestUUID string
 }
 
-func New(id uint) tea.Model {
+func New(uuid string) tea.Model {
 	return Model{
-		activeGuestID: id,
+		activeGuestUUID: uuid,
 	}
 }
 
@@ -28,5 +25,5 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	return fmt.Sprintf("guest model view - %d", m.activeGuestID)
+	return fmt.Sprintf("guest model view - %s", m.activeGuestUUID)
 }

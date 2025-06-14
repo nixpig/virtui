@@ -1,11 +1,6 @@
 package entity
 
 import (
-	"fmt"
-	"log/slog"
-	"os"
-
-	"github.com/nixpig/virtui/internal/mappers"
 	"libvirt.org/go/libvirt"
 	"libvirt.org/go/libvirtxml"
 )
@@ -56,27 +51,27 @@ func misc() {
 
 	// fmt.Println(domXML)
 
-	conn, err := libvirt.NewConnect(qemuURL)
-	if err != nil {
-		slog.Error("failed to connect", "qemuURL", qemuURL, "err", err)
-		os.Exit(1)
-	}
-
-	fmt.Println("DOMAINS: ")
-	doms, err := conn.ListAllDomains(0)
-	if err != nil {
-		slog.Error("failed to list all active domains", "err", err)
-		os.Exit(1)
-	}
-
-	for _, d := range doms {
-		defer d.Free()
-
-		s, err := mappers.ToStructXML(&d)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		fmt.Printf("%+v\n", s)
-	}
+	// conn, err := libvirt.NewConnect(qemuURL)
+	// if err != nil {
+	// 	slog.Error("failed to connect", "qemuURL", qemuURL, "err", err)
+	// 	os.Exit(1)
+	// }
+	//
+	// fmt.Println("DOMAINS: ")
+	// doms, err := conn.ListAllDomains(0)
+	// if err != nil {
+	// 	slog.Error("failed to list all active domains", "err", err)
+	// 	os.Exit(1)
+	// }
+	//
+	// for _, d := range doms {
+	// 	defer d.Free()
+	//
+	// 	s, err := mappers.ToStructXML(&d)
+	// 	if err != nil {
+	// 		fmt.Println(err)
+	// 	}
+	//
+	// 	fmt.Printf("%+v\n", s)
+	// }
 }

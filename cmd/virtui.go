@@ -10,6 +10,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/x/term"
+	"github.com/nixpig/virtui/internal/guest"
 	"github.com/nixpig/virtui/internal/keys"
 	"github.com/nixpig/virtui/internal/manager"
 	"github.com/nixpig/virtui/internal/network"
@@ -68,6 +69,10 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
+	case manager.SelectMsg:
+		m.guestModel = guest.New(msg.SelectedUUID)
+		m.state = guestView
+
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
 		m.help.Width = msg.Width

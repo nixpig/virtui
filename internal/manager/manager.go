@@ -11,6 +11,10 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
+type SelectMsg struct {
+	SelectedUUID string
+}
+
 var columns = []table.Column{
 	// UUID is hidden as it's only used for identification
 	{Title: "UUID", Width: 0},
@@ -61,15 +65,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-	// TODO: resize the table and stuff
+		// TODO: resize the table and stuff
 
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Select):
-			uuid := m.table.SelectedRow()[0]
-			// how do we bubble this up to the main model??
-			fmt.Println(uuid)
-
+			return m, func() tea.Msg {
+				return SelectMsg{
+					SelectedUUID: m.table.SelectedRow()[0],
+				}
+			}
 		}
 
 	}

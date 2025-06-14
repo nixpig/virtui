@@ -16,9 +16,11 @@ import (
 var columns = []table.Column{
 	// UUID is hidden as it's only used for identification
 	{Title: "UUID", Width: 0},
-	{Title: "ID", Width: 4},
 	{Title: "Name", Width: 30},
 	{Title: "State", Width: 10},
+	{Title: "CPU", Width: 4},
+	{Title: "Mem", Width: 12},
+	{Title: "Connection", Width: 20},
 }
 
 type Model struct {
@@ -114,7 +116,15 @@ func New(lv *libvirt.Connect) tea.Model {
 	for i, d := range domains {
 		x, _ := entity.ToDomainStruct(&d)
 		state, _, _ := d.GetState()
-		rows[i] = table.Row{x.UUID, fmt.Sprintf("%d", x.ID), x.Name, mappers.FromState(state)}
+
+		rows[i] = table.Row{
+			x.UUID,
+			x.Name,
+			mappers.FromState(state),
+			fmt.Sprintf("%d", x.VCPU.Value),
+			fmt.Sprintf("%d%s", x.Memory.Value, x.Memory.Unit),
+			"QEMU/KVM (system)",
+		}
 	}
 
 	t := table.New(

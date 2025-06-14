@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/x/term"
 	"github.com/nixpig/virtui/internal/commands"
@@ -71,7 +72,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case commands.SelectGuestMsg:
-		m.guestModel = guest.New(msg.SelectedUUID)
+		m.guestModel = guest.New(msg.SelectedUUID, m.lv)
 		m.state = guestView
 
 	case commands.GoBackMsg:
@@ -143,7 +144,6 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m MainModel) View() string {
-	helpView := m.help.View(m.keys)
 
 	var mainView string
 
@@ -160,11 +160,16 @@ func (m MainModel) View() string {
 		mainView = m.managerModel.View()
 	}
 
+	helpView := m.help.View(m.keys)
+
+	border := lipgloss.NewStyle().Border(lipgloss.NormalBorder()).Width(m.width - 2)
+	borderCompensation := 2
+
 	offset := 1 // who knows where this comes from 🤷
 
-	padding := m.height - offset - strings.Count(mainView, "\n") - strings.Count(helpView, "\n")
+	padding := m.height - borderCompensation - offset - strings.Count(mainView, "\n") - strings.Count(helpView, "\n")
 
-	return mainView + strings.Repeat("\n", padding) + helpView
+	return border.Render(mainView + strings.Repeat("\n", padding) + helpView)
 }
 
 func main() {

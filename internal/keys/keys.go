@@ -28,16 +28,16 @@ func (k Keymap) FullHelp() [][]key.Binding {
 
 var Keys = Keymap{
 	Manager: key.NewBinding(
-		key.WithKeys("1"),
-		key.WithHelp("1", "Manager"),
+		key.WithKeys("1", "f1"),
+		key.WithHelp("f1", "Manager"),
 	),
 	Network: key.NewBinding(
-		key.WithKeys("2"),
-		key.WithHelp("2", "Network"),
+		key.WithKeys("2", "f2"),
+		key.WithHelp("f2", "Network"),
 	),
 	Storage: key.NewBinding(
-		key.WithKeys("3"),
-		key.WithHelp("3", "Storage"),
+		key.WithKeys("3", "f3"),
+		key.WithHelp("f3", "Storage"),
 	),
 
 	Up: key.NewBinding(

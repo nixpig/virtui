@@ -21,6 +21,51 @@ type StoragePool struct {
 	libvirtxml.StoragePool
 }
 
+func ToStorageVolume(vol *libvirt.StorageVol) (*StorageVolume, error) {
+	doc, err := vol.GetXMLDesc(0)
+	if err != nil {
+		return nil, err
+	}
+
+	v := &StorageVolume{}
+
+	if err := v.Unmarshal(doc); err != nil {
+		return nil, err
+	}
+
+	return v, nil
+}
+
+func ToStoragePoolStruct(pool *libvirt.StoragePool) (*StoragePool, error) {
+	doc, err := pool.GetXMLDesc(0)
+	if err != nil {
+		return nil, err
+	}
+
+	p := &StoragePool{}
+
+	if err := p.Unmarshal(doc); err != nil {
+		return nil, err
+	}
+
+	return p, nil
+}
+
+func ToNetworkStruct(network *libvirt.Network) (*Network, error) {
+	doc, err := network.GetXMLDesc(0)
+	if err != nil {
+		return nil, err
+	}
+
+	n := &Network{}
+
+	if err := n.Unmarshal(doc); err != nil {
+		return nil, err
+	}
+
+	return n, nil
+}
+
 func ToDomainStruct(domain *libvirt.Domain) (*Domain, error) {
 	doc, err := domain.GetXMLDesc(0)
 	if err != nil {

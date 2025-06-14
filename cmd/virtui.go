@@ -2,11 +2,14 @@ package main
 
 import (
 	"context"
+	"os"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
+	"github.com/charmbracelet/x/term"
 	"github.com/nixpig/virtui/internal/guest"
 	"github.com/nixpig/virtui/internal/keys"
 	"github.com/nixpig/virtui/internal/manager"
@@ -34,6 +37,8 @@ type MainModel struct {
 	storageModel  tea.Model
 	lv            *libvirt.Connect
 	activeGuestID uint
+	width         int
+	height        int
 }
 
 func initialModel(lv *libvirt.Connect) MainModel {
@@ -44,12 +49,19 @@ func initialModel(lv *libvirt.Connect) MainModel {
 
 	managerModel := manager.New(domains)
 
+	width, height, err := term.GetSize(os.Stdin.Fd())
+	if err != nil {
+		log.Fatal("failed to get size of terminal", "err", err)
+	}
+
 	return MainModel{
 		state:        managerView,
 		keys:         keys.Keys,
 		help:         help.New(),
 		managerModel: managerModel,
 		lv:           lv,
+		width:        width,
+		height:       height,
 	}
 }
 
@@ -63,6 +75,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
+		m.width, m.height = msg.Width, msg.Height
 		m.help.Width = msg.Width
 
 	case tea.KeyMsg:
@@ -137,7 +150,11 @@ func (m MainModel) View() string {
 		mainView = m.managerModel.View()
 	}
 
-	return mainView + "\n" + helpView
+	offset := 1 // who knows where this comes from 🤷
+
+	padding := m.height - offset - strings.Count(mainView, "\n") - strings.Count(helpView, "\n")
+
+	return mainView + strings.Repeat("\n", padding) + helpView
 }
 
 func main() {

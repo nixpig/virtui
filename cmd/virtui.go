@@ -10,6 +10,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/x/term"
+	"github.com/nixpig/virtui/internal/commands"
 	"github.com/nixpig/virtui/internal/guest"
 	"github.com/nixpig/virtui/internal/keys"
 	"github.com/nixpig/virtui/internal/manager"
@@ -69,9 +70,15 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case manager.SelectGuestMsg:
+	case commands.SelectGuestMsg:
 		m.guestModel = guest.New(msg.SelectedUUID)
 		m.state = guestView
+
+	case commands.GoBackMsg:
+		switch m.state {
+		case guestView:
+			m.state = managerView
+		}
 
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
@@ -80,16 +87,29 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Manager):
+			if m.state == managerView {
+				break
+			}
+
 			m.managerModel = manager.New(m.lv)
 			m.state = managerView
+
 		case key.Matches(msg, m.keys.Network):
+			if m.state == networkView {
+				break
+			}
+
 			m.networkModel = network.New(m.lv)
 			m.state = networkView
+
 		case key.Matches(msg, m.keys.Storage):
+			if m.state == storageView {
+				break
+			}
+
 			m.storageModel = storage.New(m.lv)
 			m.state = storageView
-		case key.Matches(msg, m.keys.Help):
-			m.help.ShowAll = !m.help.ShowAll
+
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
 		}

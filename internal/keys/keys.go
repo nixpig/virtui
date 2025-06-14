@@ -12,23 +12,18 @@ type Keymap struct {
 	Left  key.Binding
 	Right key.Binding
 
-	Select key.Binding
-	Back   key.Binding
+	Back key.Binding
 
-	Help key.Binding
 	Quit key.Binding
+	Help key.Binding
 }
 
 func (k Keymap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Help, k.Quit}
+	return []key.Binding{k.Up, k.Down, k.Left, k.Right, k.Back, k.Quit, k.Help}
 }
 
 func (k Keymap) FullHelp() [][]key.Binding {
-	return [][]key.Binding{
-		{k.Manager, k.Network, k.Storage},
-		{k.Up, k.Down, k.Left, k.Right},
-		{k.Select, k.Back, k.Help, k.Quit},
-	}
+	return [][]key.Binding{}
 }
 
 var Keys = Keymap{
@@ -47,36 +42,32 @@ var Keys = Keymap{
 
 	Up: key.NewBinding(
 		key.WithKeys("k", "up"),
-		key.WithHelp("k/↑", "Up"),
+		key.WithHelp("k", "up"),
 	),
 	Down: key.NewBinding(
 		key.WithKeys("j", "down"),
-		key.WithHelp("j/↓", "Down"),
+		key.WithHelp("j", "down"),
 	),
 	Left: key.NewBinding(
 		key.WithKeys("h", "left"),
-		key.WithHelp("h/←", "Left"),
+		key.WithHelp("h", "left"),
 	),
 	Right: key.NewBinding(
 		key.WithKeys("l", "right"),
-		key.WithHelp("l/→", "Right"),
+		key.WithHelp("l", "right"),
 	),
 
-	Select: key.NewBinding(
-		key.WithKeys("o", "enter"),
-		key.WithHelp("o/↵", "Select"),
-	),
 	Back: key.NewBinding(
 		key.WithKeys("esc"),
-		key.WithHelp("esc", "Back"),
+		key.WithHelp("esc", "back"),
 	),
 
-	Help: key.NewBinding(
-		key.WithKeys("?"),
-		key.WithHelp("?", "Help"),
-	),
 	Quit: key.NewBinding(
 		key.WithKeys("q", "ctrl+c"),
-		key.WithHelp("q", "Quit"),
+		key.WithHelp("q", "quit"),
+	),
+	Help: key.NewBinding(
+		key.WithKeys("", ""),
+		key.WithHelp("", "https://github.com/nixpig/virtui"),
 	),
 }

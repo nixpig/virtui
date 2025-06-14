@@ -3,24 +3,15 @@ package manager
 import (
 	"fmt"
 
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/nixpig/virtui/internal/commands"
 	"github.com/nixpig/virtui/internal/entity"
-	"github.com/nixpig/virtui/internal/keys"
+	"github.com/nixpig/virtui/internal/mappers"
 	"libvirt.org/go/libvirt"
 )
-
-// SelectGuestMsg is a message to communicate the currently selected guest by UUID
-type SelectGuestMsg struct {
-	SelectedUUID string
-}
-
-func selectGuestCmd(uuid string) tea.Cmd {
-	return func() tea.Msg {
-		return SelectGuestMsg{SelectedUUID: uuid}
-	}
-}
 
 var columns = []table.Column{
 	// UUID is hidden as it's only used for identification
@@ -33,8 +24,85 @@ var columns = []table.Column{
 type Model struct {
 	domains []libvirt.Domain
 	lv      *libvirt.Connect
-	keys    keys.Keymap
+	keys    managerKeyMap
+	help    help.Model
 	table   table.Model
+}
+
+type managerKeyMap struct {
+	Open        key.Binding
+	Run         key.Binding
+	PauseResume key.Binding
+	Shutdown    key.Binding
+	Reboot      key.Binding
+	ForceReset  key.Binding
+	ForceOff    key.Binding
+	Save        key.Binding
+	Clone       key.Binding
+	Delete      key.Binding
+}
+
+func (mk managerKeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{
+		mk.Open,
+		mk.Run,
+		mk.PauseResume,
+		mk.Shutdown,
+		mk.Reboot,
+		mk.ForceReset,
+		mk.ForceOff,
+		mk.Save,
+		mk.Clone,
+		mk.Delete,
+	}
+}
+
+func (mk managerKeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{}
+}
+
+var managerKeys = managerKeyMap{
+	Open: key.NewBinding(
+		key.WithKeys("o", "enter"),
+		key.WithHelp("o", "open"),
+	),
+	Run: key.NewBinding(
+		key.WithKeys("t"),
+		key.WithHelp("t", "run"),
+	),
+
+	PauseResume: key.NewBinding(
+		key.WithKeys("p"),
+		key.WithHelp("p", "pause/resume"),
+	),
+	Shutdown: key.NewBinding(
+		key.WithKeys("s"),
+		key.WithHelp("s", "shutdown"),
+	),
+	Reboot: key.NewBinding(
+		key.WithKeys("r"),
+		key.WithHelp("r", "reboot"),
+	),
+	ForceReset: key.NewBinding(
+		key.WithKeys("e"),
+		key.WithHelp("e", "reset"),
+	),
+	ForceOff: key.NewBinding(
+		key.WithKeys("f"),
+		key.WithHelp("f", "off"),
+	),
+	Save: key.NewBinding(
+		key.WithKeys("v"),
+		key.WithHelp("v", "save"),
+	),
+	Clone: key.NewBinding(
+		key.WithKeys("c"),
+		key.WithHelp("c", "clone"),
+	),
+	Delete: key.NewBinding(
+		key.WithKeys("x"),
+		key.WithHelp("x", "delete"),
+	),
 }
 
 // New creates a tea.Model for the manager view
@@ -46,7 +114,7 @@ func New(lv *libvirt.Connect) tea.Model {
 	for i, d := range domains {
 		x, _ := entity.ToDomainStruct(&d)
 		state, _, _ := d.GetState()
-		rows[i] = table.Row{x.UUID, fmt.Sprintf("%d", x.ID), x.Name, fmt.Sprintf("%v", state)}
+		rows[i] = table.Row{x.UUID, fmt.Sprintf("%d", x.ID), x.Name, mappers.FromState(state)}
 	}
 
 	t := table.New(
@@ -58,7 +126,8 @@ func New(lv *libvirt.Connect) tea.Model {
 	return Model{
 		domains: domains,
 		table:   t,
-		keys:    keys.Keys,
+		keys:    managerKeys,
+		help:    help.New(),
 		lv:      lv,
 	}
 }
@@ -73,12 +142,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
+		m.help.Width = msg.Width
 		// TODO: resize the table and stuff
 
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, m.keys.Select):
-			return m, selectGuestCmd(m.table.SelectedRow()[0])
+		case key.Matches(msg, m.keys.Open):
+			return m, commands.SelectGuestCmd(m.table.SelectedRow()[0])
+		case key.Matches(msg, m.keys.Run):
+			fmt.Println("START!!!")
 		}
 	}
 
@@ -89,5 +161,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	return m.table.View() + "\n"
+	helpView := m.help.View(m.keys)
+	return m.table.View() + "\n" + helpView
 }

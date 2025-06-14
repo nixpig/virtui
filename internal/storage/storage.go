@@ -9,6 +9,7 @@ type Model struct {
 	lv *libvirt.Connect
 }
 
+// New creates a tea.Model for the storage view
 func New(lv *libvirt.Connect) tea.Model {
 	return Model{lv}
 }

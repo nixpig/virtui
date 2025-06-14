@@ -10,6 +10,7 @@ type Model struct {
 	activeGuestUUID string
 }
 
+// New creates a tea.Model for the guest view
 func New(uuid string) tea.Model {
 	return Model{
 		activeGuestUUID: uuid,

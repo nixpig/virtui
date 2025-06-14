@@ -11,8 +11,15 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
-type SelectMsg struct {
+// SelectGuestMsg is a message to communicate the currently selected guest by UUID
+type SelectGuestMsg struct {
 	SelectedUUID string
+}
+
+func selectGuestCmd(uuid string) tea.Cmd {
+	return func() tea.Msg {
+		return SelectGuestMsg{SelectedUUID: uuid}
+	}
 }
 
 var columns = []table.Column{
@@ -30,6 +37,7 @@ type Model struct {
 	table   table.Model
 }
 
+// New creates a tea.Model for the manager view
 func New(lv *libvirt.Connect) tea.Model {
 	domains, _ := lv.ListAllDomains(0)
 
@@ -70,13 +78,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Select):
-			return m, func() tea.Msg {
-				return SelectMsg{
-					SelectedUUID: m.table.SelectedRow()[0],
-				}
-			}
+			return m, selectGuestCmd(m.table.SelectedRow()[0])
 		}
-
 	}
 
 	m.table, cmd = m.table.Update(msg)

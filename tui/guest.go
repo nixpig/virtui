@@ -24,17 +24,17 @@ func newGuestModel(id string, conn *libvirt.Connect) tea.Model {
 	domain, err := conn.LookupDomainByUUIDString(id)
 	if err != nil {
 		// TODO: handle this a bit better by surfacing an error to the user
-		log.Debug("failed to get domain", "id", id, "err", err)
+		log.Debug("get domain", "id", id, "err", err)
 	}
 
 	d, err := entity.ToDomainStruct(domain)
 	if err != nil {
 		// TODO: surface error to user
-		log.Debug("failed to convert entity to struct", "err", err, "domain", d)
+		log.Debug("convert entity to struct", "err", err, "domain", d)
 	}
 
 	if err := domain.Free(); err != nil {
-		log.Warn("failed to free ref counted domain struct", "err", err)
+		log.Warn("free ref counted domain struct", "err", err)
 	}
 
 	return guestModel{

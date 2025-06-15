@@ -110,7 +110,7 @@ func newManagerModel(conn *libvirt.Connect) tea.Model {
 	domains, err := conn.ListAllDomains(0)
 	if err != nil {
 		// TODO: surface error to user?
-		log.Debug("failed to list all domains", "err", err)
+		log.Debug("list all domains", "err", err)
 	}
 
 	rows := make([]table.Row, len(domains))
@@ -119,16 +119,16 @@ func newManagerModel(conn *libvirt.Connect) tea.Model {
 		d, err := entity.ToDomainStruct(&domain)
 		if err != nil {
 			// TODO: surface error to user?
-			log.Debug("failed to convert entity to struct", "err", err, "domain", domain)
+			log.Debug("convert entity to struct", "err", err, "domain", domain)
 		}
 
 		state, _, err := domain.GetState()
 		if err != nil {
-			log.Debug("failed to get domain state", "uuid", d.UUID, "err", err)
+			log.Debug("get domain state", "uuid", d.UUID, "err", err)
 		}
 
 		if err := domain.Free(); err != nil {
-			log.Warn("failed to free ref counted domain struct", "err", err)
+			log.Warn("free ref counted domain struct", "err", err)
 		}
 
 		rows[i] = table.Row{

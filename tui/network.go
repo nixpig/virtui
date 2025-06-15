@@ -19,7 +19,7 @@ func newNetworkModel(conn *libvirt.Connect) tea.Model {
 	networks, err := conn.ListAllNetworks(0)
 	if err != nil {
 		// TODO: surface error to user?
-		log.Debug("failed to list all networks", "err", err)
+		log.Debug("list all networks", "err", err)
 	}
 
 	m := networkModel{
@@ -31,11 +31,11 @@ func newNetworkModel(conn *libvirt.Connect) tea.Model {
 		m.networks[i], err = entity.ToNetworkStruct(&network)
 		if err != nil {
 			// TODO: surface error to user?
-			log.Debug("failed to covert entity to struct", "err", err, "network", network)
+			log.Debug("covert entity to struct", "err", err, "network", network)
 		}
 
 		if err := network.Free(); err != nil {
-			log.Warn("failed to free ref counted network struct", "err", err)
+			log.Warn("free ref counted network struct", "err", err)
 		}
 	}
 

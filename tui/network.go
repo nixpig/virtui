@@ -29,6 +29,10 @@ func newNetworkModel(conn *libvirt.Connect) tea.Model {
 
 	for i, n := range networks {
 		m.networks[i], _ = entity.ToNetworkStruct(&n)
+
+		if err := n.Free(); err != nil {
+			log.Warn("failed to free ref counted network struct", "err", err)
+		}
 	}
 
 	return m

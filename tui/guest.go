@@ -12,13 +12,15 @@ import (
 )
 
 type guestModel struct {
-	activeGuestUUID string
-	keys            keymap
-	conn            *libvirt.Connect
-	domain          *entity.Domain
+	uuid   string
+	keys   keymap
+	conn   *libvirt.Connect
+	domain *entity.Domain
 }
 
 func newGuestModel(id string, conn *libvirt.Connect) tea.Model {
+	// TODO: does this setup stuff need to go in Init method so can return a
+	// tea.Cmd error if it fails and handle in tui model??
 	dom, err := conn.LookupDomainByUUIDString(id)
 	if err != nil {
 		// TODO: handle this a bit better by surfacing an error to the user
@@ -28,14 +30,18 @@ func newGuestModel(id string, conn *libvirt.Connect) tea.Model {
 	d, err := entity.ToDomainStruct(dom)
 	if err != nil {
 		// TODO: surface error to user
-		log.Debug("failed to convert domain to struct", "err", err)
+		log.Debug("failed to convert entity to struct", "err", err, "domain", d)
+	}
+
+	if err := dom.Free(); err != nil {
+		log.Warn("failed to free ref counted domain struct", "err", err)
 	}
 
 	return guestModel{
-		activeGuestUUID: id,
-		keys:            keys,
-		conn:            conn,
-		domain:          &d,
+		uuid:   id,
+		keys:   keys,
+		conn:   conn,
+		domain: &d,
 	}
 }
 

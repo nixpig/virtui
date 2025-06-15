@@ -119,12 +119,16 @@ func newManagerModel(conn *libvirt.Connect) tea.Model {
 		x, err := entity.ToDomainStruct(&d)
 		if err != nil {
 			// TODO: surface error to user?
-			log.Debug("failed to convert domain to struct", "err", err)
+			log.Debug("failed to convert entity to struct", "err", err, "domain", d)
 		}
 
 		state, _, err := d.GetState()
 		if err != nil {
 			log.Debug("failed to get domain state", "uuid", x.UUID, "err", err)
+		}
+
+		if err := d.Free(); err != nil {
+			log.Warn("failed to free ref counted domain struct", "err", err)
 		}
 
 		rows[i] = table.Row{

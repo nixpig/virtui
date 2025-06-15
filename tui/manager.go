@@ -107,13 +107,25 @@ var managerKeys = managerKeyMap{
 }
 
 func newManagerModel(conn *libvirt.Connect) tea.Model {
-	domains, _ := conn.ListAllDomains(0)
+	domains, err := conn.ListAllDomains(0)
+	if err != nil {
+		// TODO: surface error to user?
+		log.Debug("failed to list all domains", "err", err)
+	}
 
 	rows := make([]table.Row, len(domains))
 
 	for i, d := range domains {
-		x, _ := entity.ToDomainStruct(&d)
-		state, _, _ := d.GetState()
+		x, err := entity.ToDomainStruct(&d)
+		if err != nil {
+			// TODO: surface error to user?
+			log.Debug("failed to convert domain to struct", "err", err)
+		}
+
+		state, _, err := d.GetState()
+		if err != nil {
+			log.Debug("failed to get domain state", "uuid", x.UUID, "err", err)
+		}
 
 		rows[i] = table.Row{
 			x.UUID,

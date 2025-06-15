@@ -42,7 +42,8 @@ func New(conn *libvirt.Connect) model {
 
 	width, height, err := term.GetSize(os.Stdin.Fd())
 	if err != nil {
-		log.Fatal("failed to get size of terminal", "fd", os.Stdin.Fd(), "err", err)
+		// TODO: need to handle this
+		log.Debug("failed to get size of terminal", "fd", os.Stdin.Fd(), "err", err)
 	}
 
 	return model{

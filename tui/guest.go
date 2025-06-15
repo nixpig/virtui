@@ -22,10 +22,14 @@ func newGuestModel(id string, conn *libvirt.Connect) tea.Model {
 	dom, err := conn.LookupDomainByUUIDString(id)
 	if err != nil {
 		// TODO: handle this a bit better by surfacing an error to the user
-		log.Fatal("failed to get domain", "id", id, "err", err)
+		log.Debug("failed to get domain", "id", id, "err", err)
 	}
 
-	d, _ := entity.ToDomainStruct(dom)
+	d, err := entity.ToDomainStruct(dom)
+	if err != nil {
+		// TODO: surface error to user
+		log.Debug("failed to convert domain to struct", "err", err)
+	}
 
 	return guestModel{
 		activeGuestUUID: id,

@@ -16,7 +16,11 @@ type networkModel struct {
 }
 
 func newNetworkModel(conn *libvirt.Connect) tea.Model {
-	networks, _ := conn.ListAllNetworks(0)
+	networks, err := conn.ListAllNetworks(0)
+	if err != nil {
+		// TODO: surface error to user?
+		log.Debug("failed to list all networks", "err", err)
+	}
 
 	m := networkModel{
 		conn:     conn,

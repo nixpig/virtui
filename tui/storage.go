@@ -16,7 +16,11 @@ type storageModel struct {
 }
 
 func newStorageModel(conn *libvirt.Connect) tea.Model {
-	pools, _ := conn.ListAllStoragePools(0)
+	pools, err := conn.ListAllStoragePools(0)
+	if err != nil {
+		// TODO: surface error to user?
+		log.Debug("failed to list all storage pools", "err", err)
+	}
 
 	m := storageModel{
 		conn:    conn,
@@ -24,12 +28,28 @@ func newStorageModel(conn *libvirt.Connect) tea.Model {
 	}
 
 	for _, p := range pools {
-		x, _ := entity.ToStoragePoolStruct(&p)
+		x, err := entity.ToStoragePoolStruct(&p)
+		if err != nil {
+			// TODO: surface error to user?
+			log.Debug("failed to convert storage pool to struct", "err", err)
+		}
 		m.storage[x] = []entity.StorageVolume{}
 
-		vols, _ := p.ListAllStorageVolumes(0)
+		vols, err := p.ListAllStorageVolumes(0)
+		if err != nil {
+			// TODO: surface error to user?
+			log.Debug("failed to list all storage volumes", "err", err)
+			continue
+		}
+
 		for _, v := range vols {
-			y, _ := entity.ToStorageVolume(&v)
+			y, err := entity.ToStorageVolume(&v)
+			if err != nil {
+				// TODO: surface error to user?
+				log.Debug("failed to convert storage volume to struct", "err", err)
+				continue
+			}
+
 			m.storage[x] = append(m.storage[x], y)
 		}
 	}

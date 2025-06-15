@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
@@ -9,13 +10,27 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
+var qemuSystemURI = "qemu:///system"
+
 func main() {
 	ctx := context.Background()
 
-	uri := "qemu:///system"
-	conn, err := libvirt.NewConnect(uri)
+	logFile, err := os.OpenFile("/tmp/virtui.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		log.Fatal("failed to connect to libvirt", "uri", uri, "err", err)
+		os.Stderr.WriteString("Error: unable to open log file")
+		os.Exit(1)
+	}
+	defer logFile.Close()
+
+	// log.SetLevel(log.DebugLevel)
+	// log.SetOutput(logFile)
+	// log.SetPrefix(uuid.NewString())
+
+	conn, err := libvirt.NewConnect(qemuSystemURI)
+	if err != nil {
+		log.Debug("failed to connect to libvirt", "uri", qemuSystemURI, "err", err)
+		os.Stderr.WriteString("Error: failed to connect to libvirt")
+		os.Exit(1)
 	}
 
 	p := tea.NewProgram(
@@ -25,7 +40,8 @@ func main() {
 	)
 
 	if model, err := p.Run(); err != nil {
-		log.Debug("application state on crash", "model", model)
-		log.Fatal("received fatal error", "err", err)
+		log.Debug("encountered unrecoverable error", "err", err, "model", model)
+		os.Stderr.WriteString("Error: encountered unrecoverable error and need to exit")
+		os.Exit(1)
 	}
 }

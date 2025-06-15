@@ -27,10 +27,14 @@ func newNetworkModel(conn *libvirt.Connect) tea.Model {
 		networks: make([]entity.Network, len(networks)),
 	}
 
-	for i, n := range networks {
-		m.networks[i], _ = entity.ToNetworkStruct(&n)
+	for i, network := range networks {
+		m.networks[i], err = entity.ToNetworkStruct(&network)
+		if err != nil {
+			// TODO: surface error to user?
+			log.Debug("failed to covert entity to struct", "err", err, "network", network)
+		}
 
-		if err := n.Free(); err != nil {
+		if err := network.Free(); err != nil {
 			log.Warn("failed to free ref counted network struct", "err", err)
 		}
 	}
@@ -50,8 +54,8 @@ func (m networkModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m networkModel) View() string {
 	var sb strings.Builder
 
-	for _, n := range m.networks {
-		sb.WriteString(n.Name + " " + n.UUID)
+	for _, network := range m.networks {
+		sb.WriteString(network.Name + " " + network.UUID)
 		sb.WriteString("\n")
 	}
 

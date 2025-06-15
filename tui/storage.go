@@ -27,38 +27,40 @@ func newStorageModel(conn *libvirt.Connect) tea.Model {
 		storage: make(map[entity.StoragePool][]entity.StorageVolume, len(pools)),
 	}
 
-	for _, p := range pools {
-		x, err := entity.ToStoragePoolStruct(&p)
+	for _, pool := range pools {
+		p, err := entity.ToStoragePoolStruct(&pool)
 		if err != nil {
 			// TODO: surface error to user?
-			log.Debug("failed to convert entity to struct", "err", err, "pool", p)
+			log.Debug("failed to convert entity to struct", "err", err, "pool", pool)
 		}
-		m.storage[x] = []entity.StorageVolume{}
+		m.storage[p] = []entity.StorageVolume{}
 
-		vols, err := p.ListAllStorageVolumes(0)
+		volumes, err := pool.ListAllStorageVolumes(0)
 		if err != nil {
 			// TODO: surface error to user?
 			log.Debug("failed to list all storage volumes", "err", err)
-			continue
 		}
 
-		if err := p.Free(); err != nil {
+		if err := pool.Free(); err != nil {
 			log.Warn("failed to free ref counted pool struct", "err", err)
 		}
 
-		for _, v := range vols {
-			y, err := entity.ToStorageVolume(&v)
+		if len(volumes) == 0 {
+			continue
+		}
+
+		for _, volume := range volumes {
+			v, err := entity.ToStorageVolume(&volume)
 			if err != nil {
 				// TODO: surface error to user?
-				log.Debug("failed to convert entity to struct", "err", err, "volume", v)
-				continue
+				log.Debug("failed to convert entity to struct", "err", err, "volume", volume)
 			}
 
-			if err := v.Free(); err != nil {
+			if err := volume.Free(); err != nil {
 				log.Warn("failed to free ref counted volume struct", "err", err)
 			}
 
-			m.storage[x] = append(m.storage[x], y)
+			m.storage[p] = append(m.storage[p], v)
 		}
 	}
 

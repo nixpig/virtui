@@ -115,28 +115,28 @@ func newManagerModel(conn *libvirt.Connect) tea.Model {
 
 	rows := make([]table.Row, len(domains))
 
-	for i, d := range domains {
-		x, err := entity.ToDomainStruct(&d)
+	for i, domain := range domains {
+		d, err := entity.ToDomainStruct(&domain)
 		if err != nil {
 			// TODO: surface error to user?
-			log.Debug("failed to convert entity to struct", "err", err, "domain", d)
+			log.Debug("failed to convert entity to struct", "err", err, "domain", domain)
 		}
 
-		state, _, err := d.GetState()
+		state, _, err := domain.GetState()
 		if err != nil {
-			log.Debug("failed to get domain state", "uuid", x.UUID, "err", err)
+			log.Debug("failed to get domain state", "uuid", d.UUID, "err", err)
 		}
 
-		if err := d.Free(); err != nil {
+		if err := domain.Free(); err != nil {
 			log.Warn("failed to free ref counted domain struct", "err", err)
 		}
 
 		rows[i] = table.Row{
-			x.UUID,
-			x.Name,
+			d.UUID,
+			d.Name,
 			mappers.FromState(state),
-			fmt.Sprintf("%d", x.VCPU.Value),
-			fmt.Sprintf("%d%s", x.Memory.Value, x.Memory.Unit),
+			fmt.Sprintf("%d", d.VCPU.Value),
+			fmt.Sprintf("%d%s", d.Memory.Value, d.Memory.Unit),
 			"QEMU/KVM (system)",
 		}
 	}

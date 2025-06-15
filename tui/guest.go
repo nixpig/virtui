@@ -21,19 +21,19 @@ type guestModel struct {
 func newGuestModel(id string, conn *libvirt.Connect) tea.Model {
 	// TODO: does this setup stuff need to go in Init method so can return a
 	// tea.Cmd error if it fails and handle in tui model??
-	dom, err := conn.LookupDomainByUUIDString(id)
+	domain, err := conn.LookupDomainByUUIDString(id)
 	if err != nil {
 		// TODO: handle this a bit better by surfacing an error to the user
 		log.Debug("failed to get domain", "id", id, "err", err)
 	}
 
-	d, err := entity.ToDomainStruct(dom)
+	d, err := entity.ToDomainStruct(domain)
 	if err != nil {
 		// TODO: surface error to user
 		log.Debug("failed to convert entity to struct", "err", err, "domain", d)
 	}
 
-	if err := dom.Free(); err != nil {
+	if err := domain.Free(); err != nil {
 		log.Warn("failed to free ref counted domain struct", "err", err)
 	}
 

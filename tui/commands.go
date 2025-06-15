@@ -2,16 +2,76 @@ package tui
 
 import tea "github.com/charmbracelet/bubbletea"
 
-// selectGuestMsg is a message to communicate the currently selected guest by UUID
-type selectGuestMsg struct {
-	selectedUUID string
-}
+type openGuestMsg struct{ uuid string }
+type startGuestMsg struct{ uuid string }
+type pauseResumeGuestMsg struct{ uuid string }
+type shutdownGuestMsg struct{ uuid string }
+type rebootGuestMsg struct{ uuid string }
+type forceResetGuestMsg struct{ uuid string }
+type forceOffGuestMsg struct{ uuid string }
+type saveGuestMsg struct{ uuid string }
+type cloneGuestMsg struct{ uuid string }
+type deleteGuestMsg struct{ uuid string }
 
 type goBackMsg struct{}
 
-func selectGuestCmd(uuid string) tea.Cmd {
+func openGuestCmd(uuid string) tea.Cmd {
 	return func() tea.Msg {
-		return selectGuestMsg{selectedUUID: uuid}
+		return openGuestMsg{uuid}
+	}
+}
+
+func startGuestCmd(uuid string) tea.Cmd {
+	return func() tea.Msg {
+		return startGuestMsg{uuid}
+	}
+}
+
+func pauseResumeGuestCmd(uuid string) tea.Cmd {
+	return func() tea.Msg {
+		return pauseResumeGuestMsg{uuid}
+	}
+}
+
+func shutdownGuestCmd(uuid string) tea.Cmd {
+	return func() tea.Msg {
+		return shutdownGuestMsg{uuid}
+	}
+}
+
+func rebootGuestCmd(uuid string) tea.Cmd {
+	return func() tea.Msg {
+		return rebootGuestMsg{uuid}
+	}
+}
+
+func forceResetGuestCmd(uuid string) tea.Cmd {
+	return func() tea.Msg {
+		return forceResetGuestMsg{uuid}
+	}
+}
+
+func forceOffGuestCmd(uuid string) tea.Cmd {
+	return func() tea.Msg {
+		return forceOffGuestMsg{uuid}
+	}
+}
+
+func saveGuestCmd(uuid string) tea.Cmd {
+	return func() tea.Msg {
+		return saveGuestMsg{uuid}
+	}
+}
+
+func cloneGuestCmd(uuid string) tea.Cmd {
+	return func() tea.Msg {
+		return cloneGuestMsg{uuid}
+	}
+}
+
+func deleteGuestCmd(uuid string) tea.Cmd {
+	return func() tea.Msg {
+		return deleteGuestMsg{uuid}
 	}
 }
 

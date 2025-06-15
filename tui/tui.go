@@ -64,9 +64,36 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case selectGuestMsg:
-		m.guestModel = newGuestModel(msg.selectedUUID, m.conn)
+	case openGuestMsg:
+		m.guestModel = newGuestModel(msg.uuid, m.conn)
 		m.state = guestView
+
+	case startGuestMsg:
+		// TODO: Start Guest
+
+	case pauseResumeGuestMsg:
+		// TODO: PauseResume Guest
+
+	case shutdownGuestMsg:
+		// TODO: Shutdown Guest
+
+	case rebootGuestMsg:
+		// TODO: Reboot Guest
+
+	case forceResetGuestMsg:
+		// TODO: ForceReset Guest
+
+	case forceOffGuestMsg:
+		// TODO: ForceOff Guest
+
+	case saveGuestMsg:
+		// TODO: Save Guest
+
+	case cloneGuestMsg:
+		// TODO: Clone Guest
+
+	case deleteGuestMsg:
+	// TODO: Delete Guest
 
 	case goBackMsg:
 		switch m.state {

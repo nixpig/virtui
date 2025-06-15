@@ -32,7 +32,7 @@ type managerModel struct {
 
 type managerKeyMap struct {
 	Open        key.Binding
-	Run         key.Binding
+	Start       key.Binding
 	PauseResume key.Binding
 	Shutdown    key.Binding
 	Reboot      key.Binding
@@ -46,7 +46,7 @@ type managerKeyMap struct {
 func (mk managerKeyMap) ShortHelp() []key.Binding {
 	return []key.Binding{
 		mk.Open,
-		mk.Run,
+		mk.Start,
 		mk.PauseResume,
 		mk.Shutdown,
 		mk.Reboot,
@@ -67,9 +67,9 @@ var managerKeys = managerKeyMap{
 		key.WithKeys("o", "enter"),
 		key.WithHelp("o", "open"),
 	),
-	Run: key.NewBinding(
+	Start: key.NewBinding(
 		key.WithKeys("t"),
-		key.WithHelp("t", "run"),
+		key.WithHelp("t", "start"),
 	),
 
 	PauseResume: key.NewBinding(
@@ -155,11 +155,39 @@ func (m managerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// TODO: resize the table and stuff
 
 	case tea.KeyMsg:
+		guestUUID := m.table.SelectedRow()[0]
+
 		switch {
 		case key.Matches(msg, m.keys.Open):
-			return m, selectGuestCmd(m.table.SelectedRow()[0])
-		case key.Matches(msg, m.keys.Run):
-			fmt.Println("START!!!")
+			return m, openGuestCmd(guestUUID)
+
+		case key.Matches(msg, m.keys.Start):
+			return m, startGuestCmd(guestUUID)
+
+		case key.Matches(msg, m.keys.PauseResume):
+			return m, pauseResumeGuestCmd(guestUUID)
+
+		case key.Matches(msg, m.keys.Shutdown):
+			return m, shutdownGuestCmd(guestUUID)
+
+		case key.Matches(msg, m.keys.Reboot):
+			return m, rebootGuestCmd(guestUUID)
+
+		case key.Matches(msg, m.keys.ForceReset):
+			return m, forceResetGuestCmd(guestUUID)
+
+		case key.Matches(msg, m.keys.ForceOff):
+			return m, forceOffGuestCmd(guestUUID)
+
+		case key.Matches(msg, m.keys.Save):
+			return m, saveGuestCmd(guestUUID)
+
+		case key.Matches(msg, m.keys.Clone):
+			return m, cloneGuestCmd(guestUUID)
+
+		case key.Matches(msg, m.keys.Delete):
+			return m, deleteGuestCmd(guestUUID)
+
 		}
 	}
 

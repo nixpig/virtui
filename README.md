@@ -51,7 +51,7 @@ unix_sock_rw_perms = "0770"
 
 ```sh
 # /etc/libvirt/network.conf
-firewall_backend=iptables
+firewall_backend = "iptables"
 ```
 
 If you want to use LXC, you'll also need: `yay -Sy virt-bootstrap-git`

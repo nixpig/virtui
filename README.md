@@ -43,13 +43,13 @@ sudo systemctl enable --now libvirtd.service
 sudo usermod -aG libvirt $USER
 ```
 
-```
+```sh
 # /etc/libvirt/libvirtd.conf
 unix_sock_group = "libvirt"
 unix_sock_rw_perms = "0770"
 ```
 
-```
+```sh
 # /etc/libvirt/network.conf
 firewall_backend=iptables
 ```

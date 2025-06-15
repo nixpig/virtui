@@ -1,4 +1,4 @@
-package manager
+package tui
 
 import (
 	"fmt"
@@ -7,9 +7,8 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/nixpig/virtui/internal/commands"
-	"github.com/nixpig/virtui/internal/entity"
-	"github.com/nixpig/virtui/internal/mappers"
+	"github.com/nixpig/virtui/tui/entity"
+	"github.com/nixpig/virtui/tui/mappers"
 	"libvirt.org/go/libvirt"
 )
 
@@ -23,9 +22,9 @@ var columns = []table.Column{
 	{Title: "Connection", Width: 20},
 }
 
-type Model struct {
+type managerModel struct {
 	domains []libvirt.Domain
-	lv      *libvirt.Connect
+	conn    *libvirt.Connect
 	keys    managerKeyMap
 	help    help.Model
 	table   table.Model
@@ -108,8 +107,8 @@ var managerKeys = managerKeyMap{
 }
 
 // New creates a tea.Model for the manager view
-func New(lv *libvirt.Connect) tea.Model {
-	domains, _ := lv.ListAllDomains(0)
+func newManagerModel(conn *libvirt.Connect) tea.Model {
+	domains, _ := conn.ListAllDomains(0)
 
 	rows := make([]table.Row, len(domains))
 
@@ -133,20 +132,20 @@ func New(lv *libvirt.Connect) tea.Model {
 		table.WithRows(rows),
 	)
 
-	return Model{
+	return managerModel{
 		domains: domains,
 		table:   t,
 		keys:    managerKeys,
 		help:    help.New(),
-		lv:      lv,
+		conn:    conn,
 	}
 }
 
-func (m Model) Init() tea.Cmd {
+func (m managerModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m managerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
@@ -158,7 +157,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Open):
-			return m, commands.SelectGuestCmd(m.table.SelectedRow()[0])
+			return m, SelectGuestCmd(m.table.SelectedRow()[0])
 		case key.Matches(msg, m.keys.Run):
 			fmt.Println("START!!!")
 		}
@@ -170,7 +169,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) View() string {
+func (m managerModel) View() string {
 	helpView := m.help.View(m.keys)
 	return m.table.View() + "\n" + helpView
 }

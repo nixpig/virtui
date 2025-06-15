@@ -1,24 +1,24 @@
-package network
+package tui
 
 import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/nixpig/virtui/internal/entity"
+	"github.com/nixpig/virtui/tui/entity"
 	"libvirt.org/go/libvirt"
 )
 
-type Model struct {
-	lv       *libvirt.Connect
+type networkModel struct {
+	conn     *libvirt.Connect
 	networks []*entity.Network
 }
 
 // New creates tea.Model for the network view
-func New(lv *libvirt.Connect) tea.Model {
-	networks, _ := lv.ListAllNetworks(0)
+func newNetworkModel(conn *libvirt.Connect) tea.Model {
+	networks, _ := conn.ListAllNetworks(0)
 
-	m := Model{
-		lv:       lv,
+	m := networkModel{
+		conn:     conn,
 		networks: make([]*entity.Network, len(networks)),
 	}
 
@@ -29,15 +29,15 @@ func New(lv *libvirt.Connect) tea.Model {
 	return m
 }
 
-func (m Model) Init() tea.Cmd {
+func (m networkModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m networkModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) View() string {
+func (m networkModel) View() string {
 	var sb strings.Builder
 
 	for _, n := range m.networks {

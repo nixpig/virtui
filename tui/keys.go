@@ -1,8 +1,8 @@
-package keys
+package tui
 
 import "github.com/charmbracelet/bubbles/key"
 
-type Keymap struct {
+type keymap struct {
 	Manager key.Binding
 	Network key.Binding
 	Storage key.Binding
@@ -18,15 +18,15 @@ type Keymap struct {
 	Help key.Binding
 }
 
-func (k Keymap) ShortHelp() []key.Binding {
+func (k keymap) ShortHelp() []key.Binding {
 	return []key.Binding{k.Up, k.Down, k.Left, k.Right, k.Back, k.Quit, k.Help}
 }
 
-func (k Keymap) FullHelp() [][]key.Binding {
+func (k keymap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{}
 }
 
-var Keys = Keymap{
+var Keys = keymap{
 	Manager: key.NewBinding(
 		key.WithKeys("1", "f1"),
 		key.WithHelp("f1", "Manager"),

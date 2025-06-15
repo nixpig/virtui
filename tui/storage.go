@@ -1,25 +1,25 @@
-package storage
+package tui
 
 import (
 	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/nixpig/virtui/internal/entity"
+	"github.com/nixpig/virtui/tui/entity"
 	"libvirt.org/go/libvirt"
 )
 
-type Model struct {
-	lv      *libvirt.Connect
+type storageModel struct {
+	conn    *libvirt.Connect
 	storage map[*entity.StoragePool][]*entity.StorageVolume
 }
 
 // New creates a tea.Model for the storage view
-func New(lv *libvirt.Connect) tea.Model {
-	pools, _ := lv.ListAllStoragePools(0)
+func newStorageModel(conn *libvirt.Connect) tea.Model {
+	pools, _ := conn.ListAllStoragePools(0)
 
-	m := Model{
-		lv:      lv,
+	m := storageModel{
+		conn:    conn,
 		storage: make(map[*entity.StoragePool][]*entity.StorageVolume, len(pools)),
 	}
 
@@ -37,15 +37,15 @@ func New(lv *libvirt.Connect) tea.Model {
 	return m
 }
 
-func (m Model) Init() tea.Cmd {
+func (m storageModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m storageModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) View() string {
+func (m storageModel) View() string {
 	var sb strings.Builder
 
 	for k, v := range m.storage {

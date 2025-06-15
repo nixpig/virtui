@@ -11,7 +11,7 @@ import (
 
 type storageModel struct {
 	conn    *libvirt.Connect
-	storage map[*entity.StoragePool][]*entity.StorageVolume
+	storage map[entity.StoragePool][]entity.StorageVolume
 }
 
 // New creates a tea.Model for the storage view
@@ -20,12 +20,12 @@ func newStorageModel(conn *libvirt.Connect) tea.Model {
 
 	m := storageModel{
 		conn:    conn,
-		storage: make(map[*entity.StoragePool][]*entity.StorageVolume, len(pools)),
+		storage: make(map[entity.StoragePool][]entity.StorageVolume, len(pools)),
 	}
 
 	for _, p := range pools {
 		x, _ := entity.ToStoragePoolStruct(&p)
-		m.storage[x] = []*entity.StorageVolume{}
+		m.storage[x] = []entity.StorageVolume{}
 
 		vols, _ := p.ListAllStorageVolumes(0)
 		for _, v := range vols {

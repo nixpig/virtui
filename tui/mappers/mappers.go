@@ -25,16 +25,16 @@ func FromState(domainState libvirt.DomainState) string {
 	return s
 }
 
-func ToStructXML(domain *libvirt.Domain) (*libvirtxml.Domain, error) {
+func ToStructXML(domain *libvirt.Domain) (libvirtxml.Domain, error) {
+	var dom libvirtxml.Domain
+
 	doc, err := domain.GetXMLDesc(0)
 	if err != nil {
-		return nil, err
+		return dom, err
 	}
 
-	dom := &libvirtxml.Domain{}
-
 	if err := dom.Unmarshal(doc); err != nil {
-		return nil, err
+		return dom, err
 	}
 
 	return dom, nil

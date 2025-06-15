@@ -22,7 +22,7 @@ const (
 	storageView              // view of storage
 )
 
-type MainModel struct {
+type model struct {
 	state         state
 	keys          keymap
 	help          help.Model
@@ -36,7 +36,7 @@ type MainModel struct {
 	height        int
 }
 
-func InitialModel(conn *libvirt.Connect) MainModel {
+func New(conn *libvirt.Connect) model {
 	defaultModel := newManagerModel(conn)
 
 	width, height, err := term.GetSize(os.Stdin.Fd())
@@ -44,9 +44,9 @@ func InitialModel(conn *libvirt.Connect) MainModel {
 		log.Fatal("failed to get size of terminal", "err", err)
 	}
 
-	return MainModel{
+	return model{
 		state:        managerView,
-		keys:         Keys,
+		keys:         keys,
 		help:         help.New(),
 		managerModel: defaultModel,
 		conn:         conn,
@@ -55,20 +55,20 @@ func InitialModel(conn *libvirt.Connect) MainModel {
 	}
 }
 
-func (m MainModel) Init() tea.Cmd {
+func (m model) Init() tea.Cmd {
 	return nil
 }
 
-func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case SelectGuestMsg:
-		m.guestModel = newGuestModel(msg.SelectedUUID, m.conn)
+	case selectGuestMsg:
+		m.guestModel = newGuestModel(msg.selectedUUID, m.conn)
 		m.state = guestView
 
-	case GoBackMsg:
+	case goBackMsg:
 		switch m.state {
 		case guestView:
 			m.state = managerView
@@ -80,7 +80,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, m.keys.Manager):
+		case key.Matches(msg, m.keys.manager):
 			if m.state == managerView {
 				break
 			}
@@ -88,7 +88,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.managerModel = newManagerModel(m.conn)
 			m.state = managerView
 
-		case key.Matches(msg, m.keys.Network):
+		case key.Matches(msg, m.keys.network):
 			if m.state == networkView {
 				break
 			}
@@ -96,7 +96,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.networkModel = newNetworkModel(m.conn)
 			m.state = networkView
 
-		case key.Matches(msg, m.keys.Storage):
+		case key.Matches(msg, m.keys.storage):
 			if m.state == storageView {
 				break
 			}
@@ -104,7 +104,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.storageModel = newStorageModel(m.conn)
 			m.state = storageView
 
-		case key.Matches(msg, m.keys.Quit):
+		case key.Matches(msg, m.keys.quit):
 			return m, tea.Quit
 		}
 	}
@@ -136,7 +136,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m MainModel) View() string {
+func (m model) View() string {
 	var mainView string
 
 	switch m.state {

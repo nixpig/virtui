@@ -2,21 +2,21 @@ package tui
 
 import tea "github.com/charmbracelet/bubbletea"
 
-// SelectGuestMsg is a message to communicate the currently selected guest by UUID
-type SelectGuestMsg struct {
-	SelectedUUID string
+// selectGuestMsg is a message to communicate the currently selected guest by UUID
+type selectGuestMsg struct {
+	selectedUUID string
 }
 
-type GoBackMsg struct{}
+type goBackMsg struct{}
 
-func SelectGuestCmd(uuid string) tea.Cmd {
+func selectGuestCmd(uuid string) tea.Cmd {
 	return func() tea.Msg {
-		return SelectGuestMsg{SelectedUUID: uuid}
+		return selectGuestMsg{selectedUUID: uuid}
 	}
 }
 
-func GoBackCmd() tea.Cmd {
+func goBackCmd() tea.Cmd {
 	return func() tea.Msg {
-		return GoBackMsg{}
+		return goBackMsg{}
 	}
 }

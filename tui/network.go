@@ -10,7 +10,7 @@ import (
 
 type networkModel struct {
 	conn     *libvirt.Connect
-	networks []*entity.Network
+	networks []entity.Network
 }
 
 // New creates tea.Model for the network view
@@ -19,7 +19,7 @@ func newNetworkModel(conn *libvirt.Connect) tea.Model {
 
 	m := networkModel{
 		conn:     conn,
-		networks: make([]*entity.Network, len(networks)),
+		networks: make([]entity.Network, len(networks)),
 	}
 
 	for i, n := range networks {

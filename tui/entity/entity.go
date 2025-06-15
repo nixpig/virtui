@@ -21,64 +21,64 @@ type StoragePool struct {
 	libvirtxml.StoragePool
 }
 
-func ToStorageVolume(vol *libvirt.StorageVol) (*StorageVolume, error) {
+func ToStorageVolume(vol *libvirt.StorageVol) (StorageVolume, error) {
+	var v StorageVolume
+
 	doc, err := vol.GetXMLDesc(0)
 	if err != nil {
-		return nil, err
+		return v, err
 	}
 
-	v := &StorageVolume{}
-
 	if err := v.Unmarshal(doc); err != nil {
-		return nil, err
+		return v, err
 	}
 
 	return v, nil
 }
 
-func ToStoragePoolStruct(pool *libvirt.StoragePool) (*StoragePool, error) {
+func ToStoragePoolStruct(pool *libvirt.StoragePool) (StoragePool, error) {
+	var p StoragePool
+
 	doc, err := pool.GetXMLDesc(0)
 	if err != nil {
-		return nil, err
+		return p, err
 	}
 
-	p := &StoragePool{}
-
 	if err := p.Unmarshal(doc); err != nil {
-		return nil, err
+		return p, err
 	}
 
 	return p, nil
 }
 
-func ToNetworkStruct(network *libvirt.Network) (*Network, error) {
+func ToNetworkStruct(network *libvirt.Network) (Network, error) {
+	var n Network
+
 	doc, err := network.GetXMLDesc(0)
 	if err != nil {
-		return nil, err
+		return n, err
 	}
 
-	n := &Network{}
-
 	if err := n.Unmarshal(doc); err != nil {
-		return nil, err
+		return n, err
 	}
 
 	return n, nil
 }
 
-func ToDomainStruct(domain *libvirt.Domain) (*Domain, error) {
+func ToDomainStruct(domain *libvirt.Domain) (Domain, error) {
+	var d Domain
+
 	doc, err := domain.GetXMLDesc(0)
 	if err != nil {
-		return nil, err
+		return d, err
 	}
 
-	dom := &Domain{}
-
-	if err := dom.Unmarshal(doc); err != nil {
-		return nil, err
+	if err := d.Unmarshal(doc); err != nil {
+		return d, err
 	}
 
-	return dom, nil
+	return d, nil
 }
 
 func misc() {

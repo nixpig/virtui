@@ -19,7 +19,7 @@ func main() {
 	}
 
 	p := tea.NewProgram(
-		tui.InitialModel(conn),
+		tui.New(conn),
 		tea.WithAltScreen(),
 		tea.WithContext(ctx),
 	)

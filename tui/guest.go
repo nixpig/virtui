@@ -28,9 +28,9 @@ func newGuestModel(id string, conn *libvirt.Connect) tea.Model {
 
 	return guestModel{
 		activeGuestUUID: id,
-		keys:            Keys,
+		keys:            keys,
 		conn:            conn,
-		domain:          d,
+		domain:          &d,
 	}
 }
 
@@ -42,8 +42,8 @@ func (m guestModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, m.keys.Back):
-			return m, GoBackCmd()
+		case key.Matches(msg, m.keys.back):
+			return m, goBackCmd()
 
 		}
 	}

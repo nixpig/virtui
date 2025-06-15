@@ -157,7 +157,7 @@ func (m managerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Open):
-			return m, SelectGuestCmd(m.table.SelectedRow()[0])
+			return m, selectGuestCmd(m.table.SelectedRow()[0])
 		case key.Matches(msg, m.keys.Run):
 			fmt.Println("START!!!")
 		}

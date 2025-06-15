@@ -54,7 +54,7 @@ unix_sock_rw_perms = "0770"
 firewall_backend = "iptables"
 ```
 
-If you want to use LXC, you'll also need: `yay -Sy virt-bootstrap-git`
+If you want to use LXC, you'll also need to install `virt-bootstrap-git` from the AUR.
 
 ---
 

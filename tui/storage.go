@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/log"
 	"github.com/nixpig/virtui/tui/entity"
 	"libvirt.org/go/libvirt"
 )
@@ -14,7 +15,6 @@ type storageModel struct {
 	storage map[entity.StoragePool][]entity.StorageVolume
 }
 
-// New creates a tea.Model for the storage view
 func newStorageModel(conn *libvirt.Connect) tea.Model {
 	pools, _ := conn.ListAllStoragePools(0)
 
@@ -42,6 +42,7 @@ func (m storageModel) Init() tea.Cmd {
 }
 
 func (m storageModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	log.Debug("storage received msg", "type", fmt.Sprintf("%T", msg), "data", msg)
 	return m, nil
 }
 

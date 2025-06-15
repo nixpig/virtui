@@ -24,7 +24,8 @@ func main() {
 		tea.WithContext(ctx),
 	)
 
-	if _, err := p.Run(); err != nil {
-		log.Fatal("failed to start program", "err", err)
+	if model, err := p.Run(); err != nil {
+		log.Debug("application state on crash", "model", model)
+		log.Fatal("received fatal error", "err", err)
 	}
 }

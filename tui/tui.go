@@ -1,7 +1,7 @@
 package tui
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"strings"
 
@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/x/term"
 	"libvirt.org/go/libvirt"
 )
@@ -16,10 +17,10 @@ import (
 type state int
 
 const (
-	managerView state = iota // table that shows connections and domains under each
-	guestView                // view of an individual domain
-	networkView              // view of networks
-	storageView              // view of storage
+	managerView state = iota
+	guestView
+	networkView
+	storageView
 )
 
 type model struct {
@@ -41,7 +42,7 @@ func New(conn *libvirt.Connect) model {
 
 	width, height, err := term.GetSize(os.Stdin.Fd())
 	if err != nil {
-		log.Fatal("failed to get size of terminal", "err", err)
+		log.Fatal("failed to get size of terminal", "fd", os.Stdin.Fd(), "err", err)
 	}
 
 	return model{
@@ -62,6 +63,8 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
+
+	log.Debug("tui received msg", "type", fmt.Sprintf("%T", msg), "data", msg)
 
 	switch msg := msg.(type) {
 	case openGuestMsg:

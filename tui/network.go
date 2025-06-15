@@ -1,9 +1,11 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/log"
 	"github.com/nixpig/virtui/tui/entity"
 	"libvirt.org/go/libvirt"
 )
@@ -13,7 +15,6 @@ type networkModel struct {
 	networks []entity.Network
 }
 
-// New creates tea.Model for the network view
 func newNetworkModel(conn *libvirt.Connect) tea.Model {
 	networks, _ := conn.ListAllNetworks(0)
 
@@ -34,6 +35,7 @@ func (m networkModel) Init() tea.Cmd {
 }
 
 func (m networkModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	log.Debug("network received msg", "type", fmt.Sprintf("%T", msg), "data", msg)
 	return m, nil
 }
 

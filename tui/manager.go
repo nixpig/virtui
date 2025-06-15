@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/log"
 	"github.com/nixpig/virtui/tui/entity"
 	"github.com/nixpig/virtui/tui/mappers"
 	"libvirt.org/go/libvirt"
@@ -71,7 +72,6 @@ var managerKeys = managerKeyMap{
 		key.WithKeys("t"),
 		key.WithHelp("t", "start"),
 	),
-
 	PauseResume: key.NewBinding(
 		key.WithKeys("p"),
 		key.WithHelp("p", "pause/resume"),
@@ -106,7 +106,6 @@ var managerKeys = managerKeyMap{
 	),
 }
 
-// New creates a tea.Model for the manager view
 func newManagerModel(conn *libvirt.Connect) tea.Model {
 	domains, _ := conn.ListAllDomains(0)
 
@@ -148,6 +147,8 @@ func (m managerModel) Init() tea.Cmd {
 func (m managerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
+
+	log.Debug("manager received msg", "type", fmt.Sprintf("%T", msg), "data", msg)
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:

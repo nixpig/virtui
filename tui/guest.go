@@ -1,11 +1,12 @@
 package tui
 
 import (
-	"log"
+	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/log"
 	"github.com/nixpig/virtui/tui/entity"
 	"libvirt.org/go/libvirt"
 )
@@ -17,11 +18,11 @@ type guestModel struct {
 	domain          *entity.Domain
 }
 
-// New creates a tea.Model for the guest view
 func newGuestModel(id string, conn *libvirt.Connect) tea.Model {
 	dom, err := conn.LookupDomainByUUIDString(id)
 	if err != nil {
-		log.Fatal(err)
+		// TODO: handle this a bit better by surfacing an error to the user
+		log.Fatal("failed to get domain", "id", id, "err", err)
 	}
 
 	d, _ := entity.ToDomainStruct(dom)
@@ -39,6 +40,8 @@ func (m guestModel) Init() tea.Cmd {
 }
 
 func (m guestModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	log.Debug("guest received msg", "type", fmt.Sprintf("%T", msg), "data", msg)
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {

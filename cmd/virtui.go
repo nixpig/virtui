@@ -6,7 +6,9 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
+	"github.com/google/uuid"
 	"github.com/nixpig/virtui/tui"
+	"github.com/spf13/pflag"
 	"libvirt.org/go/libvirt"
 )
 
@@ -15,16 +17,25 @@ var qemuSystemURI = "qemu:///system"
 func main() {
 	ctx := context.Background()
 
-	logFile, err := os.OpenFile("/tmp/virtui.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	var debug bool
+	var logPath string
+	pflag.BoolVarP(&debug, "debug", "d", false, "set debug log level")
+	pflag.StringVarP(&logPath, "log", "l", "/tmp/virtui.log", "path to log output file")
+	pflag.Parse()
+
+	if debug {
+		log.SetLevel(log.DebugLevel)
+	}
+
+	logFile, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		os.Stderr.WriteString("Error: unable to open log file")
 		os.Exit(1)
 	}
 	defer logFile.Close()
 
-	// log.SetLevel(log.DebugLevel)
-	// log.SetOutput(logFile)
-	// log.SetPrefix(uuid.NewString())
+	log.SetOutput(logFile)
+	log.SetPrefix(uuid.NewString())
 
 	conn, err := libvirt.NewConnect(qemuSystemURI)
 	if err != nil {

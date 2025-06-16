@@ -12,15 +12,15 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
-var qemuSystemURI = "qemu:///system"
-
 func main() {
 	ctx := context.Background()
 
 	var debug bool
 	var logPath string
+	var qemuURI string
 	pflag.BoolVarP(&debug, "debug", "d", false, "set debug log level")
 	pflag.StringVarP(&logPath, "log", "l", "/tmp/virtui.log", "path to log output file")
+	pflag.StringVarP(&qemuURI, "uri", "u", "qemu:///system", "QEMU URI")
 	pflag.Parse()
 
 	if debug {
@@ -37,12 +37,14 @@ func main() {
 	log.SetOutput(logFile)
 	log.SetPrefix(uuid.NewString())
 
-	conn, err := libvirt.NewConnect(qemuSystemURI)
+	conn, err := libvirt.NewConnect(qemuURI)
 	if err != nil {
-		log.Debug("connect to libvirt", "uri", qemuSystemURI, "err", err)
+		log.Debug("connect to libvirt", "err", err)
 		os.Stderr.WriteString("Error: failed to connect to libvirt")
 		os.Exit(1)
 	}
+
+	log.Debug("virtui settings", "debug", debug, "logPath", logPath, "qemuURI", qemuURI)
 
 	p := tea.NewProgram(
 		tui.New(conn),

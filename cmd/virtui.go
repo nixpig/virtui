@@ -38,7 +38,7 @@ func main() {
 
 	conn, err := libvirt.NewConnect(qemuURI)
 	if err != nil {
-		log.Debug("connect to libvirt", "err", err)
+		log.Error("connect to libvirt", "err", err)
 		os.Stderr.WriteString("Error: failed to connect to libvirt\n")
 		os.Exit(1)
 	}
@@ -54,7 +54,7 @@ func main() {
 	)
 
 	if model, err := p.Run(); err != nil {
-		log.Debug("unrecoverable error", "err", err, "model", model)
+		log.Error("unrecoverable error", "err", err, "model", model)
 		os.Stderr.WriteString("Error: encountered unrecoverable error and need to exit\n")
 		os.Exit(1)
 	}

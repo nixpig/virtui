@@ -25,7 +25,6 @@ var columns = []table.Column{
 
 type managerModel struct {
 	domains []libvirt.Domain
-	conn    *libvirt.Connect
 	keys    managerKeyMap
 	help    help.Model
 	table   table.Model
@@ -106,13 +105,7 @@ var managerKeys = managerKeyMap{
 	),
 }
 
-func newManagerModel(conn *libvirt.Connect) tea.Model {
-	domains, err := conn.ListAllDomains(0)
-	if err != nil {
-		// TODO: surface error to user?
-		log.Debug("list all domains", "err", err)
-	}
-
+func newManagerModel(domains []libvirt.Domain) tea.Model {
 	rows := make([]table.Row, len(domains))
 
 	for i, domain := range domains {
@@ -154,7 +147,6 @@ func newManagerModel(conn *libvirt.Connect) tea.Model {
 		table:   t,
 		keys:    managerKeys,
 		help:    help.New(),
-		conn:    conn,
 	}
 }
 

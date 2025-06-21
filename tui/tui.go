@@ -23,6 +23,12 @@ const (
 	storageView
 )
 
+func listenForEvent(ch chan *libvirt.DomainEventLifecycle) tea.Cmd {
+	return func() tea.Msg {
+		return <-ch
+	}
+}
+
 type model struct {
 	state         state
 	keys          keymap
@@ -35,16 +41,46 @@ type model struct {
 	activeGuestID uint
 	width         int
 	height        int
+	events        chan *libvirt.DomainEventLifecycle
 }
 
 func New(conn *libvirt.Connect) model {
-	defaultModel := newManagerModel(conn)
 
 	width, height, err := term.GetSize(os.Stdin.Fd())
 	if err != nil {
 		// TODO: need to handle this
-		log.Debug("get size of terminal", "fd", os.Stdin.Fd(), "err", err)
+		log.Error("get size of terminal", "fd", os.Stdin.Fd(), "err", err)
 	}
+
+	events := make(chan *libvirt.DomainEventLifecycle)
+
+	if err := libvirt.EventRegisterDefaultImpl(); err != nil {
+		log.Error("failed to register default event loop impl", "err", err)
+	}
+
+	go func() {
+		for {
+			if err := libvirt.EventRunDefaultImpl(); err != nil {
+				log.Error("failed to run event loop", "err", err)
+			}
+		}
+	}()
+
+	domains, err := conn.ListAllDomains(0)
+	if err != nil {
+		// TODO: surface error to user?
+		log.Debug("list all domains", "err", err)
+	}
+	for _, d := range domains {
+		log.Debug("registering handler for domain lifecycle events", "domain", d)
+		if _, err := conn.DomainEventLifecycleRegister(&d, func(c *libvirt.Connect, d *libvirt.Domain, event *libvirt.DomainEventLifecycle) {
+			log.Debug("handling domain event", "domain", d, "event", event.Event, "detail", event.Detail)
+			events <- event
+		}); err != nil {
+			log.Debug("failed to register domain event handler", "domain", d, "err", err)
+		}
+	}
+	defaultModel := newManagerModel(domains)
 
 	return model{
 		state:        managerView,
@@ -54,11 +90,12 @@ func New(conn *libvirt.Connect) model {
 		conn:         conn,
 		width:        width,
 		height:       height,
+		events:       events,
 	}
 }
 
 func (m model) Init() tea.Cmd {
-	return nil
+	return tea.Batch(listenForEvent(m.events))
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -76,27 +113,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		d, err := m.conn.LookupDomainByUUIDString(msg.uuid)
 		if err != nil {
 			// TODO: surface error to user?
-			log.Debug("failed to lookup domain", "uuid", msg.uuid, "err", err)
+			log.Error("failed to lookup domain", "uuid", msg.uuid, "err", err)
 		}
 		if err := d.Create(); err != nil {
 			// TODO: surface error to user?
-			log.Debug("failed to create domain", "uuid", msg.uuid, "err", err)
+			log.Error("failed to create domain", "uuid", msg.uuid, "err", err)
 		}
 
 	case pauseResumeGuestMsg:
 		d, err := m.conn.LookupDomainByUUIDString(msg.uuid)
 		if err != nil {
 			// TODO: surface error to user?
-			log.Debug("failed to lookup domain", "uuid", msg.uuid, "err", err)
+			log.Error("failed to lookup domain", "uuid", msg.uuid, "err", err)
 		}
 		s, _, _ := d.GetState()
 		if s == libvirt.DOMAIN_PAUSED {
 			if err := d.Resume(); err != nil {
-				log.Debug("failed to resume domain", "uuid", msg.uuid, "err", err)
+				log.Error("failed to resume domain", "uuid", msg.uuid, "err", err)
 			}
 		} else if s == libvirt.DOMAIN_RUNNING {
 			if err := d.Suspend(); err != nil {
-				log.Debug("failed to pause domain", "uuid", msg.uuid, "err", err)
+				log.Error("failed to pause domain", "uuid", msg.uuid, "err", err)
 			}
 		}
 
@@ -104,12 +141,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		d, err := m.conn.LookupDomainByUUIDString(msg.uuid)
 		if err != nil {
 			// TODO: surface error to user?
-			log.Debug("failed to lookup domain", "uuid", msg.uuid, "err", err)
+			log.Error("failed to lookup domain", "uuid", msg.uuid, "err", err)
 		}
 		s, _, _ := d.GetState()
 		if s != libvirt.DOMAIN_SHUTOFF {
 			if err := d.Shutdown(); err != nil {
-				log.Debug("failed to shutdown domain", "uuid", msg.uuid, "err", err)
+				log.Error("failed to shutdown domain", "uuid", msg.uuid, "err", err)
 			}
 		}
 
@@ -117,12 +154,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		d, err := m.conn.LookupDomainByUUIDString(msg.uuid)
 		if err != nil {
 			// TODO: surface error to user?
-			log.Debug("failed to lookup domain", "uuid", msg.uuid, "err", err)
+			log.Error("failed to lookup domain", "uuid", msg.uuid, "err", err)
 		}
 		s, _, _ := d.GetState()
 		if s == libvirt.DOMAIN_RUNNING {
 			if err := d.Reboot(0); err != nil {
-				log.Debug("failed to reboot domain", "uuid", msg.uuid, "err", err)
+				log.Error("failed to reboot domain", "uuid", msg.uuid, "err", err)
 			}
 		}
 
@@ -130,20 +167,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		d, err := m.conn.LookupDomainByUUIDString(msg.uuid)
 		if err != nil {
 			// TODO: surface error to user?
-			log.Debug("failed to lookup domain", "uuid", msg.uuid, "err", err)
+			log.Error("failed to lookup domain", "uuid", msg.uuid, "err", err)
 		}
 		if err := d.Reset(0); err != nil {
-			log.Debug("failed to reset domain", "uuid", msg.uuid, "err", err)
+			log.Error("failed to reset domain", "uuid", msg.uuid, "err", err)
 		}
 
 	case forceOffGuestMsg:
 		d, err := m.conn.LookupDomainByUUIDString(msg.uuid)
 		if err != nil {
 			// TODO: surface error to user?
-			log.Debug("failed to lookup domain", "uuid", msg.uuid, "err", err)
+			log.Error("failed to lookup domain", "uuid", msg.uuid, "err", err)
 		}
 		if err := d.Destroy(); err != nil {
-			log.Debug("failed to destroy domain", "uuid", msg.uuid, "err", err)
+			log.Error("failed to destroy domain", "uuid", msg.uuid, "err", err)
 		}
 
 	case saveGuestMsg:
@@ -163,10 +200,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case deleteGuestMsg:
 	// TODO: Delete Guest (with confirmation)
 
+	case registerGuestMsg:
+		log.Info("should be registering in here...")
+		if _, err := m.conn.DomainEventLifecycleRegister(msg.dom, func(c *libvirt.Connect, d *libvirt.Domain, event *libvirt.DomainEventLifecycle) {
+			log.Info("got a message", "event", event)
+		}); err != nil {
+			log.Error("failed to register guest event handler", "err", err)
+		}
+
 	case goBackMsg:
 		switch m.state {
 		case guestView:
 			m.state = managerView
+
 		}
 
 	case tea.WindowSizeMsg:
@@ -180,7 +226,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 
-			m.managerModel = newManagerModel(m.conn)
+			domains, err := m.conn.ListAllDomains(0)
+			if err != nil {
+				// TODO: surface error to user?
+				log.Debug("list all domains", "err", err)
+			}
+			m.managerModel = newManagerModel(domains)
 			m.state = managerView
 
 		case key.Matches(msg, m.keys.network):

@@ -136,7 +136,9 @@ func newManagerModel(conn *libvirt.Connect) tea.Model {
 			d.Name,
 			mappers.FromState(state),
 			fmt.Sprintf("%d", d.VCPU.Value),
-			fmt.Sprintf("%d%s", d.Memory.Value, d.Memory.Unit),
+			// FIXME: assumes the d.Memory.Value is always the default KiB, which it's not...
+			// https://libvirt.org/formatdomain.html#memory-allocation
+			fmt.Sprintf("%dMiB", d.Memory.Value/1024),
 			"QEMU/KVM (system)",
 		}
 	}

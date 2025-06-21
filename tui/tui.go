@@ -73,31 +73,95 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.state = guestView
 
 	case startGuestMsg:
-		// TODO: Start Guest
+		d, err := m.conn.LookupDomainByUUIDString(msg.uuid)
+		if err != nil {
+			// TODO: surface error to user?
+			log.Debug("failed to lookup domain", "uuid", msg.uuid, "err", err)
+		}
+		if err := d.Create(); err != nil {
+			// TODO: surface error to user?
+			log.Debug("failed to create domain", "uuid", msg.uuid, "err", err)
+		}
 
 	case pauseResumeGuestMsg:
-		// TODO: PauseResume Guest
+		d, err := m.conn.LookupDomainByUUIDString(msg.uuid)
+		if err != nil {
+			// TODO: surface error to user?
+			log.Debug("failed to lookup domain", "uuid", msg.uuid, "err", err)
+		}
+		s, _, _ := d.GetState()
+		if s == libvirt.DOMAIN_PAUSED {
+			if err := d.Resume(); err != nil {
+				log.Debug("failed to resume domain", "uuid", msg.uuid, "err", err)
+			}
+		} else if s == libvirt.DOMAIN_RUNNING {
+			if err := d.Suspend(); err != nil {
+				log.Debug("failed to pause domain", "uuid", msg.uuid, "err", err)
+			}
+		}
 
 	case shutdownGuestMsg:
-		// TODO: Shutdown Guest
+		d, err := m.conn.LookupDomainByUUIDString(msg.uuid)
+		if err != nil {
+			// TODO: surface error to user?
+			log.Debug("failed to lookup domain", "uuid", msg.uuid, "err", err)
+		}
+		s, _, _ := d.GetState()
+		if s != libvirt.DOMAIN_SHUTOFF {
+			if err := d.Shutdown(); err != nil {
+				log.Debug("failed to shutdown domain", "uuid", msg.uuid, "err", err)
+			}
+		}
 
 	case rebootGuestMsg:
-		// TODO: Reboot Guest
+		d, err := m.conn.LookupDomainByUUIDString(msg.uuid)
+		if err != nil {
+			// TODO: surface error to user?
+			log.Debug("failed to lookup domain", "uuid", msg.uuid, "err", err)
+		}
+		s, _, _ := d.GetState()
+		if s == libvirt.DOMAIN_RUNNING {
+			if err := d.Reboot(0); err != nil {
+				log.Debug("failed to reboot domain", "uuid", msg.uuid, "err", err)
+			}
+		}
 
 	case forceResetGuestMsg:
-		// TODO: ForceReset Guest
+		d, err := m.conn.LookupDomainByUUIDString(msg.uuid)
+		if err != nil {
+			// TODO: surface error to user?
+			log.Debug("failed to lookup domain", "uuid", msg.uuid, "err", err)
+		}
+		if err := d.Reset(0); err != nil {
+			log.Debug("failed to reset domain", "uuid", msg.uuid, "err", err)
+		}
 
 	case forceOffGuestMsg:
-		// TODO: ForceOff Guest
+		d, err := m.conn.LookupDomainByUUIDString(msg.uuid)
+		if err != nil {
+			// TODO: surface error to user?
+			log.Debug("failed to lookup domain", "uuid", msg.uuid, "err", err)
+		}
+		if err := d.Destroy(); err != nil {
+			log.Debug("failed to destroy domain", "uuid", msg.uuid, "err", err)
+		}
 
 	case saveGuestMsg:
-		// TODO: Save Guest
+	// TODO: Save Guest
+	// d, err := m.conn.LookupDomainByUUIDString(msg.uuid)
+	// if err != nil {
+	// 	// TODO: surface error to user?
+	// 	log.Debug("failed to lookup domain", "uuid", msg.uuid, "err", err)
+	// }
+	// if err := d.Save(/* SOME FILE TO SAVE TO */); err != nil {
+	// 	log.Debug("failed to destroy domain", "uuid", msg.uuid, "err", err)
+	// }
 
 	case cloneGuestMsg:
 		// TODO: Clone Guest
 
 	case deleteGuestMsg:
-	// TODO: Delete Guest
+	// TODO: Delete Guest (with confirmation)
 
 	case goBackMsg:
 		switch m.state {

@@ -13,11 +13,10 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
-
 	var debug bool
 	var logPath string
 	var qemuURI string
+
 	pflag.BoolVarP(&debug, "debug", "d", false, "set debug log level")
 	pflag.StringVarP(&logPath, "log", "l", "/tmp/virtui.log", "path to log output file")
 	pflag.StringVarP(&qemuURI, "uri", "u", "qemu:///system", "QEMU URI")
@@ -40,11 +39,13 @@ func main() {
 	conn, err := libvirt.NewConnect(qemuURI)
 	if err != nil {
 		log.Debug("connect to libvirt", "err", err)
-		os.Stderr.WriteString("Error: failed to connect to libvirt")
+		os.Stderr.WriteString("Error: failed to connect to libvirt\n")
 		os.Exit(1)
 	}
 
 	log.Debug("virtui settings", "debug", debug, "logPath", logPath, "qemuURI", qemuURI)
+
+	ctx := context.Background()
 
 	p := tea.NewProgram(
 		tui.New(conn),
@@ -54,7 +55,7 @@ func main() {
 
 	if model, err := p.Run(); err != nil {
 		log.Debug("unrecoverable error", "err", err, "model", model)
-		os.Stderr.WriteString("Error: encountered unrecoverable error and need to exit")
+		os.Stderr.WriteString("Error: encountered unrecoverable error and need to exit\n")
 		os.Exit(1)
 	}
 }

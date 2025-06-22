@@ -31,6 +31,7 @@ type managerModel struct {
 }
 
 type managerKeyMap struct {
+	New         key.Binding
 	Open        key.Binding
 	Start       key.Binding
 	PauseResume key.Binding
@@ -45,6 +46,7 @@ type managerKeyMap struct {
 
 func (mk managerKeyMap) ShortHelp() []key.Binding {
 	return []key.Binding{
+		mk.New,
 		mk.Open,
 		mk.Start,
 		mk.PauseResume,
@@ -63,6 +65,11 @@ func (mk managerKeyMap) FullHelp() [][]key.Binding {
 }
 
 var managerKeys = managerKeyMap{
+	New: key.NewBinding(
+		key.WithKeys("n"),
+		key.WithHelp("n", "new"),
+	),
+
 	Open: key.NewBinding(
 		key.WithKeys("o", "enter"),
 		key.WithHelp("o", "open"),
@@ -73,7 +80,7 @@ var managerKeys = managerKeyMap{
 	),
 	PauseResume: key.NewBinding(
 		key.WithKeys("p"),
-		key.WithHelp("p", "pause/resume"),
+		key.WithHelp("p", "pause"),
 	),
 	Shutdown: key.NewBinding(
 		key.WithKeys("s"),
@@ -105,7 +112,7 @@ var managerKeys = managerKeyMap{
 	),
 }
 
-func newManagerModel(domains []*libvirt.Domain) tea.Model {
+func newManagerModel(domains []*libvirt.Domain, cursor int) tea.Model {
 	rows := make([]table.Row, len(domains))
 
 	for i, domain := range domains {
@@ -141,6 +148,8 @@ func newManagerModel(domains []*libvirt.Domain) tea.Model {
 		table.WithFocused(true),
 		table.WithRows(rows),
 	)
+
+	t.SetCursor(cursor)
 
 	return managerModel{
 		domains: domains,

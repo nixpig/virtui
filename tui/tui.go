@@ -81,20 +81,21 @@ func New(conn *libvirt.Connect) model {
 		log.Debug("list all domains", "err", err)
 	}
 
+	if _, err := conn.DomainEventLifecycleRegister(nil, func(c *libvirt.Connect, d *libvirt.Domain, event *libvirt.DomainEventLifecycle) {
+		log.Debug("⏩ writing domain event to channel", "event", event.Event, "detail", event.Detail)
+		m.events <- event
+	}); err != nil {
+		log.Debug("failed to register domain event handler", "err", err)
+	}
+
 	ds := make([]*libvirt.Domain, len(domains))
 	for i, d := range domains {
 		ds[i] = &d
 
 		log.Debug("registering handler for domain lifecycle events", "domain", d)
-		if _, err := conn.DomainEventLifecycleRegister(&d, func(c *libvirt.Connect, d *libvirt.Domain, event *libvirt.DomainEventLifecycle) {
-			log.Debug("⏩ writing domain event to channel", "event", event.Event, "detail", event.Detail)
-			m.events <- event
-		}); err != nil {
-			log.Debug("failed to register domain event handler", "domain", d, "err", err)
-		}
 	}
 
-	defaultModel := newManagerModel(ds)
+	defaultModel := newManagerModel(ds, 0)
 
 	m.managerModel = defaultModel
 
@@ -110,21 +111,29 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	log.Debug("tui received msg", "type", fmt.Sprintf("%T", msg), "data", msg)
-	cmds = append(cmds, listenForEvent(m.events))
 
 	switch msg := msg.(type) {
 	case *libvirt.DomainEventLifecycle:
-		domains, err := m.conn.ListAllDomains(0)
-		if err != nil {
-			// TODO: surface error to user?
-			log.Debug("list all domains", "err", err)
-		}
+		switch m.state {
+		case managerView:
+			domains, err := m.conn.ListAllDomains(0)
+			if err != nil {
+				// TODO: surface error to user?
+				log.Debug("list all domains", "err", err)
+			}
 
-		ds := make([]*libvirt.Domain, len(domains))
-		for i, d := range domains {
-			ds[i] = &d
+			ds := make([]*libvirt.Domain, len(domains))
+			for i, d := range domains {
+				ds[i] = &d
+			}
+
+			mx, _ := m.managerModel.(managerModel)
+			m.managerModel = newManagerModel(ds, mx.table.Cursor())
+			// TODO: what about persisting active selection in ui instead of it jumping to top
+
+			// TODO: other model views
+
 		}
-		m.managerModel = newManagerModel(ds)
 
 	case openGuestMsg:
 		m.guestModel = newGuestModel(msg.uuid, m.conn)
@@ -249,7 +258,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			for i, d := range domains {
 				ds[i] = &d
 			}
-			m.managerModel = newManagerModel(ds)
+			mx, _ := m.managerModel.(managerModel)
+			m.managerModel = newManagerModel(ds, mx.table.Cursor())
 			m.state = managerView
 
 		case key.Matches(msg, m.keys.network):
@@ -296,7 +306,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	}
 
-	cmds = append(cmds, cmd)
+	cmds = append(cmds, cmd, listenForEvent(m.events))
 	return m, tea.Batch(cmds...)
 }
 

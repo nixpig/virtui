@@ -24,7 +24,7 @@ var columns = []table.Column{
 }
 
 type managerModel struct {
-	domains []libvirt.Domain
+	domains []*libvirt.Domain
 	keys    managerKeyMap
 	help    help.Model
 	table   table.Model
@@ -105,11 +105,11 @@ var managerKeys = managerKeyMap{
 	),
 }
 
-func newManagerModel(domains []libvirt.Domain) tea.Model {
+func newManagerModel(domains []*libvirt.Domain) tea.Model {
 	rows := make([]table.Row, len(domains))
 
 	for i, domain := range domains {
-		d, err := entity.ToDomainStruct(&domain)
+		d, err := entity.ToDomainStruct(domain)
 		if err != nil {
 			// TODO: surface error to user?
 			log.Debug("convert entity to struct", "err", err, "domain", domain)
@@ -120,9 +120,9 @@ func newManagerModel(domains []libvirt.Domain) tea.Model {
 			log.Debug("get domain state", "uuid", d.UUID, "err", err)
 		}
 
-		if err := domain.Free(); err != nil {
-			log.Warn("free ref counted domain struct", "err", err)
-		}
+		// if err := domain.Free(); err != nil {
+		// 	log.Warn("free ref counted domain struct", "err", err)
+		// }
 
 		rows[i] = table.Row{
 			d.UUID,

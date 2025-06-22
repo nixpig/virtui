@@ -33,9 +33,9 @@ func newGuestModel(id string, conn *libvirt.Connect) tea.Model {
 		log.Debug("convert entity to struct", "err", err, "domain", d)
 	}
 
-	if err := domain.Free(); err != nil {
-		log.Warn("free ref counted domain struct", "err", err)
-	}
+	// if err := domain.Free(); err != nil {
+	// 	log.Warn("free ref counted domain struct", "err", err)
+	// }
 
 	return guestModel{
 		uuid:   id,

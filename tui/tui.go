@@ -25,7 +25,9 @@ const (
 
 func listenForEvent(ch chan *libvirt.DomainEventLifecycle) tea.Cmd {
 	return func() tea.Msg {
-		return <-ch
+		e := <-ch
+		log.Debug("⏪ reading domain event from channel", "event", e.Event, "detail", e.Detail)
+		return e
 	}
 }
 
@@ -45,14 +47,21 @@ type model struct {
 }
 
 func New(conn *libvirt.Connect) model {
+	var err error
 
-	width, height, err := term.GetSize(os.Stdin.Fd())
+	m := model{
+		state:  managerView,
+		keys:   keys,
+		help:   help.New(),
+		conn:   conn,
+		events: make(chan *libvirt.DomainEventLifecycle),
+	}
+
+	m.width, m.height, err = term.GetSize(os.Stdin.Fd())
 	if err != nil {
 		// TODO: need to handle this
 		log.Error("get size of terminal", "fd", os.Stdin.Fd(), "err", err)
 	}
-
-	events := make(chan *libvirt.DomainEventLifecycle)
 
 	if err := libvirt.EventRegisterDefaultImpl(); err != nil {
 		log.Error("failed to register default event loop impl", "err", err)
@@ -71,27 +80,25 @@ func New(conn *libvirt.Connect) model {
 		// TODO: surface error to user?
 		log.Debug("list all domains", "err", err)
 	}
-	for _, d := range domains {
+
+	ds := make([]*libvirt.Domain, len(domains))
+	for i, d := range domains {
+		ds[i] = &d
+
 		log.Debug("registering handler for domain lifecycle events", "domain", d)
 		if _, err := conn.DomainEventLifecycleRegister(&d, func(c *libvirt.Connect, d *libvirt.Domain, event *libvirt.DomainEventLifecycle) {
-			log.Debug("handling domain event", "domain", d, "event", event.Event, "detail", event.Detail)
-			events <- event
+			log.Debug("⏩ writing domain event to channel", "event", event.Event, "detail", event.Detail)
+			m.events <- event
 		}); err != nil {
 			log.Debug("failed to register domain event handler", "domain", d, "err", err)
 		}
 	}
-	defaultModel := newManagerModel(domains)
 
-	return model{
-		state:        managerView,
-		keys:         keys,
-		help:         help.New(),
-		managerModel: defaultModel,
-		conn:         conn,
-		width:        width,
-		height:       height,
-		events:       events,
-	}
+	defaultModel := newManagerModel(ds)
+
+	m.managerModel = defaultModel
+
+	return m
 }
 
 func (m model) Init() tea.Cmd {
@@ -103,8 +110,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	log.Debug("tui received msg", "type", fmt.Sprintf("%T", msg), "data", msg)
+	cmds = append(cmds, listenForEvent(m.events))
 
 	switch msg := msg.(type) {
+	case *libvirt.DomainEventLifecycle:
+		domains, err := m.conn.ListAllDomains(0)
+		if err != nil {
+			// TODO: surface error to user?
+			log.Debug("list all domains", "err", err)
+		}
+
+		ds := make([]*libvirt.Domain, len(domains))
+		for i, d := range domains {
+			ds[i] = &d
+		}
+		m.managerModel = newManagerModel(ds)
+
 	case openGuestMsg:
 		m.guestModel = newGuestModel(msg.uuid, m.conn)
 		m.state = guestView
@@ -200,14 +221,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case deleteGuestMsg:
 	// TODO: Delete Guest (with confirmation)
 
-	case registerGuestMsg:
-		log.Info("should be registering in here...")
-		if _, err := m.conn.DomainEventLifecycleRegister(msg.dom, func(c *libvirt.Connect, d *libvirt.Domain, event *libvirt.DomainEventLifecycle) {
-			log.Info("got a message", "event", event)
-		}); err != nil {
-			log.Error("failed to register guest event handler", "err", err)
-		}
-
 	case goBackMsg:
 		switch m.state {
 		case guestView:
@@ -231,7 +244,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				// TODO: surface error to user?
 				log.Debug("list all domains", "err", err)
 			}
-			m.managerModel = newManagerModel(domains)
+
+			ds := make([]*libvirt.Domain, len(domains))
+			for i, d := range domains {
+				ds[i] = &d
+			}
+			m.managerModel = newManagerModel(ds)
 			m.state = managerView
 
 		case key.Matches(msg, m.keys.network):

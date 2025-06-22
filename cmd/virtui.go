@@ -6,7 +6,6 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
-	"github.com/google/uuid"
 	"github.com/nixpig/virtui/tui"
 	"github.com/spf13/pflag"
 	"libvirt.org/go/libvirt"
@@ -34,7 +33,7 @@ func main() {
 	defer logFile.Close()
 
 	log.SetOutput(logFile)
-	log.SetPrefix(uuid.NewString())
+	// log.SetPrefix(uuid.NewString())
 
 	conn, err := libvirt.NewConnect(qemuURI)
 	if err != nil {

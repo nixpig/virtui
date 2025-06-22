@@ -2,7 +2,6 @@ package tui
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"libvirt.org/go/libvirt"
 )
 
 type openGuestMsg struct{ uuid string }
@@ -17,16 +16,6 @@ type cloneGuestMsg struct{ uuid string }
 type deleteGuestMsg struct{ uuid string }
 
 type goBackMsg struct{}
-
-type registerGuestMsg struct {
-	dom *libvirt.Domain
-}
-
-func registerGuestCmd(dom *libvirt.Domain) tea.Cmd {
-	return func() tea.Msg {
-		return registerGuestMsg{dom}
-	}
-}
 
 func openGuestCmd(uuid string) tea.Cmd {
 	return func() tea.Msg {

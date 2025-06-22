@@ -88,14 +88,7 @@ func New(conn *libvirt.Connect) model {
 		log.Debug("failed to register domain event handler", "err", err)
 	}
 
-	ds := make([]*libvirt.Domain, len(domains))
-	for i, d := range domains {
-		ds[i] = &d
-
-		log.Debug("registering handler for domain lifecycle events", "domain", d)
-	}
-
-	defaultModel := newManagerModel(ds, 0)
+	defaultModel := newManagerModel(domains, 0)
 
 	m.managerModel = defaultModel
 
@@ -122,13 +115,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				log.Debug("list all domains", "err", err)
 			}
 
-			ds := make([]*libvirt.Domain, len(domains))
-			for i, d := range domains {
-				ds[i] = &d
-			}
-
 			mx, _ := m.managerModel.(managerModel)
-			m.managerModel = newManagerModel(ds, mx.table.Cursor())
+			m.managerModel = newManagerModel(domains, mx.table.Cursor())
 			// TODO: what about persisting active selection in ui instead of it jumping to top
 
 			// TODO: other model views
@@ -254,12 +242,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				log.Debug("list all domains", "err", err)
 			}
 
-			ds := make([]*libvirt.Domain, len(domains))
-			for i, d := range domains {
-				ds[i] = &d
-			}
 			mx, _ := m.managerModel.(managerModel)
-			m.managerModel = newManagerModel(ds, mx.table.Cursor())
+			m.managerModel = newManagerModel(domains, mx.table.Cursor())
 			m.state = managerView
 
 		case key.Matches(msg, m.keys.network):

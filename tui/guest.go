@@ -32,10 +32,9 @@ func newGuestModel(id string, conn *libvirt.Connect) tea.Model {
 		// TODO: surface error to user
 		log.Debug("convert entity to struct", "err", err, "domain", d)
 	}
-
-	// if err := domain.Free(); err != nil {
-	// 	log.Warn("free ref counted domain struct", "err", err)
-	// }
+	if err := domain.Free(); err != nil {
+		log.Warn("free ref counted domain struct", "err", err)
+	}
 
 	return guestModel{
 		uuid:   id,
@@ -79,6 +78,14 @@ func (m guestModel) View() string {
 	sb.WriteString("Emulator: " + m.domain.Devices.Emulator + "\n")
 	sb.WriteString("Chipset: " + m.domain.OS.Type.Machine + "\n")
 	sb.WriteString("Firmware: " + m.domain.OS.Firmware + "\n")
+
+	sb.WriteString("\nCPUs\n")
+	sb.WriteString("vCPU allocation: " + fmt.Sprintf("%d", m.domain.VCPU.Value) + "\n")
+	sb.WriteString("Mode: " + m.domain.CPU.Mode + "\n")
+
+	sb.WriteString("\nMemory\n")
+	sb.WriteString("Current allocation: " + fmt.Sprintf("%d", m.domain.CurrentMemory.Value) + m.domain.CurrentMemory.Unit + "\n")
+	sb.WriteString("Maximum allocation?: " + fmt.Sprintf("%d", m.domain.Memory.Value) + m.domain.Memory.Unit + "\n")
 
 	return sb.String()
 }

@@ -82,7 +82,7 @@ func (m storageModel) View() string {
 	for k, v := range m.storage {
 		sb.WriteString(k.Name + " - ")
 		for i, x := range v {
-			sb.WriteString(fmt.Sprintf("\n%d %s", i, x.Name))
+			sb.WriteString(fmt.Sprintf("\n %d %s", i, x.Name))
 		}
 		sb.WriteString("\n")
 	}

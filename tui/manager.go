@@ -132,7 +132,7 @@ func newManagerModel(domains []libvirt.Domain, cursor int) tea.Model {
 
 		rows[i] = table.Row{
 			d.UUID,
-			d.Name,
+			fmt.Sprintf(" %s", d.Name),
 			mappers.FromState(state),
 			fmt.Sprintf("%d", d.VCPU.Value),
 			// FIXME: assumes the d.Memory.Value is always the default KiB, which it's not...

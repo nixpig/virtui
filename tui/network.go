@@ -55,8 +55,20 @@ func (m networkModel) View() string {
 	var sb strings.Builder
 
 	for _, network := range m.networks {
-		sb.WriteString(network.Name + " " + network.UUID)
-		sb.WriteString("\n")
+		sb.WriteString("󰛳 Name: " + network.Name + "\n")
+		sb.WriteString("UUID: " + network.UUID + "\n")
+		sb.WriteString("Bridge device: " + network.Bridge.Name + "\n")
+
+		for _, ip := range network.IPs {
+			sb.WriteString("Address: " + ip.Address + "\n")
+			sb.WriteString("Netmask: " + ip.Netmask + "\n")
+			for _, dhcp := range ip.DHCP.Ranges {
+				sb.WriteString("DHCP range: " + dhcp.Start + " - " + dhcp.End + "\n")
+			}
+		}
+
+		sb.WriteString("Forwarding mode: " + strings.ToUpper(network.Forward.Mode) + "\n")
+		sb.WriteString("\n\n")
 	}
 
 	return sb.String()

@@ -55,7 +55,7 @@ func (m networkModel) View() string {
 	var sb strings.Builder
 
 	for _, network := range m.networks {
-		sb.WriteString("󰛳 Name: " + network.Name + "\n")
+		sb.WriteString("󰖟 Name: " + network.Name + "\n")
 		sb.WriteString("UUID: " + network.UUID + "\n")
 		sb.WriteString("Bridge device: " + network.Bridge.Name + "\n")
 

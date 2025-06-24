@@ -124,7 +124,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case openGuestMsg:
-		m.guestModel = newGuestModel(msg.uuid, m.conn)
+		m.guestModel = newGuestModel(msg.uuid, m.conn, m.width, m.height)
 		m.state = guestView
 
 	case startGuestMsg:

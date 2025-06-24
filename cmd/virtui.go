@@ -49,6 +49,7 @@ func main() {
 	p := tea.NewProgram(
 		tui.New(conn),
 		tea.WithAltScreen(),
+		tea.WithMouseAllMotion(),
 		tea.WithContext(ctx),
 	)
 

@@ -5,20 +5,24 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/nixpig/virtui/tui/entity"
 	"libvirt.org/go/libvirt"
+	"libvirt.org/go/libvirtxml"
 )
 
 type guestModel struct {
-	uuid   string
-	keys   keymap
-	conn   *libvirt.Connect
-	domain *entity.Domain
+	uuid     string
+	keys     keymap
+	viewport viewport.Model
+	conn     *libvirt.Connect
+	domain   *entity.Domain
 }
 
-func newGuestModel(id string, conn *libvirt.Connect) tea.Model {
+func newGuestModel(id string, conn *libvirt.Connect, width, height int) tea.Model {
 	// TODO: does this setup stuff need to go in Init method so can return a
 	// tea.Cmd error if it fails and handle in tui model??
 	domain, err := conn.LookupDomainByUUIDString(id)
@@ -36,11 +40,18 @@ func newGuestModel(id string, conn *libvirt.Connect) tea.Model {
 		log.Warn("free ref counted domain struct", "err", err)
 	}
 
+	log.Debug("WIDTH", "width", width)
+
+	vp := viewport.New(width, height-3)
+	style := lipgloss.NewStyle().Border(lipgloss.NormalBorder()).Width(1).Width(width - 2)
+	vp.Style = style
+
 	return guestModel{
-		uuid:   id,
-		keys:   keys,
-		conn:   conn,
-		domain: &d,
+		uuid:     id,
+		keys:     keys,
+		conn:     conn,
+		domain:   &d,
+		viewport: vp,
 	}
 }
 
@@ -49,20 +60,7 @@ func (m guestModel) Init() tea.Cmd {
 }
 
 func (m guestModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	log.Debug("guest received msg", "type", fmt.Sprintf("%T", msg), "data", msg)
 
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch {
-		case key.Matches(msg, m.keys.back):
-			return m, goBackCmd()
-
-		}
-	}
-	return m, nil
-}
-
-func (m guestModel) View() string {
 	var sb strings.Builder
 
 	sb.WriteString("Basic details\n")
@@ -87,5 +85,49 @@ func (m guestModel) View() string {
 	sb.WriteString("Current allocation: " + fmt.Sprintf("%d", m.domain.CurrentMemory.Value) + m.domain.CurrentMemory.Unit + "\n")
 	sb.WriteString("Maximum allocation?: " + fmt.Sprintf("%d", m.domain.Memory.Value) + m.domain.Memory.Unit + "\n")
 
-	return sb.String()
+	var mouse libvirtxml.DomainInput
+	var keyboard libvirtxml.DomainInput
+
+	for _, in := range m.domain.Devices.Inputs {
+		switch in.Type {
+		case "mouse":
+			mouse = in
+		case "keyboard":
+			keyboard = in
+		}
+	}
+
+	sb.WriteString("\nKeyboard: " + fmt.Sprintf("%s %s", keyboard.Bus, keyboard.Type) + "\n")
+
+	sb.WriteString("\nMouse: " + fmt.Sprintf("%s %s", mouse.Bus, mouse.Type) + "\n")
+
+	m.viewport.SetContent(sb.String())
+
+	var cmd tea.Cmd
+	var cmds []tea.Cmd
+
+	log.Debug("guest received msg", "type", fmt.Sprintf("%T", msg), "data", msg)
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, m.keys.back):
+			return m, goBackCmd()
+		case key.Matches(msg, m.keys.down):
+			m.viewport.ScrollDown(1)
+		case key.Matches(msg, m.keys.up):
+			m.viewport.ScrollUp(1)
+
+		}
+	}
+
+	m.viewport, cmd = m.viewport.Update(msg)
+	cmds = append(cmds, cmd)
+
+	return m, tea.Batch(cmds...)
+}
+
+func (m guestModel) View() string {
+
+	return m.viewport.View()
 }

@@ -72,7 +72,6 @@ func (m storageModel) Init() tea.Cmd {
 }
 
 func (m storageModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	log.Debug("storage received msg", "type", fmt.Sprintf("%T", msg), "data", msg)
 	return m, nil
 }
 

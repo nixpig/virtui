@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
+	"github.com/google/uuid"
 	"github.com/nixpig/virtui/tui"
 	"github.com/spf13/pflag"
 	"libvirt.org/go/libvirt"
@@ -33,7 +34,9 @@ func main() {
 	defer logFile.Close()
 
 	log.SetOutput(logFile)
-	// log.SetPrefix(uuid.NewString())
+	log.SetPrefix(uuid.NewString())
+
+	log.Debug("settings", "debug", debug, "logPath", logPath)
 
 	conn, err := libvirt.NewConnect(qemuURI)
 	if err != nil {
@@ -42,7 +45,23 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.Debug("virtui settings", "debug", debug, "logPath", logPath, "qemuURI", qemuURI)
+	defer conn.Close()
+
+	hostname, _ := conn.GetHostname()
+	lvVersion, _ := conn.GetLibVersion()
+	hvVersion, _ := conn.GetVersion()
+	connectionType, _ := conn.GetType()
+	hostinfo, _ := conn.GetNodeInfo()
+
+	log.Debug(
+		"connection",
+		"hostname", hostname,
+		"qemuURI", qemuURI,
+		"connectionType", connectionType,
+		"hvVersion", hvVersion,
+		"lvVersion", lvVersion,
+		"hostinfo", hostinfo,
+	)
 
 	ctx := context.Background()
 

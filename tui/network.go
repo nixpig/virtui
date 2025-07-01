@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -31,7 +30,7 @@ func newNetworkModel(conn *libvirt.Connect) tea.Model {
 		m.networks[i], err = entity.ToNetworkStruct(&network)
 		if err != nil {
 			// TODO: surface error to user?
-			log.Debug("covert entity to struct", "err", err, "network", network)
+			log.Debug("convert entity to struct", "err", err, "network", network)
 		}
 
 		if err := network.Free(); err != nil {
@@ -47,7 +46,6 @@ func (m networkModel) Init() tea.Cmd {
 }
 
 func (m networkModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	log.Debug("network received msg", "type", fmt.Sprintf("%T", msg), "data", msg)
 	return m, nil
 }
 

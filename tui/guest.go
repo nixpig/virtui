@@ -40,11 +40,8 @@ func newGuestModel(id string, conn *libvirt.Connect, width, height int) tea.Mode
 		log.Warn("free ref counted domain struct", "err", err)
 	}
 
-	log.Debug("WIDTH", "width", width)
-
-	vp := viewport.New(width, height-3)
-	style := lipgloss.NewStyle().Border(lipgloss.NormalBorder()).Width(1).Width(width - 2)
-	vp.Style = style
+	vp := viewport.New(width, height)
+	vp.Style = lipgloss.NewStyle().Border(lipgloss.NormalBorder()).Width(1).Width(width)
 
 	return guestModel{
 		uuid:     id,
@@ -105,8 +102,6 @@ func (m guestModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
-
-	log.Debug("guest received msg", "type", fmt.Sprintf("%T", msg), "data", msg)
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:

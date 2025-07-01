@@ -1,9 +1,7 @@
 package tui
 
 import (
-	"fmt"
 	"os"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -11,6 +9,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/x/term"
+	"github.com/nixpig/virtui/tui/mappers"
 	"libvirt.org/go/libvirt"
 )
 
@@ -26,35 +25,57 @@ const (
 func listenForEvent(ch chan *libvirt.DomainEventLifecycle) tea.Cmd {
 	return func() tea.Msg {
 		e := <-ch
-		log.Debug("⏪ reading domain event from channel", "event", e.Event, "detail", e.Detail)
 		return e
 	}
 }
 
 type model struct {
-	state         state
-	keys          keymap
-	help          help.Model
-	managerModel  tea.Model
-	guestModel    tea.Model
-	networkModel  tea.Model
-	storageModel  tea.Model
-	conn          *libvirt.Connect
-	activeGuestID uint
-	width         int
-	height        int
-	events        chan *libvirt.DomainEventLifecycle
+	state             state
+	keys              keymap
+	help              help.Model
+	managerModel      tea.Model
+	guestModel        tea.Model
+	networkModel      tea.Model
+	storageModel      tea.Model
+	conn              *libvirt.Connect
+	connectionDetails *connectionDetails
+	width             int
+	height            int
+	events            chan *libvirt.DomainEventLifecycle
+}
+
+type connectionDetails struct {
+	hostname  string
+	uri       string
+	connType  string
+	hvVersion string
+	lvVersion string
 }
 
 func New(conn *libvirt.Connect) model {
 	var err error
 
+	hostname, _ := conn.GetHostname()
+	lvVersion, _ := conn.GetLibVersion()
+	hvVersion, _ := conn.GetVersion()
+	connectionType, _ := conn.GetType()
+	connURI, _ := conn.GetURI()
+
+	connDetails := &connectionDetails{
+		uri:       connURI,
+		hostname:  hostname,
+		lvVersion: mappers.Version(lvVersion),
+		hvVersion: mappers.Version(hvVersion),
+		connType:  connectionType,
+	}
+
 	m := model{
-		state:  managerView,
-		keys:   keys,
-		help:   help.New(),
-		conn:   conn,
-		events: make(chan *libvirt.DomainEventLifecycle),
+		state:             managerView,
+		keys:              keys,
+		help:              help.New(),
+		conn:              conn,
+		connectionDetails: connDetails,
+		events:            make(chan *libvirt.DomainEventLifecycle),
 	}
 
 	m.width, m.height, err = term.GetSize(os.Stdin.Fd())
@@ -69,28 +90,27 @@ func New(conn *libvirt.Connect) model {
 
 	go func() {
 		for {
+			// TODO: pass context and close event loop cleanly on exit and unregister handlers
 			if err := libvirt.EventRunDefaultImpl(); err != nil {
 				log.Error("failed to run event loop", "err", err)
 			}
 		}
 	}()
 
-	domains, err := conn.ListAllDomains(0)
-	if err != nil {
-		// TODO: surface error to user?
-		log.Debug("list all domains", "err", err)
-	}
-
 	if _, err := conn.DomainEventLifecycleRegister(nil, func(c *libvirt.Connect, d *libvirt.Domain, event *libvirt.DomainEventLifecycle) {
-		log.Debug("⏩ writing domain event to channel", "event", event.Event, "detail", event.Detail)
 		m.events <- event
 	}); err != nil {
+		// TODO: surface error to user?
 		log.Debug("failed to register domain event handler", "err", err)
 	}
 
-	defaultModel := newManagerModel(domains, 0)
+	manModel, _ := newManagerModel(conn).Update(&libvirt.DomainEventLifecycle{})
+	netModel, _ := newNetworkModel(conn).Update(&libvirt.DomainEventLifecycle{})
+	storModel, _ := newStorageModel(conn).Update(&libvirt.DomainEventLifecycle{})
 
-	m.managerModel = defaultModel
+	m.managerModel = manModel
+	m.networkModel = netModel
+	m.storageModel = storModel
 
 	return m
 }
@@ -103,28 +123,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
-	log.Debug("tui received msg", "type", fmt.Sprintf("%T", msg), "data", msg)
-
 	switch msg := msg.(type) {
 	case *libvirt.DomainEventLifecycle:
 		switch m.state {
 		case managerView:
-			domains, err := m.conn.ListAllDomains(0)
-			if err != nil {
-				// TODO: surface error to user?
-				log.Debug("list all domains", "err", err)
-			}
-
-			mx, _ := m.managerModel.(managerModel)
-			m.managerModel = newManagerModel(domains, mx.table.Cursor())
-			// TODO: what about persisting active selection in ui instead of it jumping to top
-
-			// TODO: other model views
+			m.managerModel, cmd = m.managerModel.Update(msg)
+			return m, cmd
 
 		}
 
 	case openGuestMsg:
-		m.guestModel = newGuestModel(msg.uuid, m.conn, m.width, m.height)
+		m.guestModel = newGuestModel(msg.uuid, m.conn, m.width-2, m.height-3)
 		m.state = guestView
 
 	case startGuestMsg:
@@ -236,14 +245,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 
-			domains, err := m.conn.ListAllDomains(0)
-			if err != nil {
-				// TODO: surface error to user?
-				log.Debug("list all domains", "err", err)
-			}
-
-			mx, _ := m.managerModel.(managerModel)
-			m.managerModel = newManagerModel(domains, mx.table.Cursor())
+			m.managerModel, cmd = m.managerModel.Update(msg)
 			m.state = managerView
 
 		case key.Matches(msg, m.keys.network):
@@ -251,7 +253,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 
-			m.networkModel = newNetworkModel(m.conn)
+			m.networkModel, cmd = m.networkModel.Update(msg)
 			m.state = networkView
 
 		case key.Matches(msg, m.keys.storage):
@@ -259,7 +261,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 
-			m.storageModel = newStorageModel(m.conn)
+			m.storageModel, cmd = m.storageModel.Update(msg)
 			m.state = storageView
 
 		case key.Matches(msg, m.keys.quit):
@@ -310,14 +312,26 @@ func (m model) View() string {
 		mainView = m.managerModel.View()
 	}
 
-	helpView := m.help.View(m.keys)
+	// helpView := m.help.View(m.keys)
 
-	border := lipgloss.NewStyle().Border(lipgloss.NormalBorder()).Width(m.width - 2)
-	borderCompensation := 2
+	border := lipgloss.NewStyle().Border(lipgloss.NormalBorder()).Width(m.width - 2).Height(5)
+	// borderCompensation := 2
 
-	offset := 1 // who knows where this comes from 🤷
+	// offset := 1 // who knows where this comes from 🤷
 
-	padding := m.height - borderCompensation - offset - strings.Count(mainView, "\n") - strings.Count(helpView, "\n")
+	// padding := m.height - borderCompensation - offset - strings.Count(mainView, "\n") - strings.Count(helpView, "\n")
+	// padding := borderCompensation - offset
 
-	return border.Render(mainView + strings.Repeat("\n", padding) + helpView)
+	panel := border.Render(mainView)
+
+	heading := lipgloss.NewStyle().Render(
+		" Hostname: "+m.connectionDetails.hostname+"\n",
+		"URI: "+m.connectionDetails.uri+"\n",
+		"Hypervisor: "+m.connectionDetails.connType+" ("+m.connectionDetails.hvVersion+")"+"\n",
+		"Libvirt: "+m.connectionDetails.lvVersion+"\n",
+		"CPU: 17% (4)\n",
+		"Memory: 40% (32GiB)\n",
+	)
+
+	return heading + panel
 }

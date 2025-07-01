@@ -1,6 +1,8 @@
 package mappers
 
 import (
+	"fmt"
+
 	"libvirt.org/go/libvirt"
 	"libvirt.org/go/libvirtxml"
 )
@@ -38,4 +40,12 @@ func ToStructXML(domain *libvirt.Domain) (libvirtxml.Domain, error) {
 	}
 
 	return dom, nil
+}
+
+func Version(v uint32) string {
+	major := v / 1_000_000
+	minor := (v - (major * 1_000_000)) / 1000
+	patch := v - (major * 1_000_000) - (minor * 1000)
+
+	return fmt.Sprintf("%d.%d.%d", major, minor, patch)
 }

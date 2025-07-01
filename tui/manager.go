@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -20,14 +21,13 @@ var columns = []table.Column{
 	{Title: "State", Width: 10},
 	{Title: "CPU", Width: 4},
 	{Title: "Mem", Width: 12},
-	{Title: "Connection", Width: 20},
 }
 
 type managerModel struct {
-	domains []libvirt.Domain
-	keys    managerKeyMap
-	help    help.Model
-	table   table.Model
+	keys  managerKeyMap
+	help  help.Model
+	table table.Model
+	conn  *libvirt.Connect
 }
 
 type managerKeyMap struct {
@@ -112,49 +112,17 @@ var managerKeys = managerKeyMap{
 	),
 }
 
-func newManagerModel(domains []libvirt.Domain, cursor int) tea.Model {
-	rows := make([]table.Row, len(domains))
-
-	for i, domain := range domains {
-		d, err := entity.ToDomainStruct(&domain)
-		if err != nil {
-			// TODO: surface error to user?
-			log.Debug("convert entity to struct", "err", err, "domain", domain)
-		}
-
-		state, _, err := domain.GetState()
-		if err != nil {
-			log.Debug("get domain state", "uuid", d.UUID, "err", err)
-		}
-		if err := domain.Free(); err != nil {
-			log.Warn("free ref counted domain struct", "err", err)
-		}
-
-		rows[i] = table.Row{
-			d.UUID,
-			fmt.Sprintf("󰍹 %s", d.Name),
-			mappers.FromState(state),
-			fmt.Sprintf("%d", d.VCPU.Value),
-			// FIXME: assumes the d.Memory.Value is always the default KiB, which it's not...
-			// https://libvirt.org/formatdomain.html#memory-allocation
-			fmt.Sprintf("%dMiB", d.Memory.Value/1024),
-			"QEMU/KVM (system)",
-		}
-	}
-
+func newManagerModel(conn *libvirt.Connect) tea.Model {
 	t := table.New(
 		table.WithColumns(columns),
 		table.WithFocused(true),
-		table.WithRows(rows),
 	)
 
-	t.SetCursor(cursor)
-
 	return managerModel{
-		domains: domains,
-		table:   t,
-		keys:    managerKeys,
-		help:    help.New(),
+		table: t,
+		keys:  managerKeys,
+		help:  help.New(),
+		conn:  conn,
 	}
 }
 
@@ -166,15 +134,54 @@ func (m managerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
-	log.Debug("manager received msg", "type", fmt.Sprintf("%T", msg), "data", msg)
-
 	switch msg := msg.(type) {
+	case *libvirt.DomainEventLifecycle:
+		domains, err := m.conn.ListAllDomains(0)
+		if err != nil {
+			// TODO: surface error to user?
+			log.Debug("list all domains", "err", err)
+		}
+
+		rows := make([]table.Row, len(domains))
+
+		for i, domain := range domains {
+			d, err := entity.ToDomainStruct(&domain)
+			if err != nil {
+				// TODO: surface error to user?
+				log.Debug("convert entity to struct", "err", err, "domain", domain)
+			}
+
+			state, _, err := domain.GetState()
+			if err != nil {
+				// TODO: surface error to user?
+				log.Debug("get domain state", "uuid", d.UUID, "err", err)
+			}
+			if err := domain.Free(); err != nil {
+				log.Warn("free ref counted domain struct", "err", err)
+			}
+
+			rows[i] = table.Row{
+				d.UUID,
+				fmt.Sprintf("󰍹 %s %s", d.Name, strings.Repeat(".", 26)),
+				mappers.FromState(state),
+				fmt.Sprintf("%d", d.VCPU.Value),
+				// FIXME: assumes the d.Memory.Value is always the default KiB, which it's not...
+				// https://libvirt.org/formatdomain.html#memory-allocation
+				fmt.Sprintf("%dMiB", d.Memory.Value/1024),
+			}
+		}
+
+		m.table.SetRows(rows)
+
 	case tea.WindowSizeMsg:
 		m.help.Width = msg.Width
 		// TODO: resize the table and stuff
 
 	case tea.KeyMsg:
-		guestUUID := m.table.SelectedRow()[0]
+		var guestUUID string
+		if len(m.table.Rows()) > 0 {
+			guestUUID = m.table.SelectedRow()[0]
+		}
 
 		switch {
 		case key.Matches(msg, m.keys.Open):
@@ -217,6 +224,9 @@ func (m managerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m managerModel) View() string {
+	nameWidth := m.help.Width - 68
+	m.table.Columns()[1].Width = nameWidth
+
 	helpView := m.help.View(m.keys)
 	return m.table.View() + "\n" + helpView
 }

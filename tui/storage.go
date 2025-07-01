@@ -79,7 +79,7 @@ func (m storageModel) View() string {
 	var sb strings.Builder
 
 	for k, v := range m.storage {
-		sb.WriteString("󰒋 Name: " + k.Name + "\n")
+		sb.WriteString("Name: " + k.Name + "\n")
 		sb.WriteString("UUID: " + k.UUID + "\n")
 		sb.WriteString("Type: " + k.Type + "\n")
 		sb.WriteString("Size: " + fmt.Sprintf("%d%s (%d%s available)", k.Capacity.Value, k.Capacity.Unit, k.Available.Value, k.Available.Unit) + "\n")

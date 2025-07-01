@@ -61,7 +61,23 @@ func (mk managerKeyMap) ShortHelp() []key.Binding {
 }
 
 func (mk managerKeyMap) FullHelp() [][]key.Binding {
-	return [][]key.Binding{}
+	return [][]key.Binding{
+		{
+			mk.New,
+			mk.Open,
+			mk.Start,
+			mk.PauseResume,
+			mk.Shutdown,
+			mk.Reboot,
+		},
+		{
+			mk.ForceReset,
+			mk.ForceOff,
+			mk.Save,
+			mk.Clone,
+			mk.Delete,
+		},
+	}
 }
 
 var managerKeys = managerKeyMap{
@@ -118,12 +134,14 @@ func newManagerModel(conn *libvirt.Connect) tea.Model {
 		table.WithFocused(true),
 	)
 
-	return managerModel{
+	m := &managerModel{
 		table: t,
 		keys:  managerKeys,
 		help:  help.New(),
 		conn:  conn,
 	}
+
+	return m
 }
 
 func (m managerModel) Init() tea.Cmd {
@@ -162,7 +180,7 @@ func (m managerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			rows[i] = table.Row{
 				d.UUID,
-				fmt.Sprintf("󰍹 %s %s", d.Name, strings.Repeat(".", 26)),
+				fmt.Sprintf("%s %s", d.Name, strings.Repeat(".", 26)),
 				mappers.FromState(state),
 				fmt.Sprintf("%d", d.VCPU.Value),
 				// FIXME: assumes the d.Memory.Value is always the default KiB, which it's not...
@@ -227,6 +245,7 @@ func (m managerModel) View() string {
 	nameWidth := m.help.Width - 68
 	m.table.Columns()[1].Width = nameWidth
 
-	helpView := m.help.View(m.keys)
-	return m.table.View() + "\n" + helpView
+	m.table.SetHeight(5)
+
+	return m.table.View()
 }

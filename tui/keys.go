@@ -12,6 +12,8 @@ type keymap struct {
 	left  key.Binding
 	right key.Binding
 
+	open key.Binding
+
 	back key.Binding
 
 	quit key.Binding
@@ -23,21 +25,34 @@ func (k keymap) ShortHelp() []key.Binding {
 }
 
 func (k keymap) FullHelp() [][]key.Binding {
-	return [][]key.Binding{}
+	return [][]key.Binding{
+		{
+			k.manager,
+			k.network,
+			k.storage,
+			k.quit,
+		},
+		{
+			k.left,
+			k.down,
+			k.up,
+			k.right,
+		},
+	}
 }
 
 var keys = keymap{
 	manager: key.NewBinding(
 		key.WithKeys("1", "f1"),
-		key.WithHelp("f1", "Manager"),
+		key.WithHelp("1", "Manager"),
 	),
 	network: key.NewBinding(
 		key.WithKeys("2", "f2"),
-		key.WithHelp("f2", "Network"),
+		key.WithHelp("2", "Network"),
 	),
 	storage: key.NewBinding(
 		key.WithKeys("3", "f3"),
-		key.WithHelp("f3", "Storage"),
+		key.WithHelp("3", "Storage"),
 	),
 
 	up: key.NewBinding(

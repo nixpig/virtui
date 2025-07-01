@@ -22,6 +22,11 @@ const (
 	storageView
 )
 
+var (
+	labelStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
+	headingStyle = lipgloss.NewStyle().Underline(true).Bold(true).Align(lipgloss.Center).Foreground(lipgloss.Color("202"))
+)
+
 func listenForEvent(ch chan *libvirt.DomainEventLifecycle) tea.Cmd {
 	return func() tea.Msg {
 		e := <-ch
@@ -312,26 +317,27 @@ func (m model) View() string {
 		mainView = m.managerModel.View()
 	}
 
-	// helpView := m.help.View(m.keys)
+	title := headingStyle.Width(m.width - 2).Render("VIRTUI")
 
-	border := lipgloss.NewStyle().Border(lipgloss.NormalBorder()).Width(m.width - 2).Height(5)
-	// borderCompensation := 2
-
-	// offset := 1 // who knows where this comes from 🤷
-
-	// padding := m.height - borderCompensation - offset - strings.Count(mainView, "\n") - strings.Count(helpView, "\n")
-	// padding := borderCompensation - offset
-
-	panel := border.Render(mainView)
-
-	heading := lipgloss.NewStyle().Render(
-		" Hostname: "+m.connectionDetails.hostname+"\n",
-		"URI: "+m.connectionDetails.uri+"\n",
-		"Hypervisor: "+m.connectionDetails.connType+" ("+m.connectionDetails.hvVersion+")"+"\n",
-		"Libvirt: "+m.connectionDetails.lvVersion+"\n",
-		"CPU: 17% (4)\n",
-		"Memory: 40% (32GiB)\n",
+	systemInfo := lipgloss.NewStyle().Width(m.width/4).Render(
+		labelStyle.Render(" Hostname: ")+m.connectionDetails.hostname+"\n",
+		labelStyle.Render("URI: ")+m.connectionDetails.uri+"\n",
+		labelStyle.Render("Hypervisor: ")+m.connectionDetails.connType+" ("+m.connectionDetails.hvVersion+")"+"\n",
+		labelStyle.Render("Libvirt: ")+m.connectionDetails.lvVersion+"\n",
+		labelStyle.Render("CPU: ")+"17% (4)\n",
+		labelStyle.Render("Memory: ")+"40% (32GiB)",
 	)
 
-	return heading + panel
+	globalKeys := lipgloss.NewStyle().Width(m.width / 4).Render(m.help.FullHelpView(m.keys.FullHelp()))
+	localKeys := lipgloss.NewStyle().Width(m.width / 4).Render(m.managerModel.(managerModel).help.FullHelpView(m.managerModel.(managerModel).keys.FullHelp()))
+	logo := lipgloss.NewStyle().Width(m.width / 4).Foreground(lipgloss.Color("23")).Render("" + "\n" + "https://github.com/nixpig/virtui")
+
+	heading := lipgloss.JoinVertical(0, title, lipgloss.JoinHorizontal(0, systemInfo, globalKeys, localKeys, logo))
+
+	panel := lipgloss.NewStyle().BorderForeground(lipgloss.Color("#aaaaaa")).Border(lipgloss.NormalBorder()).
+		Height(m.height - 2 - lipgloss.Height(heading)).
+		Width(m.width - 2).
+		Render(mainView)
+
+	return heading + "\n" + panel
 }

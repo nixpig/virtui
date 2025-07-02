@@ -44,11 +44,11 @@ func (k keymap) FullHelp() [][]key.Binding {
 var keys = keymap{
 	manager: key.NewBinding(
 		key.WithKeys("1", "f1"),
-		key.WithHelp("1", "Manager"),
+		key.WithHelp("1", "Guests"),
 	),
 	network: key.NewBinding(
 		key.WithKeys("2", "f2"),
-		key.WithHelp("2", "Network"),
+		key.WithHelp("2", "Networks"),
 	),
 	storage: key.NewBinding(
 		key.WithKeys("3", "f3"),
@@ -57,19 +57,19 @@ var keys = keymap{
 
 	up: key.NewBinding(
 		key.WithKeys("k", "up"),
-		key.WithHelp("k", "up"),
+		key.WithHelp("k/󰁞", "up"),
 	),
 	down: key.NewBinding(
 		key.WithKeys("j", "down"),
-		key.WithHelp("j", "down"),
+		key.WithHelp("j/󰁆", "down"),
 	),
 	left: key.NewBinding(
 		key.WithKeys("h", "left"),
-		key.WithHelp("h", "left"),
+		key.WithHelp("h/󰁎", "left"),
 	),
 	right: key.NewBinding(
 		key.WithKeys("l", "right"),
-		key.WithHelp("l", "right"),
+		key.WithHelp("l/󰁕", "right"),
 	),
 
 	back: key.NewBinding(

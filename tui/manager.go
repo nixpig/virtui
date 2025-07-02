@@ -2,12 +2,12 @@ package tui
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/nixpig/virtui/tui/entity"
 	"github.com/nixpig/virtui/tui/mappers"
@@ -17,17 +17,18 @@ import (
 var columns = []table.Column{
 	// UUID is hidden as it's only used for identification
 	{Title: "UUID", Width: 0},
-	{Title: "Name", Width: 30},
-	{Title: "State", Width: 10},
-	{Title: "CPU", Width: 4},
+	{Title: " Name", Width: 30},
+	{Title: "State", Width: 12},
+	{Title: "CPU", Width: 6},
 	{Title: "Mem", Width: 12},
 }
 
 type managerModel struct {
-	keys  managerKeyMap
-	help  help.Model
-	table table.Model
-	conn  *libvirt.Connect
+	keys          managerKeyMap
+	help          help.Model
+	table         table.Model
+	conn          *libvirt.Connect
+	width, height int
 }
 
 type managerKeyMap struct {
@@ -63,16 +64,19 @@ func (mk managerKeyMap) ShortHelp() []key.Binding {
 func (mk managerKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{
-			mk.New,
 			mk.Open,
 			mk.Start,
 			mk.PauseResume,
-			mk.Shutdown,
 			mk.Reboot,
 		},
 		{
-			mk.ForceReset,
+			mk.Shutdown,
 			mk.ForceOff,
+			mk.ForceReset,
+		},
+		{
+
+			mk.New,
 			mk.Save,
 			mk.Clone,
 			mk.Delete,
@@ -132,6 +136,10 @@ func newManagerModel(conn *libvirt.Connect) tea.Model {
 	t := table.New(
 		table.WithColumns(columns),
 		table.WithFocused(true),
+		table.WithStyles(table.Styles{
+			Header:   lipgloss.NewStyle().Bold(true).Border(lipgloss.NormalBorder(), false, false, true),
+			Selected: lipgloss.NewStyle().Background(lipgloss.Color("2")).Foreground(lipgloss.Color("0")),
+		}),
 	)
 
 	m := &managerModel{
@@ -178,9 +186,22 @@ func (m managerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				log.Warn("free ref counted domain struct", "err", err)
 			}
 
+			var icon string
+
+			switch state {
+			case libvirt.DOMAIN_RUNNING:
+				icon = "󰻏"
+			case libvirt.DOMAIN_BLOCKED:
+				icon = "󰾊"
+			case libvirt.DOMAIN_PAUSED:
+				icon = "󰾉"
+			default:
+				icon = "󰔂"
+			}
+
 			rows[i] = table.Row{
 				d.UUID,
-				fmt.Sprintf("%s %s", d.Name, strings.Repeat(".", 26)),
+				fmt.Sprintf(" %s  %s", icon, d.Name),
 				mappers.FromState(state),
 				fmt.Sprintf("%d", d.VCPU.Value),
 				// FIXME: assumes the d.Memory.Value is always the default KiB, which it's not...
@@ -192,7 +213,7 @@ func (m managerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.SetRows(rows)
 
 	case tea.WindowSizeMsg:
-		m.help.Width = msg.Width
+		m.width = msg.Width
 		// TODO: resize the table and stuff
 
 	case tea.KeyMsg:
@@ -242,7 +263,7 @@ func (m managerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m managerModel) View() string {
-	nameWidth := m.help.Width - 68
+	nameWidth := m.width - 32
 	m.table.Columns()[1].Width = nameWidth
 
 	m.table.SetHeight(5)

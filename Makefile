@@ -37,10 +37,6 @@ coveralls:
 build:
 	go build -o ${BUILD_OUTPUT_DIR}/${BINARY_NAME} ${PACKAGE_PATH}
 
-.PHONY: run
-run:
-	go run ${PACKAGE_PATH}
-
 .PHONY: clean
 clean:
 	rm -rf tmp *.out

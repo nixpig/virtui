@@ -23,8 +23,12 @@ const (
 )
 
 var (
-	labelStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
-	headingStyle = lipgloss.NewStyle().Underline(true).Bold(true).Align(lipgloss.Center).Foreground(lipgloss.Color("202"))
+	labelStyle = lipgloss.NewStyle().Bold(true)
+	valueStyle = lipgloss.NewStyle().Faint(true)
+
+	headingStyle = lipgloss.NewStyle().
+			Underline(true).
+			Bold(true)
 )
 
 func listenForEvent(ch chan *libvirt.DomainEventLifecycle) tea.Cmd {
@@ -103,6 +107,7 @@ func New(conn *libvirt.Connect) model {
 	}()
 
 	if _, err := conn.DomainEventLifecycleRegister(nil, func(c *libvirt.Connect, d *libvirt.Domain, event *libvirt.DomainEventLifecycle) {
+		log.Debug("handing domain event", "event", event.Event, "detail", event.Detail, "data", event)
 		m.events <- event
 	}); err != nil {
 		// TODO: surface error to user?
@@ -317,24 +322,26 @@ func (m model) View() string {
 		mainView = m.managerModel.View()
 	}
 
-	title := headingStyle.Width(m.width - 2).Render("VIRTUI")
-
-	systemInfo := lipgloss.NewStyle().Width(m.width/4).Render(
-		labelStyle.Render(" Hostname: ")+m.connectionDetails.hostname+"\n",
-		labelStyle.Render("URI: ")+m.connectionDetails.uri+"\n",
-		labelStyle.Render("Hypervisor: ")+m.connectionDetails.connType+" ("+m.connectionDetails.hvVersion+")"+"\n",
-		labelStyle.Render("Libvirt: ")+m.connectionDetails.lvVersion+"\n",
-		labelStyle.Render("CPU: ")+"17% (4)\n",
-		labelStyle.Render("Memory: ")+"40% (32GiB)",
+	systemInfo := lipgloss.NewStyle().Border(lipgloss.MarkdownBorder(), false, false, true).BorderForeground(lipgloss.Color("8")).Width(m.width/4).Render(
+		" "+headingStyle.Foreground(lipgloss.Color("4")).Render("󰘚 System Info")+"\n"+
+			labelStyle.Render(" Hostname: ")+valueStyle.Render(m.connectionDetails.hostname)+"\n",
+		labelStyle.Render("URI: ")+valueStyle.Render(m.connectionDetails.uri)+"\n",
+		labelStyle.Render("Hypervisor: ")+valueStyle.Render(m.connectionDetails.connType+" ("+m.connectionDetails.hvVersion+")")+"\n",
+		labelStyle.Render("Libvirt: ")+valueStyle.Render(m.connectionDetails.lvVersion),
 	)
 
-	globalKeys := lipgloss.NewStyle().Width(m.width / 4).Render(m.help.FullHelpView(m.keys.FullHelp()))
-	localKeys := lipgloss.NewStyle().Width(m.width / 4).Render(m.managerModel.(managerModel).help.FullHelpView(m.managerModel.(managerModel).keys.FullHelp()))
-	logo := lipgloss.NewStyle().Width(m.width / 4).Foreground(lipgloss.Color("23")).Render("" + "\n" + "https://github.com/nixpig/virtui")
+	globalKeys := headingStyle.Foreground(lipgloss.Color("5")).Render("󰆌 Global Keys") + "\n" + lipgloss.NewStyle().Border(lipgloss.MarkdownBorder(), false, false, true).BorderForeground(lipgloss.Color("8")).Width(m.width/4).Render(m.help.FullHelpView(m.keys.FullHelp()))
+	localKeys := headingStyle.Foreground(lipgloss.Color("3")).Render("󱁤 Window Keys") + "\n" + lipgloss.NewStyle().Border(lipgloss.MarkdownBorder(), false, false, true).BorderForeground(lipgloss.Color("8")).Width(m.width/2).Render(m.managerModel.(managerModel).help.FullHelpView(m.managerModel.(managerModel).keys.FullHelp()))
 
-	heading := lipgloss.JoinVertical(0, title, lipgloss.JoinHorizontal(0, systemInfo, globalKeys, localKeys, logo))
+	aboveTable := lipgloss.NewStyle().Width(m.width-2).MarginLeft(0).Border(lipgloss.InnerHalfBlockBorder(), false, true).BorderForeground(lipgloss.Color("7")).Background(lipgloss.Color("7")).Align(lipgloss.Center).Foreground(lipgloss.Color("0")).Render("Guests")
 
-	panel := lipgloss.NewStyle().BorderForeground(lipgloss.Color("#aaaaaa")).Border(lipgloss.NormalBorder()).
+	heading := lipgloss.JoinVertical(0, lipgloss.JoinHorizontal(0, systemInfo, globalKeys, localKeys), aboveTable)
+
+	// errorBlock := lipgloss.NewStyle().Width(m.width - 2).PaddingLeft(1).PaddingRight(1).Border(lipgloss.DoubleBorder()).BorderForeground(lipgloss.Color("1")).Foreground(lipgloss.Color("1")).Render("󰅚  Error: some error has occurred, please try again. [C]lose")
+	// successBlock := lipgloss.NewStyle().Width(m.width - 2).PaddingLeft(1).PaddingRight(1).Border(lipgloss.DoubleBorder()).BorderForeground(lipgloss.Color("2")).Foreground(lipgloss.Color("2")).Render("󰗡  Success: something happened successfully! [O]kay")
+	// warningBlock := lipgloss.NewStyle().Width(m.width - 2).PaddingLeft(1).PaddingRight(1).Border(lipgloss.DoubleBorder()).BorderForeground(lipgloss.Color("3")).Foreground(lipgloss.Color("3")).Render("󰗖  Warning: something happened that might be an issue! [O]kay")
+
+	panel := lipgloss.NewStyle().Border(lipgloss.NormalBorder(), true, true, true).
 		Height(m.height - 2 - lipgloss.Height(heading)).
 		Width(m.width - 2).
 		Render(mainView)

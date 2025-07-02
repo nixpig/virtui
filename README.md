@@ -24,12 +24,11 @@ Why...?
 ## 👩‍💻 Usage
 
 
-## 🤝 Contributing
-
-
 ## 📦️ Dependencies
 
-You'll need a working [libvirt](https://libvirt.org/) installation to make use of this software. Below are instructions to get to that on Arch; I'm sure you can figure it out for other distros.
+You'll need a working [libvirt](https://libvirt.org/) installation to make use of this software. Below are instructions to get that on Arch (feel free to submit a PR for instructions for other distros!).
+
+### Arch
 
 ```
 pacman -Sy fuse3 libvirt radvd qemu-base virt-manager dnsmasq
@@ -56,8 +55,7 @@ firewall_backend = "iptables"
 
 If you want to use LXC, you'll also need to install `virt-bootstrap-git` from the AUR.
 
----
 
-`sudo virt-install --print-xml --connect qemu:///system --name test-vm --ram 2048 --vcpus 2 --disk path=/var/lib/libvirt/images/linux2022.qcow2 --location /var/lib/libvirt/images/ubuntu-24.04.2-live-server-amd64.iso,kernel=casper/vmlinuz,initrd=casper/initrd --os-variant ubuntu24.04 --graphics none --extra-args='console=ttyS0'`
 
----
+## 🤝 Contributing
+

@@ -54,8 +54,8 @@ unix_sock_rw_perms = "0770"
 # /etc/libvirt/network.conf
 firewall_backend = "iptables"
 ```
-
-If you want to use LXC, you'll also need to install `virt-bootstrap-git` from the AUR.
+> [!NOTE]  
+> If you want to use LXC, you'll also need to install `virt-bootstrap-git` from the AUR.
 
 
 

@@ -2,6 +2,8 @@
 
 An interactive Terminal UI (TUI) for managing QEMU/KVM virtual machines via libvirt.
 
+[screenshot]
+
 Why...?
 
 ### 🎯 Initial project goals

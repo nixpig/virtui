@@ -32,15 +32,15 @@ You'll need a working [libvirt](https://libvirt.org/) installation to make use o
 
 ### Arch
 
-```
+```sh
 pacman -Sy fuse3 libvirt radvd qemu-base virt-manager dnsmasq # install dependencies
 ```
 
-```
+```sh
 sudo systemctl enable --now libvirtd.service # enable libvirtd service
 ```
 
-```
+```sh
 sudo usermod -aG libvirt $USER # add user to libvirt group
 ```
 

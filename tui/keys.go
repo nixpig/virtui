@@ -57,19 +57,19 @@ var keys = keymap{
 
 	up: key.NewBinding(
 		key.WithKeys("k", "up"),
-		key.WithHelp("k/󰁞", "up"),
+		key.WithHelp("󰁞/k", "up"),
 	),
 	down: key.NewBinding(
 		key.WithKeys("j", "down"),
-		key.WithHelp("j/󰁆", "down"),
+		key.WithHelp("󰁆/j", "down"),
 	),
 	left: key.NewBinding(
 		key.WithKeys("h", "left"),
-		key.WithHelp("h/󰁎", "left"),
+		key.WithHelp("󰁎/h", "left"),
 	),
 	right: key.NewBinding(
 		key.WithKeys("l", "right"),
-		key.WithHelp("l/󰁕", "right"),
+		key.WithHelp("󰁕/l", "right"),
 	),
 
 	back: key.NewBinding(

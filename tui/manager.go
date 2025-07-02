@@ -182,9 +182,9 @@ func (m managerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				// TODO: surface error to user?
 				log.Debug("get domain state", "uuid", d.UUID, "err", err)
 			}
-			if err := domain.Free(); err != nil {
-				log.Warn("free ref counted domain struct", "err", err)
-			}
+			// if err := domain.Free(); err != nil {
+			// 	log.Warn("free ref counted domain struct", "err", err)
+			// }
 
 			var icon string
 
@@ -213,7 +213,11 @@ func (m managerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.SetRows(rows)
 
 	case tea.WindowSizeMsg:
+		log.Debug("window size msg in manager", "width", msg.Width, "height", msg.Height)
 		m.width = msg.Width
+		m.table.SetHeight(10)
+		nameWidth := m.width - 32
+		m.table.Columns()[1].Width = nameWidth
 		// TODO: resize the table and stuff
 
 	case tea.KeyMsg:
@@ -263,10 +267,6 @@ func (m managerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m managerModel) View() string {
-	nameWidth := m.width - 32
-	m.table.Columns()[1].Width = nameWidth
-
-	m.table.SetHeight(5)
 
 	return m.table.View()
 }

@@ -32,29 +32,24 @@ You'll need a working [libvirt](https://libvirt.org/) installation to make use o
 
 ### Arch
 
-1. Install dependencies
 ```
-pacman -Sy fuse3 libvirt radvd qemu-base virt-manager dnsmasq
-```
-
-2. Enable the `libvirtd` service
-```
-sudo systemctl enable --now libvirtd.service
+pacman -Sy fuse3 libvirt radvd qemu-base virt-manager dnsmasq # install dependencies
 ```
 
-3. Add user to the `libvirt` group
 ```
-sudo usermod -aG libvirt $USER
+sudo systemctl enable --now libvirtd.service # enable libvirtd service
 ```
 
-4. Configure socket group owner and permissions
+```
+sudo usermod -aG libvirt $USER # add user to libvirt group
+```
+
 ```sh
 # /etc/libvirt/libvirtd.conf
 unix_sock_group = "libvirt"
 unix_sock_rw_perms = "0770"
 ```
 
-5. Configure backend to work with `iptables-nft`
 ```sh
 # /etc/libvirt/network.conf
 firewall_backend = "iptables"

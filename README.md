@@ -1,6 +1,6 @@
 # 🖥️ virtui
 
-An interactive Terminal UI (TUI) for managing QEMU/KVM virtual machines via libvirt.
+**A fully interactive terminal UI app for managing KVM-based virtual machines via libvirt.**
 
 [screenshot]
 
@@ -61,3 +61,7 @@ firewall_backend = "iptables"
 
 ## 🤝 Contributing
 
+
+## 📃 License
+
+[MIT](https://github.com/nixpig/virtui?tab=MIT-1-ov-file)

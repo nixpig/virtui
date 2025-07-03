@@ -324,15 +324,15 @@ func (m model) View() string {
 	}
 
 	systemInfo := lipgloss.NewStyle().Border(lipgloss.MarkdownBorder(), false, false, true).BorderForeground(lipgloss.Color("8")).Width(m.width/4).Render(
-		" "+headingStyle.Foreground(lipgloss.Color("4")).Render("󰘚 System Info")+"\n"+
+		" "+headingStyle.Foreground(lipgloss.Color("4")).Render("󰘚 System")+"\n"+
 			labelStyle.Render(" Hostname: ")+valueStyle.Render(m.connectionDetails.hostname)+"\n",
 		labelStyle.Render("URI: ")+valueStyle.Render(m.connectionDetails.uri)+"\n",
 		labelStyle.Render("Hypervisor: ")+valueStyle.Render(m.connectionDetails.connType+" ("+m.connectionDetails.hvVersion+")")+"\n",
 		labelStyle.Render("Libvirt: ")+valueStyle.Render(m.connectionDetails.lvVersion),
 	)
 
-	globalKeys := headingStyle.Foreground(lipgloss.Color("5")).Render("󰆌 Global Keys") + "\n" + lipgloss.NewStyle().Border(lipgloss.MarkdownBorder(), false, false, true).BorderForeground(lipgloss.Color("8")).Width(m.width/4).Render(m.help.FullHelpView(m.keys.FullHelp()))
-	localKeys := headingStyle.Foreground(lipgloss.Color("3")).Render("󱁤 Window Keys") + "\n" + lipgloss.NewStyle().Border(lipgloss.MarkdownBorder(), false, false, true).BorderForeground(lipgloss.Color("8")).Width(m.width/2).Render(m.managerModel.(managerModel).help.FullHelpView(m.managerModel.(managerModel).keys.FullHelp()))
+	globalKeys := headingStyle.Foreground(lipgloss.Color("5")).Render("󰆌 Navigation") + "\n" + lipgloss.NewStyle().Border(lipgloss.MarkdownBorder(), false, false, true).BorderForeground(lipgloss.Color("8")).Width(m.width/4).Render(m.help.FullHelpView(m.keys.FullHelp()))
+	localKeys := headingStyle.Foreground(lipgloss.Color("3")).Render("󱁤 Actions") + "\n" + lipgloss.NewStyle().Border(lipgloss.MarkdownBorder(), false, false, true).BorderForeground(lipgloss.Color("8")).Width(m.width/2).Render(m.managerModel.(managerModel).help.FullHelpView(m.managerModel.(managerModel).keys.FullHelp()))
 
 	aboveTable := lipgloss.NewStyle().Width(m.width-2).MarginLeft(0).Border(lipgloss.InnerHalfBlockBorder(), false, true).BorderForeground(lipgloss.Color("7")).Background(lipgloss.Color("7")).Align(lipgloss.Center).Foreground(lipgloss.Color("0")).Render("Guests")
 

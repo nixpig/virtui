@@ -323,7 +323,7 @@ func (m model) View() string {
 		mainView = m.managerModel.View()
 	}
 
-	systemInfo := lipgloss.NewStyle().Border(lipgloss.MarkdownBorder(), false, false, true).BorderForeground(lipgloss.Color("8")).Width(m.width/4).Render(
+	systemInfo := lipgloss.NewStyle().Width(m.width/4).Render(
 		labelStyle.Render(" Hostname: ")+valueStyle.Render(m.connectionDetails.hostname)+"\n",
 		labelStyle.Render("URI: ")+valueStyle.Render(m.connectionDetails.uri)+"\n",
 		labelStyle.Render("Hypervisor: ")+valueStyle.Render(m.connectionDetails.connType+" ("+m.connectionDetails.hvVersion+")")+"\n",
@@ -337,21 +337,22 @@ func (m model) View() string {
 	x.help.Styles.FullKey = lipgloss.NewStyle().Foreground(lipgloss.Color("3"))
 	x.help.Styles.FullDesc = lipgloss.NewStyle().Inherit(valueStyle)
 
-	globalKeys := lipgloss.NewStyle().Border(lipgloss.MarkdownBorder(), false, false, true).BorderForeground(lipgloss.Color("8")).Width(m.width / 4).Render(m.help.FullHelpView(m.keys.FullHelp()))
-	localKeys := lipgloss.NewStyle().Border(lipgloss.MarkdownBorder(), false, false, true).BorderForeground(lipgloss.Color("8")).Width(m.width / 2).Render(x.help.FullHelpView(x.keys.FullHelp()))
+	globalKeys := lipgloss.NewStyle().MarginBottom(1).Width(m.width / 4).Render(m.help.FullHelpView(m.keys.FullHelp()))
+	localKeys := lipgloss.NewStyle().MarginBottom(1).Width(m.width / 2).Render(x.help.FullHelpView(x.keys.FullHelp()))
 
-	aboveTable := lipgloss.NewStyle().Width(m.width-2).MarginLeft(0).Border(lipgloss.InnerHalfBlockBorder(), false, true).BorderForeground(lipgloss.Color("7")).Background(lipgloss.Color("7")).Align(lipgloss.Center).Foreground(lipgloss.Color("0")).Render("Guests")
+	aboveTable := lipgloss.NewStyle().MarginTop(1).Width(m.width-2).MarginLeft(0).Border(lipgloss.InnerHalfBlockBorder(), false, true).BorderForeground(lipgloss.Color("7")).Background(lipgloss.Color("7")).Align(lipgloss.Center).Foreground(lipgloss.Color("0")).Render("Guests")
 
-	heading := lipgloss.JoinVertical(0, lipgloss.JoinHorizontal(0, systemInfo, globalKeys, localKeys), aboveTable)
+	heading := lipgloss.JoinHorizontal(0, systemInfo, globalKeys, localKeys)
 
 	// errorBlock := lipgloss.NewStyle().Width(m.width - 2).PaddingLeft(1).PaddingRight(1).Border(lipgloss.DoubleBorder()).BorderForeground(lipgloss.Color("1")).Foreground(lipgloss.Color("1")).Render("󰅚  Error: some error has occurred, please try again. [C]lose")
 	// successBlock := lipgloss.NewStyle().Width(m.width - 2).PaddingLeft(1).PaddingRight(1).Border(lipgloss.DoubleBorder()).BorderForeground(lipgloss.Color("2")).Foreground(lipgloss.Color("2")).Render("󰗡  Success: something happened successfully! [O]kay")
 	// warningBlock := lipgloss.NewStyle().Width(m.width - 2).PaddingLeft(1).PaddingRight(1).Border(lipgloss.DoubleBorder()).BorderForeground(lipgloss.Color("3")).Foreground(lipgloss.Color("3")).Render("󰗖  Warning: something happened that might be an issue! [O]kay")
 
 	panel := lipgloss.NewStyle().Border(lipgloss.NormalBorder(), true, true, true).
-		Height(m.height - 2 - lipgloss.Height(heading)).
+		Height(m.height - 2 - 2 - lipgloss.Height(heading)).
 		Width(m.width - 2).
 		Render(mainView)
 
-	return heading + "\n" + panel
+	// return heading + "\n" + panel
+	return lipgloss.JoinVertical(1, aboveTable, panel) + "\n" + heading
 }

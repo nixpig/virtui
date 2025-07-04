@@ -2,7 +2,7 @@
 
 **A fully interactive terminal UI app for managing KVM-based virtual machines via libvirt.**
 
-[screenshot]
+![screenshot of guests view](screenshot.png)
 
 Why...?
 

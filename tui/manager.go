@@ -66,20 +66,20 @@ func (mk managerKeyMap) FullHelp() [][]key.Binding {
 		{
 			mk.Open,
 			mk.Start,
-			mk.PauseResume,
 			mk.Reboot,
+			mk.Shutdown,
 		},
 		{
-			mk.Shutdown,
-			mk.ForceOff,
+			mk.PauseResume,
 			mk.ForceReset,
+			mk.ForceOff,
+			mk.Delete,
 		},
 		{
 
 			mk.New,
-			mk.Save,
-			mk.Clone,
-			mk.Delete,
+			// mk.Save,
+			// mk.Clone,
 		},
 	}
 }

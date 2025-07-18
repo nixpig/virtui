@@ -46,6 +46,10 @@ clean:
 vhs:
 	vhs demo.tape
 
+.PHONY: install
+install:
+	go mod download
+
 .PHONY: env
 env: 
 	# Environment variables

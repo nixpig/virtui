@@ -4,7 +4,7 @@ ifneq (,$(wildcard .env))
 endif
 
 BINARY_NAME := virtui
-PACKAGE_PATH := cmd/virtui.go
+PACKAGE_PATH := cmd/virtui/main.go
 BUILD_OUTPUT_DIR := tmp/bin
 CGO_ENABLED := 1
 

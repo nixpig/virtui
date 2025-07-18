@@ -12,8 +12,6 @@ type keymap struct {
 	left  key.Binding
 	right key.Binding
 
-	open key.Binding
-
 	back key.Binding
 
 	quit key.Binding

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"libvirt.org/go/libvirt"
-	"libvirt.org/go/libvirtxml"
 )
 
 var states = map[libvirt.DomainState]string{
@@ -25,21 +24,6 @@ func FromState(domainState libvirt.DomainState) string {
 	}
 
 	return s
-}
-
-func ToStructXML(domain *libvirt.Domain) (libvirtxml.Domain, error) {
-	var dom libvirtxml.Domain
-
-	doc, err := domain.GetXMLDesc(0)
-	if err != nil {
-		return dom, err
-	}
-
-	if err := dom.Unmarshal(doc); err != nil {
-		return dom, err
-	}
-
-	return dom, nil
 }
 
 func Version(v uint32) string {

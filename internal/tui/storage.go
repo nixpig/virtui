@@ -6,7 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
-	"github.com/nixpig/virtui/tui/entity"
+	"github.com/nixpig/virtui/internal/entity"
 	"libvirt.org/go/libvirt"
 )
 
@@ -50,7 +50,7 @@ func newStorageModel(conn *libvirt.Connect) tea.Model {
 		}
 
 		for _, volume := range volumes {
-			v, err := entity.ToStorageVolume(&volume)
+			v, err := entity.ToStorageVolumeStruct(&volume)
 			if err != nil {
 				// TODO: surface error to user?
 				log.Debug("convert entity to struct", "err", err, "volume", volume)

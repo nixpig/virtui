@@ -5,7 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
-	"github.com/nixpig/virtui/tui/entity"
+	"github.com/nixpig/virtui/internal/entity"
 	"libvirt.org/go/libvirt"
 )
 

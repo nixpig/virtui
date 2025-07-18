@@ -4,16 +4,18 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type openGuestMsg struct{ uuid string }
-type startGuestMsg struct{ uuid string }
-type pauseResumeGuestMsg struct{ uuid string }
-type shutdownGuestMsg struct{ uuid string }
-type rebootGuestMsg struct{ uuid string }
-type forceResetGuestMsg struct{ uuid string }
-type forceOffGuestMsg struct{ uuid string }
-type saveGuestMsg struct{ uuid string }
-type cloneGuestMsg struct{ uuid string }
-type deleteGuestMsg struct{ uuid string }
+type guestMsg struct{ uuid string }
+
+type openGuestMsg guestMsg
+type startGuestMsg guestMsg
+type pauseResumeGuestMsg guestMsg
+type shutdownGuestMsg guestMsg
+type rebootGuestMsg guestMsg
+type forceResetGuestMsg guestMsg
+type forceOffGuestMsg guestMsg
+type saveGuestMsg guestMsg
+type cloneGuestMsg guestMsg
+type deleteGuestMsg guestMsg
 
 type goBackMsg struct{}
 

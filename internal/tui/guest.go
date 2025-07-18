@@ -9,7 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
-	"github.com/nixpig/virtui/tui/entity"
+	"github.com/nixpig/virtui/internal/entity"
 	"libvirt.org/go/libvirt"
 	"libvirt.org/go/libvirtxml"
 )

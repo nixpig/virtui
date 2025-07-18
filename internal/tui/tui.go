@@ -9,7 +9,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/x/term"
-	"github.com/nixpig/virtui/tui/mappers"
+	"github.com/nixpig/virtui/internal/mappers"
 	"libvirt.org/go/libvirt"
 )
 

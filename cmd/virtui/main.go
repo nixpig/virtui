@@ -7,7 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
 	"github.com/google/uuid"
-	"github.com/nixpig/virtui/tui"
+	"github.com/nixpig/virtui/internal/tui"
 	"github.com/spf13/pflag"
 	"libvirt.org/go/libvirt"
 )

@@ -21,7 +21,7 @@ type StoragePool struct {
 	libvirtxml.StoragePool
 }
 
-func ToStorageVolume(vol *libvirt.StorageVol) (StorageVolume, error) {
+func ToStorageVolumeStruct(vol *libvirt.StorageVol) (StorageVolume, error) {
 	var v StorageVolume
 
 	doc, err := vol.GetXMLDesc(0)

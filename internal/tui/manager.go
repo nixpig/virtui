@@ -194,15 +194,15 @@ func (m managerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			switch state {
 			case libvirt.DOMAIN_RUNNING:
-				icon = icons.vm.play
+				icon = icons.vm.running
 			case libvirt.DOMAIN_BLOCKED:
-				icon = icons.vm.off
+				icon = icons.vm.blocked
 			case libvirt.DOMAIN_PAUSED:
-				icon = icons.vm.pause
+				icon = icons.vm.paused
 			case libvirt.DOMAIN_SHUTDOWN, libvirt.DOMAIN_SHUTOFF:
-				icon = icons.vm.empty
+				icon = icons.vm.off
 			default:
-				icon = icons.vm.empty
+				icon = icons.vm.off
 			}
 
 			rows[i] = table.Row{

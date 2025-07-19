@@ -219,12 +219,10 @@ func (m managerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.SetRows(rows)
 
 	case tea.WindowSizeMsg:
-		log.Debug("window size msg in manager", "width", msg.Width, "height", msg.Height)
-		m.width = msg.Width
-		m.table.SetHeight(10)
-		nameWidth := m.width - 32
+		nameWidth := msg.Width - 32
 		m.table.Columns()[1].Width = nameWidth
-		// TODO: resize the table and stuff
+		m.table.SetHeight(10)
+		m.table.SetWidth(msg.Width)
 
 	case tea.KeyMsg:
 		var guestUUID string

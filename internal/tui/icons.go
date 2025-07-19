@@ -1,6 +1,6 @@
 package tui
 
-var fonts = f{
+var icons = fonts{
 	vm{
 		empty:   "󰔂",
 		play:    "󰻏",
@@ -13,7 +13,7 @@ var fonts = f{
 	},
 }
 
-type f struct {
+type fonts struct {
 	vm
 }
 

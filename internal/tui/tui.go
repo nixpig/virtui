@@ -116,7 +116,9 @@ func New(conn *libvirt.Connect) model {
 
 	manModel, _ := newManagerModel(conn).Update(&libvirt.DomainEventLifecycle{})
 	netModel, _ := newNetworkModel(conn).Update(&libvirt.DomainEventLifecycle{})
-	storModel, _ := newStorageModel(conn).Update(&libvirt.DomainEventLifecycle{})
+	storModel, _ := newStorageModel(
+		conn,
+	).Update(&libvirt.DomainEventLifecycle{})
 
 	m.managerModel = manModel
 	m.networkModel = netModel
@@ -324,10 +326,19 @@ func (m model) View() string {
 	}
 
 	systemInfo := lipgloss.NewStyle().Width(m.width/4).Render(
-		labelStyle.Render(" Hostname: ")+valueStyle.Render(m.connectionDetails.hostname)+"\n",
-		labelStyle.Render("URI: ")+valueStyle.Render(m.connectionDetails.uri)+"\n",
-		labelStyle.Render("Hypervisor: ")+valueStyle.Render(m.connectionDetails.connType+" ("+m.connectionDetails.hvVersion+")")+"\n",
-		labelStyle.Render("Libvirt: ")+valueStyle.Render(m.connectionDetails.lvVersion),
+		labelStyle.Render(" Hostname: ")+
+			valueStyle.Render(m.connectionDetails.hostname)+
+			"\n",
+		labelStyle.Render("URI: ")+
+			valueStyle.Render(m.connectionDetails.uri)+
+			"\n",
+		labelStyle.Render("Hypervisor: ")+
+			valueStyle.Render(
+				m.connectionDetails.connType+" ("+m.connectionDetails.hvVersion+")",
+			)+
+			"\n",
+		labelStyle.Render("Libvirt: ")+
+			valueStyle.Render(m.connectionDetails.lvVersion),
 	)
 
 	m.help.Styles.FullKey = lipgloss.NewStyle().Foreground(lipgloss.Color("5"))
@@ -337,10 +348,25 @@ func (m model) View() string {
 	x.help.Styles.FullKey = lipgloss.NewStyle().Foreground(lipgloss.Color("3"))
 	x.help.Styles.FullDesc = lipgloss.NewStyle().Inherit(valueStyle)
 
-	globalKeys := lipgloss.NewStyle().MarginBottom(1).Width(m.width / 4).Render(m.help.FullHelpView(m.keys.FullHelp()))
-	localKeys := lipgloss.NewStyle().MarginBottom(1).Width(m.width / 2).Render(x.help.FullHelpView(x.keys.FullHelp()))
+	globalKeys := lipgloss.NewStyle().
+		MarginBottom(1).
+		Width(m.width / 4).
+		Render(m.help.FullHelpView(m.keys.FullHelp()))
+	localKeys := lipgloss.NewStyle().
+		MarginBottom(1).
+		Width(m.width / 2).
+		Render(x.help.FullHelpView(x.keys.FullHelp()))
 
-	aboveTable := lipgloss.NewStyle().MarginTop(1).Width(m.width-2).MarginLeft(0).Border(lipgloss.InnerHalfBlockBorder(), false, true).BorderForeground(lipgloss.Color("7")).Background(lipgloss.Color("7")).Align(lipgloss.Center).Foreground(lipgloss.Color("0")).Render("Guests")
+	aboveTable := lipgloss.NewStyle().
+		MarginTop(1).
+		Width(m.width-2).
+		MarginLeft(0).
+		Border(lipgloss.InnerHalfBlockBorder(), false, true).
+		BorderForeground(lipgloss.Color("7")).
+		Background(lipgloss.Color("7")).
+		Align(lipgloss.Center).
+		Foreground(lipgloss.Color("0")).
+		Render("Guests")
 
 	heading := lipgloss.JoinHorizontal(0, systemInfo, globalKeys, localKeys)
 
@@ -348,7 +374,8 @@ func (m model) View() string {
 	// successBlock := lipgloss.NewStyle().Width(m.width - 2).PaddingLeft(1).PaddingRight(1).Border(lipgloss.DoubleBorder()).BorderForeground(lipgloss.Color("2")).Foreground(lipgloss.Color("2")).Render("󰗡  Success: something happened successfully! [O]kay")
 	// warningBlock := lipgloss.NewStyle().Width(m.width - 2).PaddingLeft(1).PaddingRight(1).Border(lipgloss.DoubleBorder()).BorderForeground(lipgloss.Color("3")).Foreground(lipgloss.Color("3")).Render("󰗖  Warning: something happened that might be an issue! [O]kay")
 
-	panel := lipgloss.NewStyle().Border(lipgloss.NormalBorder(), true, true, true).
+	panel := lipgloss.NewStyle().
+		Border(lipgloss.NormalBorder(), true, true, true).
 		Height(m.height - 2 - 2 - lipgloss.Height(heading)).
 		Width(m.width - 2).
 		Render(mainView)

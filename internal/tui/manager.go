@@ -137,8 +137,12 @@ func newManagerModel(conn *libvirt.Connect) tea.Model {
 		table.WithColumns(columns),
 		table.WithFocused(true),
 		table.WithStyles(table.Styles{
-			Header:   lipgloss.NewStyle().Bold(true).Border(lipgloss.NormalBorder(), false, false, true),
-			Selected: lipgloss.NewStyle().Background(lipgloss.Color("2")).Foreground(lipgloss.Color("0")),
+			Header: lipgloss.NewStyle().
+				Bold(true).
+				Border(lipgloss.NormalBorder(), false, false, true),
+			Selected: lipgloss.NewStyle().
+				Background(lipgloss.Color("2")).
+				Foreground(lipgloss.Color("0")),
 		}),
 	)
 
@@ -190,13 +194,15 @@ func (m managerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			switch state {
 			case libvirt.DOMAIN_RUNNING:
-				icon = "󰻏"
+				icon = fonts.vm.play
 			case libvirt.DOMAIN_BLOCKED:
-				icon = "󰾊"
+				icon = fonts.vm.off
 			case libvirt.DOMAIN_PAUSED:
-				icon = "󰾉"
+				icon = fonts.vm.pause
+			case libvirt.DOMAIN_SHUTDOWN, libvirt.DOMAIN_SHUTOFF:
+				icon = fonts.vm.empty
 			default:
-				icon = "󰔂"
+				icon = fonts.vm.empty
 			}
 
 			rows[i] = table.Row{

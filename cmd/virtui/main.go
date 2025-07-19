@@ -18,7 +18,13 @@ func main() {
 	var qemuURI string
 
 	pflag.BoolVarP(&debug, "debug", "d", false, "set debug log level")
-	pflag.StringVarP(&logPath, "log", "l", "/tmp/virtui.log", "path to log output file")
+	pflag.StringVarP(
+		&logPath,
+		"log",
+		"l",
+		"/tmp/virtui.log",
+		"path to log output file",
+	)
 	pflag.StringVarP(&qemuURI, "uri", "u", "qemu:///system", "QEMU URI")
 	pflag.Parse()
 
@@ -26,7 +32,11 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	logFile, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	logFile, err := os.OpenFile(
+		logPath,
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
+		0644,
+	)
 	if err != nil {
 		os.Stderr.WriteString("Error: unable to open log file")
 		os.Exit(1)
@@ -74,7 +84,9 @@ func main() {
 
 	if model, err := p.Run(); err != nil {
 		log.Error("unrecoverable error", "err", err, "model", model)
-		os.Stderr.WriteString("Error: encountered unrecoverable error and need to exit\n")
+		os.Stderr.WriteString(
+			"Error: encountered unrecoverable error and need to exit\n",
+		)
 		os.Exit(1)
 	}
 }

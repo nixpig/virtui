@@ -66,3 +66,9 @@ firewall_backend = "iptables"
 ## 📃 License
 
 [MIT](https://github.com/nixpig/virtui?tab=MIT-1-ov-file)
+
+## Notes
+- https://github.com/digitalocean/go-libvirt/issues/92
+- https://github.com/free4inno/prometheus-libvirt-exporter/blob/9da210267ae14300fdd4d2036294e66bbecaa03b/collector/memory.go#L183
+- https://github.com/free4inno/prometheus-libvirt-exporter/blob/9da210267ae14300fdd4d2036294e66bbecaa03b/collector/cpu.go
+- https://github.com/kubevirt/kubevirt/blob/main/pkg/virt-launcher/virtwrap/cli/libvirt.go#L506

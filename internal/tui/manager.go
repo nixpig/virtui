@@ -271,6 +271,5 @@ func (m managerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m managerModel) View() string {
-
 	return m.table.View()
 }

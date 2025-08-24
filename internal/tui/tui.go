@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"context"
 	"os"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -39,6 +40,7 @@ func listenForEvent(ch chan *libvirt.DomainEventLifecycle) tea.Cmd {
 }
 
 type model struct {
+	ctx               context.Context
 	state             state
 	keys              keymap
 	help              help.Model
@@ -51,6 +53,7 @@ type model struct {
 	width             int
 	height            int
 	events            chan *libvirt.DomainEventLifecycle
+	eventCallbackID   int
 }
 
 type connectionDetails struct {
@@ -61,7 +64,7 @@ type connectionDetails struct {
 	lvVersion string
 }
 
-func New(conn *libvirt.Connect) model {
+func New(conn *libvirt.Connect, ctx context.Context) model {
 	var err error
 
 	hostname, _ := conn.GetHostname()
@@ -79,6 +82,7 @@ func New(conn *libvirt.Connect) model {
 	}
 
 	m := model{
+		ctx:               ctx,
 		state:             managerView,
 		keys:              keys,
 		help:              help.New(),
@@ -99,14 +103,27 @@ func New(conn *libvirt.Connect) model {
 
 	go func() {
 		for {
-			// TODO: pass context and close event loop cleanly on exit and unregister handlers
-			if err := libvirt.EventRunDefaultImpl(); err != nil {
-				log.Error("failed to run event loop", "err", err)
+			select {
+			case <-ctx.Done():
+				if err := m.conn.DomainEventDeregister(m.eventCallbackID); err != nil {
+					log.Error(
+						"failed to deregister domain event handler",
+						"err",
+						err,
+					)
+				}
+				return
+
+			default:
+				// TODO: pass context and close event loop cleanly on exit and unregister handlers
+				if err := libvirt.EventRunDefaultImpl(); err != nil {
+					log.Error("failed to run event loop", "err", err)
+				}
 			}
 		}
 	}()
 
-	if _, err := conn.DomainEventLifecycleRegister(nil, func(c *libvirt.Connect, d *libvirt.Domain, event *libvirt.DomainEventLifecycle) {
+	if m.eventCallbackID, err = conn.DomainEventLifecycleRegister(nil, func(c *libvirt.Connect, d *libvirt.Domain, event *libvirt.DomainEventLifecycle) {
 		log.Debug("handing domain event", "event", event.Event, "detail", event.Detail, "data", event)
 		m.events <- event
 	}); err != nil {

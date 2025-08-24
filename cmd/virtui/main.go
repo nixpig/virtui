@@ -7,10 +7,13 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
 	"github.com/google/uuid"
-	"github.com/nixpig/virtui/internal/service"
-	"github.com/nixpig/virtui/internal/tui"
+	"github.com/nixpig/virtui/internal/app"
+	libvirtconn "github.com/nixpig/virtui/internal/libvirt/conn"
+	"github.com/nixpig/virtui/internal/libvirt/events"
+	"github.com/nixpig/virtui/internal/screens/manager"
+	"github.com/nixpig/virtui/internal/screens/network"
+	"github.com/nixpig/virtui/internal/screens/storage"
 	"github.com/spf13/pflag"
-	"libvirt.org/go/libvirt"
 )
 
 func main() {
@@ -18,15 +21,9 @@ func main() {
 	var logPath string
 	var qemuURI string
 
-	pflag.BoolVarP(&debug, "debug", "d", false, "set debug log level")
-	pflag.StringVarP(
-		&logPath,
-		"log",
-		"l",
-		"/tmp/virtui.log",
-		"path to log output file",
-	)
-	pflag.StringVarP(&qemuURI, "uri", "u", "qemu:///system", "QEMU URI")
+	pflag.BoolVarP(&debug, "debug", "d", false, "set DEBUG log level")
+	pflag.StringVarP(&qemuURI, "uri", "u", "qemu:///system", "set QEMU URI")
+	pflag.StringVarP(&logPath, "log", "l", "/tmp/virtui.log", "set log path")
 	pflag.Parse()
 
 	if debug {
@@ -39,7 +36,7 @@ func main() {
 		0644,
 	)
 	if err != nil {
-		os.Stderr.WriteString("Error: unable to open log file")
+		os.Stderr.WriteString("Error: unable to open log file\n")
 		os.Exit(1)
 	}
 	defer logFile.Close()
@@ -47,40 +44,45 @@ func main() {
 	log.SetOutput(logFile)
 	log.SetPrefix(uuid.NewString())
 
-	log.Debug("settings", "debug", debug, "logPath", logPath)
-
-	conn, err := libvirt.NewConnect(qemuURI)
-	if err != nil {
-		log.Error("connect to libvirt", "err", err)
-		os.Stderr.WriteString("Error: failed to connect to libvirt\n")
-		os.Exit(1)
-	}
-
-	if err := libvirt.EventRegisterDefaultImpl(); err != nil {
-		log.Error("failed to register default event loop impl", "err", err)
-		os.Stderr.WriteString("Error: failed to register default event loop impl\n")
-		os.Exit(1)
-	}
-
-	defer conn.Close()
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	svc := service.NewLibvirtService(conn)
-
-	initialModel, err := tui.New(svc, ctx)
+	conn, err := libvirtconn.New(ctx, qemuURI)
 	if err != nil {
-		log.Error("failed to initialize TUI", "err", err)
-		os.Stderr.WriteString("Error: failed to initialize TUI\n")
+		log.Error("failed to establish connection with hypervisor", "err", err)
+		os.Stderr.WriteString(
+			"Error: failed to establish hypervisor connection and need to exit\n",
+		)
 		os.Exit(1)
 	}
 
+	if err := events.RegisterDefaultEventLoopImpl(); err != nil {
+		log.Error("failed to register default event loop", "err", err)
+	}
+
+	go func() {
+		for {
+			// TODO: pass context and close event loop cleanly on exit and unregister handlers
+			if err := events.RunDefaultEventLoopImpl(); err != nil {
+				log.Error("failed to run default event loop", "err", err)
+			}
+		}
+	}()
+
+	initialModel := app.NewAppModel(
+		conn,
+		[]app.Screen{
+			manager.NewManagerScreen(),
+			storage.NewStorageScreen(),
+			network.NewNetworkScreen(),
+		},
+	)
+
 	p := tea.NewProgram(
 		initialModel,
+		tea.WithContext(ctx),
 		tea.WithAltScreen(),
 		tea.WithMouseAllMotion(),
-		tea.WithContext(ctx),
 	)
 
 	if model, err := p.Run(); err != nil {
@@ -90,4 +92,5 @@ func main() {
 		)
 		os.Exit(1)
 	}
+
 }

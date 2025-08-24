@@ -73,10 +73,11 @@ func main() {
 		"hostinfo", hostinfo,
 	)
 
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	p := tea.NewProgram(
-		tui.New(conn),
+		tui.New(conn, ctx),
 		tea.WithAltScreen(),
 		tea.WithMouseAllMotion(),
 		tea.WithContext(ctx),

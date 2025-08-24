@@ -10,10 +10,10 @@ Why...?
 
 - [x] Connect to `qemu:///system` hypervisor
 - [ ] Manage existing VMs (start, stop, pause, etc...)
-- [ ] Create an Ubuntu VM from ISO (default settings)
 - [ ] Create a filesystem directory storage pool
 - [ ] Create storage volume in storage pool
 - [ ] Create virtual network and connect to bridge
+- [ ] Create a VM from ISO (using filesystem/storage/network)
 - [ ] Connect VM console to host stdio
 
 ### 👑 Longer-term goals

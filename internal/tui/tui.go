@@ -23,6 +23,14 @@ const (
 	storageView
 )
 
+type errMsg struct {
+	err error
+}
+
+func (e errMsg) Error() string {
+	return e.err.Error()
+}
+
 var (
 	labelStyle = lipgloss.NewStyle().Bold(true)
 	valueStyle = lipgloss.NewStyle().Faint(true)
@@ -54,6 +62,7 @@ type model struct {
 	height            int
 	events            chan *libvirt.DomainEventLifecycle
 	eventCallbackID   int
+	currentErr        error
 }
 
 type connectionDetails struct {
@@ -64,7 +73,7 @@ type connectionDetails struct {
 	lvVersion string
 }
 
-func New(conn *libvirt.Connect, ctx context.Context) model {
+func New(conn *libvirt.Connect, ctx context.Context) (model, tea.Cmd) {
 	var err error
 
 	hostname, _ := conn.GetHostname()
@@ -94,11 +103,26 @@ func New(conn *libvirt.Connect, ctx context.Context) model {
 	m.width, m.height, err = term.GetSize(os.Stdin.Fd())
 	if err != nil {
 		// TODO: need to handle this
-		log.Error("get size of terminal", "fd", os.Stdin.Fd(), "err", err)
+		log.Warn(
+			"failed to get size of terminal",
+			"fd",
+			os.Stdin.Fd(),
+			"err",
+			err,
+		)
+		m.width = 80
+		m.height = 24
+
+		return m, tea.Batch(listenForEvent(m.events), func() tea.Msg {
+			return errMsg{err}
+		})
 	}
 
 	if err := libvirt.EventRegisterDefaultImpl(); err != nil {
 		log.Error("failed to register default event loop impl", "err", err)
+		return m, tea.Batch(listenForEvent(m.events), func() tea.Msg {
+			return errMsg{err}
+		})
 	}
 
 	go func() {
@@ -127,8 +151,10 @@ func New(conn *libvirt.Connect, ctx context.Context) model {
 		log.Debug("handing domain event", "event", event.Event, "detail", event.Detail, "data", event)
 		m.events <- event
 	}); err != nil {
-		// TODO: surface error to user?
 		log.Debug("failed to register domain event handler", "err", err)
+		return m, tea.Batch(listenForEvent(m.events), func() tea.Msg {
+			return errMsg{err}
+		})
 	}
 
 	manModel, _ := newManagerModel(conn).Update(&libvirt.DomainEventLifecycle{})
@@ -141,7 +167,7 @@ func New(conn *libvirt.Connect, ctx context.Context) model {
 	m.networkModel = netModel
 	m.storageModel = storModel
 
-	return m
+	return m, tea.Batch(listenForEvent(m.events))
 }
 
 func (m model) Init() tea.Cmd {
@@ -152,7 +178,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
+	// clear any previous error on receipt of new messages
+	m.currentErr = nil
+
 	switch msg := msg.(type) {
+	case errMsg:
+		m.currentErr = msg.err
+		return m, nil
+
 	case *libvirt.DomainEventLifecycle:
 		switch m.state {
 		case managerView:
@@ -168,19 +201,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case startGuestMsg:
 		d, err := m.conn.LookupDomainByUUIDString(msg.uuid)
 		if err != nil {
-			// TODO: surface error to user?
 			log.Error("failed to lookup domain", "uuid", msg.uuid, "err", err)
+			return m, func() tea.Msg {
+				return errMsg{err}
+			}
 		}
 		if err := d.Create(); err != nil {
-			// TODO: surface error to user?
 			log.Error("failed to create domain", "uuid", msg.uuid, "err", err)
+			return m, func() tea.Msg {
+				return errMsg{err}
+			}
 		}
 
 	case pauseResumeGuestMsg:
 		d, err := m.conn.LookupDomainByUUIDString(msg.uuid)
 		if err != nil {
-			// TODO: surface error to user?
 			log.Error("failed to lookup domain", "uuid", msg.uuid, "err", err)
+			return m, func() tea.Msg {
+				return errMsg{err}
+			}
 		}
 		s, _, _ := d.GetState()
 		if s == libvirt.DOMAIN_PAUSED {
@@ -196,55 +235,77 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case shutdownGuestMsg:
 		d, err := m.conn.LookupDomainByUUIDString(msg.uuid)
 		if err != nil {
-			// TODO: surface error to user?
 			log.Error("failed to lookup domain", "uuid", msg.uuid, "err", err)
+			return m, func() tea.Msg {
+				return errMsg{err}
+			}
 		}
 		s, _, _ := d.GetState()
 		if s != libvirt.DOMAIN_SHUTOFF {
 			if err := d.Shutdown(); err != nil {
 				log.Error("failed to shutdown domain", "uuid", msg.uuid, "err", err)
+				return m, func() tea.Msg {
+					return errMsg{err}
+				}
 			}
 		}
 
 	case rebootGuestMsg:
 		d, err := m.conn.LookupDomainByUUIDString(msg.uuid)
 		if err != nil {
-			// TODO: surface error to user?
 			log.Error("failed to lookup domain", "uuid", msg.uuid, "err", err)
+			return m, func() tea.Msg {
+				return errMsg{err}
+			}
 		}
 		s, _, _ := d.GetState()
 		if s == libvirt.DOMAIN_RUNNING {
 			if err := d.Reboot(0); err != nil {
 				log.Error("failed to reboot domain", "uuid", msg.uuid, "err", err)
+				return m, func() tea.Msg {
+					return errMsg{err}
+				}
 			}
 		}
 
 	case forceResetGuestMsg:
 		d, err := m.conn.LookupDomainByUUIDString(msg.uuid)
 		if err != nil {
-			// TODO: surface error to user?
 			log.Error("failed to lookup domain", "uuid", msg.uuid, "err", err)
+			return m, func() tea.Msg {
+				return errMsg{err}
+			}
 		}
 		if err := d.Reset(0); err != nil {
 			log.Error("failed to reset domain", "uuid", msg.uuid, "err", err)
+			return m, func() tea.Msg {
+				return errMsg{err}
+			}
 		}
 
 	case forceOffGuestMsg:
 		d, err := m.conn.LookupDomainByUUIDString(msg.uuid)
 		if err != nil {
-			// TODO: surface error to user?
 			log.Error("failed to lookup domain", "uuid", msg.uuid, "err", err)
+			return m, func() tea.Msg {
+				return errMsg{err}
+			}
 		}
 		if err := d.Destroy(); err != nil {
 			log.Error("failed to destroy domain", "uuid", msg.uuid, "err", err)
+			return m, func() tea.Msg {
+				return errMsg{err}
+			}
 		}
 
 	case saveGuestMsg:
 	// TODO: Save Guest
 	// d, err := m.conn.LookupDomainByUUIDString(msg.uuid)
 	// if err != nil {
-	// 	// TODO: surface error to user?
 	// 	log.Debug("failed to lookup domain", "uuid", msg.uuid, "err", err)
+	// return m, func() tea.Msg {
+	// 	return errMsg{err}
+	// }
 	// }
 	// if err := d.Save(/* SOME FILE TO SAVE TO */); err != nil {
 	// 	log.Debug("failed to destroy domain", "uuid", msg.uuid, "err", err)
@@ -397,6 +458,23 @@ func (m model) View() string {
 		Width(m.width - 2).
 		Render(mainView)
 
+	var errorBlock string
+	if m.currentErr != nil {
+		errorBlock = lipgloss.NewStyle().
+			Width(m.width - 2).
+			PaddingLeft(1).
+			PaddingRight(1).
+			Border(lipgloss.DoubleBorder()).
+			BorderForeground(lipgloss.Color("1")).
+			Render("󰅚  Error: " + m.currentErr.Error() + "[C]lose")
+	}
+
+	finalView := lipgloss.JoinVertical(1, aboveTable, panel) + "\n" + heading
+
+	if errorBlock != "" {
+		finalView = lipgloss.JoinVertical(1, finalView, errorBlock)
+	}
+
 	// return heading + "\n" + panel
-	return lipgloss.JoinVertical(1, aboveTable, panel) + "\n" + heading
+	return finalView
 }

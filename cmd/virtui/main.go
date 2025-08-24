@@ -76,8 +76,10 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	initialModel, _ := tui.New(conn, ctx)
+
 	p := tea.NewProgram(
-		tui.New(conn, ctx),
+		initialModel,
 		tea.WithAltScreen(),
 		tea.WithMouseAllMotion(),
 		tea.WithContext(ctx),

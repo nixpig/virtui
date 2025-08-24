@@ -7,6 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
 	"github.com/google/uuid"
+	"github.com/nixpig/virtui/internal/service"
 	"github.com/nixpig/virtui/internal/tui"
 	"github.com/spf13/pflag"
 	"libvirt.org/go/libvirt"
@@ -55,28 +56,25 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err := libvirt.EventRegisterDefaultImpl(); err != nil {
+		log.Error("failed to register default event loop impl", "err", err)
+		os.Stderr.WriteString("Error: failed to register default event loop impl\n")
+		os.Exit(1)
+	}
+
 	defer conn.Close()
-
-	hostname, _ := conn.GetHostname()
-	lvVersion, _ := conn.GetLibVersion()
-	hvVersion, _ := conn.GetVersion()
-	connectionType, _ := conn.GetType()
-	hostinfo, _ := conn.GetNodeInfo()
-
-	log.Debug(
-		"connection",
-		"hostname", hostname,
-		"qemuURI", qemuURI,
-		"connectionType", connectionType,
-		"hvVersion", hvVersion,
-		"lvVersion", lvVersion,
-		"hostinfo", hostinfo,
-	)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	initialModel, _ := tui.New(conn, ctx)
+	svc := service.NewLibvirtService(conn)
+
+	initialModel, err := tui.New(svc, ctx)
+	if err != nil {
+		log.Error("failed to initialize TUI", "err", err)
+		os.Stderr.WriteString("Error: failed to initialize TUI\n")
+		os.Exit(1)
+	}
 
 	p := tea.NewProgram(
 		initialModel,

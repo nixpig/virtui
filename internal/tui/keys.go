@@ -2,7 +2,7 @@ package tui
 
 import "github.com/charmbracelet/bubbles/key"
 
-type keymap struct {
+type Keymap struct {
 	manager key.Binding
 	network key.Binding
 	storage key.Binding
@@ -18,11 +18,11 @@ type keymap struct {
 	help key.Binding
 }
 
-func (k keymap) ShortHelp() []key.Binding {
+func (k Keymap) ShortHelp() []key.Binding {
 	return []key.Binding{k.up, k.down, k.left, k.right, k.back, k.quit, k.help}
 }
 
-func (k keymap) FullHelp() [][]key.Binding {
+func (k Keymap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{
 			k.manager,
@@ -39,7 +39,7 @@ func (k keymap) FullHelp() [][]key.Binding {
 	}
 }
 
-var keys = keymap{
+var keys = Keymap{
 	manager: key.NewBinding(
 		key.WithKeys("1", "f1"),
 		key.WithHelp("1", "Guests"),

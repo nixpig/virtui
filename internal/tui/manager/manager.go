@@ -1,4 +1,4 @@
-package tui
+package manager
 
 import (
 	"fmt"
@@ -9,8 +9,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
-	"github.com/nixpig/virtui/internal/entity"
 	"github.com/nixpig/virtui/internal/mappers"
+	"github.com/nixpig/virtui/internal/service"
+	"github.com/nixpig/virtui/internal/tui/common"
+	"github.com/nixpig/virtui/internal/tui/icons"
 	"libvirt.org/go/libvirt"
 )
 
@@ -23,11 +25,17 @@ var columns = []table.Column{
 	{Title: "Mem", Width: 12},
 }
 
+type Model interface {
+	tea.Model
+	Help() *help.Model
+	Keys() *managerKeyMap
+}
+
 type managerModel struct {
 	keys          managerKeyMap
 	help          help.Model
 	table         table.Model
-	conn          *libvirt.Connect
+	service       service.Service
 	width, height int
 }
 
@@ -132,7 +140,7 @@ var managerKeys = managerKeyMap{
 	),
 }
 
-func newManagerModel(conn *libvirt.Connect) tea.Model {
+func NewModel(svc service.Service) tea.Model {
 	t := table.New(
 		table.WithColumns(columns),
 		table.WithFocused(true),
@@ -147,72 +155,67 @@ func newManagerModel(conn *libvirt.Connect) tea.Model {
 	)
 
 	m := &managerModel{
-		table: t,
-		keys:  managerKeys,
-		help:  help.New(),
-		conn:  conn,
+		table:   t,
+		keys:    managerKeys,
+		help:    help.New(),
+		service: svc,
 	}
 
 	return m
 }
 
-func (m managerModel) Init() tea.Cmd {
+func (m managerModel) Help() *help.Model {
+	return &m.help
+}
+
+func (m managerModel) Keys() *managerKeyMap {
+	return &m.keys
+}
+
+func (m *managerModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m managerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *managerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
 	case *libvirt.DomainEventLifecycle:
-		domains, err := m.conn.ListAllDomains(0)
+		domains, err := m.service.ListAllDomains()
 		if err != nil {
-			// TODO: surface error to user?
 			log.Debug("list all domains", "err", err)
+			return m, func() tea.Msg {
+				return common.ErrMsg{Err: err}
+			}
 		}
 
 		rows := make([]table.Row, len(domains))
 
-		for i, domain := range domains {
-			d, err := entity.ToDomainStruct(&domain)
-			if err != nil {
-				// TODO: surface error to user?
-				log.Debug("convert entity to struct", "err", err, "domain", domain)
-			}
-
-			state, _, err := domain.GetState()
-			if err != nil {
-				// TODO: surface error to user?
-				log.Debug("get domain state", "uuid", d.UUID, "err", err)
-			}
-			// if err := domain.Free(); err != nil {
-			// 	log.Warn("free ref counted domain struct", "err", err)
-			// }
-
+		for i, d := range domains {
 			var icon string
 
-			switch state {
+			switch d.State {
 			case libvirt.DOMAIN_RUNNING:
-				icon = icons.vm.running
+				icon = icons.Vm.Running
 			case libvirt.DOMAIN_BLOCKED:
-				icon = icons.vm.blocked
+				icon = icons.Vm.Blocked
 			case libvirt.DOMAIN_PAUSED:
-				icon = icons.vm.paused
+				icon = icons.Vm.Paused
 			case libvirt.DOMAIN_SHUTDOWN, libvirt.DOMAIN_SHUTOFF:
-				icon = icons.vm.off
+				icon = icons.Vm.Off
 			default:
-				icon = icons.vm.off
+				icon = icons.Vm.Off
 			}
 
 			rows[i] = table.Row{
-				d.UUID,
-				fmt.Sprintf(" %s  %s", icon, d.Name),
-				mappers.FromState(state),
-				fmt.Sprintf("%d", d.VCPU.Value),
+				d.Domain.UUID,
+				fmt.Sprintf(" %s  %s", icon, d.Domain.Name),
+				mappers.FromState(d.State),
+				fmt.Sprintf("%d", d.Domain.VCPU.Value),
 				// FIXME: assumes the d.Memory.Value is always the default KiB, which it's not...
 				// https://libvirt.org/formatdomain.html#memory-allocation
-				fmt.Sprintf("%dMiB", d.Memory.Value/1024),
+				fmt.Sprintf("%dMiB", d.Domain.Memory.Value/1024),
 			}
 		}
 
@@ -225,41 +228,55 @@ func (m managerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.SetWidth(msg.Width)
 
 	case tea.KeyMsg:
+		log.Debug("KeyMsg received in managerModel.Update", "key", msg.String())
 		var guestUUID string
 		if len(m.table.Rows()) > 0 {
 			guestUUID = m.table.SelectedRow()[0]
+			log.Debug("Selected guest UUID", "uuid", guestUUID)
+		} else {
+			log.Debug("No rows in table, guestUUID is empty")
 		}
 
 		switch {
 		case key.Matches(msg, m.keys.Open):
-			return m, openGuestCmd(guestUUID)
+			log.Debug("Key matched: Open")
+			return m, common.OpenGuestCmd(guestUUID)
 
 		case key.Matches(msg, m.keys.Start):
-			return m, startGuestCmd(guestUUID)
+			log.Debug("Key matched: Start")
+			return m, common.StartGuestCmd(guestUUID)
 
 		case key.Matches(msg, m.keys.PauseResume):
-			return m, pauseResumeGuestCmd(guestUUID)
+			log.Debug("Key matched: PauseResume")
+			return m, common.PauseResumeGuestCmd(guestUUID)
 
 		case key.Matches(msg, m.keys.Shutdown):
-			return m, shutdownGuestCmd(guestUUID)
+			log.Debug("Key matched: Shutdown")
+			return m, common.ShutdownGuestCmd(guestUUID)
 
 		case key.Matches(msg, m.keys.Reboot):
-			return m, rebootGuestCmd(guestUUID)
+			log.Debug("Key matched: Reboot")
+			return m, common.RebootGuestCmd(guestUUID)
 
 		case key.Matches(msg, m.keys.ForceReset):
-			return m, forceResetGuestCmd(guestUUID)
+			log.Debug("Key matched: ForceReset")
+			return m, common.ForceResetGuestCmd(guestUUID)
 
 		case key.Matches(msg, m.keys.ForceOff):
-			return m, forceOffGuestCmd(guestUUID)
+			log.Debug("Key matched: ForceOff")
+			return m, common.ForceOffGuestCmd(guestUUID)
 
 		case key.Matches(msg, m.keys.Save):
-			return m, saveGuestCmd(guestUUID)
+			log.Debug("Key matched: Save")
+			return m, common.SaveGuestCmd(guestUUID)
 
 		case key.Matches(msg, m.keys.Clone):
-			return m, cloneGuestCmd(guestUUID)
+			log.Debug("Key matched: Clone")
+			return m, common.CloneGuestCmd(guestUUID)
 
 		case key.Matches(msg, m.keys.Delete):
-			return m, deleteGuestCmd(guestUUID)
+			log.Debug("Key matched: Delete")
+			return m, common.DeleteGuestCmd(guestUUID)
 
 		}
 	}
@@ -270,6 +287,6 @@ func (m managerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m managerModel) View() string {
+func (m *managerModel) View() string {
 	return m.table.View()
 }

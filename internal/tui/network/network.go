@@ -1,4 +1,4 @@
-package tui
+package network
 
 import (
 	"strings"
@@ -6,36 +6,31 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
 	"github.com/nixpig/virtui/internal/entity"
-	"libvirt.org/go/libvirt"
+	"github.com/nixpig/virtui/internal/service"
 )
 
+type Model interface {
+	tea.Model
+}
+
 type networkModel struct {
-	conn     *libvirt.Connect
+	service  service.Service
 	networks []entity.Network
 }
 
-func newNetworkModel(conn *libvirt.Connect) tea.Model {
-	networks, err := conn.ListAllNetworks(0)
+func NewModel(svc service.Service) tea.Model {
+	networks, err := svc.ListAllNetworks()
 	if err != nil {
-		// TODO: surface error to user?
 		log.Debug("list all networks", "err", err)
+		return networkModel{
+			service:  svc,
+			networks: []entity.Network{},
+		}
 	}
 
 	m := networkModel{
-		conn:     conn,
-		networks: make([]entity.Network, len(networks)),
-	}
-
-	for i, network := range networks {
-		m.networks[i], err = entity.ToNetworkStruct(&network)
-		if err != nil {
-			// TODO: surface error to user?
-			log.Debug("convert entity to struct", "err", err, "network", network)
-		}
-
-		if err := network.Free(); err != nil {
-			log.Warn("free ref counted network struct", "err", err)
-		}
+		service:  svc,
+		networks: networks,
 	}
 
 	return m
@@ -61,11 +56,15 @@ func (m networkModel) View() string {
 			sb.WriteString("Address: " + ip.Address + "\n")
 			sb.WriteString("Netmask: " + ip.Netmask + "\n")
 			for _, dhcp := range ip.DHCP.Ranges {
-				sb.WriteString("DHCP range: " + dhcp.Start + " - " + dhcp.End + "\n")
+				sb.WriteString(
+					"DHCP range: " + dhcp.Start + " - " + dhcp.End + "\n",
+				)
 			}
 		}
 
-		sb.WriteString("Forwarding mode: " + strings.ToUpper(network.Forward.Mode) + "\n")
+		sb.WriteString(
+			"Forwarding mode: " + strings.ToUpper(network.Forward.Mode) + "\n",
+		)
 		sb.WriteString("\n\n")
 	}
 

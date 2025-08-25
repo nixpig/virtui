@@ -4,11 +4,9 @@
 
 ![screenshot of guests view](screenshot.png)
 
-Why...?
-
 ### 🎯 Initial project goals
 
-- [ ] Connect to `qemu:///system` hypervisor
+- [x] Connect to `qemu:///system` hypervisor
 - [ ] Manage existing VMs (start, stop, pause, etc...)
 - [ ] Create a filesystem directory storage pool
 - [ ] Create storage volume in storage pool
@@ -23,8 +21,12 @@ Why...?
 
 ## 🚀 Quick start
 
+_Coming soon..._
+
 
 ## 👩‍💻 Usage
+
+_Coming soon..._
 
 
 ## 📦️ Dependencies
@@ -61,6 +63,8 @@ firewall_backend = "iptables"
 
 
 ## 🤝 Contributing
+
+_Coming soon..._
 
 
 ## 📃 License

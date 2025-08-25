@@ -9,42 +9,48 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/nixpig/virtui/internal/app"
 	"github.com/nixpig/virtui/internal/common"
+	"github.com/nixpig/virtui/internal/messages"
 )
 
-var _ app.Screen = (*model)(nil)
+var _ app.Screen = (*storageScreenModel)(nil)
 
-type model struct {
+type storageScreenModel struct {
 	id       string
+	title    string
 	viewport viewport.Model
 	width    int
 	height   int
 	keys     common.ScrollKeyMap
 }
 
-func NewStorageScreen() *model {
-	return &model{
+// NewStorageScreen returns and initialised storage screen model.
+func NewStorageScreen() *storageScreenModel {
+	return &storageScreenModel{
 		id:       "storage",
+		title:    "Storage",
 		viewport: viewport.New(0, 0),
 		keys:     common.DefaultScrollKeyMap(),
 	}
 }
 
-func (m *model) Init() tea.Cmd {
+func (m *storageScreenModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *storageScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case app.ScreenSizeMsg:
+	case messages.ScreenSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+
 	case tea.KeyMsg:
-		if key.Matches(msg, m.keys.ScrollUp) {
+		switch {
+		case key.Matches(msg, m.keys.Up):
 			m.viewport.ScrollUp(1)
-		} else if key.Matches(msg, m.keys.ScrollDown) {
+		case key.Matches(msg, m.keys.Down):
 			m.viewport.ScrollDown(1)
 		}
 	}
@@ -55,7 +61,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m *model) View() string {
+func (m *storageScreenModel) View() string {
 	content := "This is the Storage Screen.\n\n" +
 		"Current screen dimensions: Width = %d, Height = %d\n\n" +
 		"Press '1' for Manager, '2' for Network, 'q' or 'ctrl+c' to quit."
@@ -74,11 +80,13 @@ func (m *model) View() string {
 		Render(m.viewport.View())
 }
 
-func (m *model) Title() string {
-	return "Storage Screen"
+// Title returns the title of the screen.
+func (m *storageScreenModel) Title() string {
+	return m.title
 }
 
-func (m *model) Keybindings() []key.Binding {
+// Keybindings returns screen-specific keybindings.
+func (m *storageScreenModel) Keybindings() []key.Binding {
 	return []key.Binding{
 		key.NewBinding(key.WithKeys("z"), key.WithHelp("z", "action z")),
 		key.NewBinding(key.WithKeys("y"), key.WithHelp("y", "action y")),
@@ -87,10 +95,12 @@ func (m *model) Keybindings() []key.Binding {
 	}
 }
 
-func (m *model) ScrollKeys() common.ScrollKeyMap {
+// ScrollKeys returns screen-specific keys used for scrolling.
+func (m *storageScreenModel) ScrollKeys() common.ScrollKeyMap {
 	return m.keys
 }
 
-func (m *model) ID() string {
+// ID returns the screen ID.
+func (m *storageScreenModel) ID() string {
 	return m.id
 }

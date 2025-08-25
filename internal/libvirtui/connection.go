@@ -1,4 +1,4 @@
-package libvirt
+package libvirtui
 
 import (
 	"context"
@@ -15,9 +15,8 @@ type Connection interface {
 
 	Close() (int, error)
 
-	DomainEventLifecycleRegister(
-		func(DomainEvent),
-	) (int, error)
+	DomainEventLifecycleRegister(func(DomainEvent)) (int, error)
+	DomainEventLifecycleDeregister(callbackID int) error
 
 	LookupDomainByUUIDString(uuid string) (*libvirt.Domain, error)
 	ListAllDomains(
@@ -27,14 +26,13 @@ type Connection interface {
 		xml string,
 		flags libvirt.DomainDefineFlags,
 	) (*libvirt.Domain, error)
-	DomainEventLifecycleDeregister(callbackID int) error
 }
 
 type connection struct {
 	*libvirt.Connect
 }
 
-func New(ctx context.Context, qemuURI string) (Connection, error) {
+func NewConnection(ctx context.Context, qemuURI string) (Connection, error) {
 	c, err := libvirt.NewConnect(qemuURI)
 	if err != nil {
 		return nil, err
@@ -56,21 +54,11 @@ func (c connection) DomainEventLifecycleRegister(
 	return c.Connect.DomainEventLifecycleRegister(
 		nil,
 		func(_ *libvirt.Connect, d *libvirt.Domain, event *libvirt.DomainEventLifecycle) {
-			domainName, err := d.GetName()
-			if err != nil {
-				domainName = "" // Handle error or log it
-			}
-			cb(DomainEvent{
-				DomainName: domainName,
-				Event:      int(event.Event),
-				Detail:     int(event.Detail),
-			})
+			cb(DomainEvent{event})
 		},
 	)
 }
 
-func (c connection) DomainEventLifecycleDeregister(
-	callbackID int,
-) error {
+func (c connection) DomainEventLifecycleDeregister(callbackID int) error {
 	return c.Connect.DomainEventDeregister(callbackID)
 }

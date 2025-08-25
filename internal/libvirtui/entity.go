@@ -1,19 +1,30 @@
-package libvirt
+package libvirtui
 
 import (
-	"fmt" // New import
+	"fmt"
+
 	"libvirt.org/go/libvirt"
 	"libvirt.org/go/libvirtxml"
 )
 
 type Domain struct {
-	libvirt.Domain
+	*libvirt.Domain
 	xml    libvirtxml.Domain
 	Name   string
 	State  string
 	Memory uint64
 	VCPU   uint32
 }
+
+type DomainState uint32
+
+const (
+	DomainStateRunning  = DomainState(libvirt.DOMAIN_RUNNING)
+	DomainStateBlocked  = DomainState(libvirt.DOMAIN_BLOCKED)
+	DomainStatePaused   = DomainState(libvirt.DOMAIN_PAUSED)
+	DomainStateShutdown = DomainState(libvirt.DOMAIN_SHUTDOWN)
+	DomainStateShutoff  = DomainState(libvirt.DOMAIN_SHUTOFF)
+)
 
 type Network struct {
 	libvirt.Network
@@ -77,26 +88,26 @@ func ToNetworkStruct(network *libvirt.Network) (Network, error) {
 
 func ToDomainStruct(domain *libvirt.Domain) (Domain, error) {
 	var d Domain
-	d.Domain = *domain // Embed the libvirt.Domain
+	d.Domain = domain
 
 	name, err := domain.GetName()
 	if err != nil {
-		return d, fmt.Errorf("failed to get domain name: %w", err)
+		return d, fmt.Errorf("get domain name: %w", err)
 	}
 	d.Name = name
 
 	state, _, err := domain.GetState()
 	if err != nil {
-		return d, fmt.Errorf("failed to get domain state: %w", err)
+		return d, fmt.Errorf("get domain state: %w", err)
 	}
-	d.State = FromState(state) // Assuming FromState converts libvirt state to string
+	d.State = FromState(state)
 
 	info, err := domain.GetInfo()
 	if err != nil {
-		return d, fmt.Errorf("failed to get domain info: %w", err)
+		return d, fmt.Errorf("get domain info: %w", err)
 	}
 	d.Memory = info.MaxMem
-	d.VCPU = uint32(info.NrVirtCpu) // Explicitly cast to uint32
+	d.VCPU = uint32(info.NrVirtCpu)
 
 	doc, err := domain.GetXMLDesc(0)
 	if err != nil {

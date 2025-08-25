@@ -1,4 +1,4 @@
-package libvirt
+package libvirtui
 
 import (
 	"fmt"

@@ -1,11 +1,9 @@
-package libvirt
+package libvirtui
 
 import "libvirt.org/go/libvirt"
 
 type DomainEvent struct {
-	DomainName string
-	Event      int
-	Detail     int
+	*libvirt.DomainEventLifecycle
 }
 
 func RegisterDefaultEventLoop() error {

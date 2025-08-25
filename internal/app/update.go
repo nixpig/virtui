@@ -3,11 +3,37 @@ package app
 import (
 	"fmt"
 
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
-	"libvirt.org/go/libvirt"
+	libvirtconn "github.com/nixpig/virtui/internal/libvirt"
+	"github.com/nixpig/virtui/internal/messages" // New import
 )
+
+func (m *model) switchScreen(screenName string) tea.Cmd {
+	if nextScreen, ok := m.screens[screenName]; ok {
+		m.currentScreen = nextScreen
+		availableScreenHeight := max(m.height-1-m.keybindingsViewHeight, 0)
+		var screenCmd tea.Cmd
+		var updatedModel tea.Model
+		updatedModel, screenCmd = m.currentScreen.Update(ScreenSizeMsg{Width: m.width, Height: availableScreenHeight})
+		m.currentScreen = updatedModel.(Screen)
+		return screenCmd
+	}
+	return nil
+}
+
+func getDomainsCmd(service libvirtconn.Service) tea.Cmd {
+	return func() tea.Msg {
+		domains, err := service.ListAllDomains()
+		if err != nil {
+			log.Error("failed to list all domains", "err", err)
+			return nil // Or return an error message
+		}
+		return messages.DomainsMsg(domains)
+	}
+}
 
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	log.Debug(
@@ -20,23 +46,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case *libvirt.DomainEventLifecycle:
+	case libvirtconn.DomainEvent: // Changed from *libvirt.DomainEventLifecycle
 		// TODO: handle domain event
 
-	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-		m.help.Width = m.width
-
-		// calculate available height for the current screen
-		// where header is 1 line, footer height is stored in m.keybindingsViewHeight
-		availableScreenHeight := max(m.height-1-m.keybindingsViewHeight, 0)
-
-		// pass dimensions to the current screen
-		if m.currentScreen != nil {
-			m.currentScreen.SetDimensions(m.width, availableScreenHeight) // Updated: Pass calculated height
-			// also send WindowSizeMsg to the current screen's Update method
-			// this allows the screen to react to resize events
+	case messages.DomainsMsg: // New case for DomainsMsg
+		if m.currentScreen.ID() == "manager" {
 			var screenCmd tea.Cmd
 			var updatedModel tea.Model
 			updatedModel, screenCmd = m.currentScreen.Update(msg)
@@ -44,15 +58,37 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, screenCmd)
 		}
 
+	case ScreenSizeMsg:
+		if m.currentScreen != nil {
+			var screenCmd tea.Cmd
+			var updatedModel tea.Model
+			updatedModel, screenCmd = m.currentScreen.Update(msg)
+			m.currentScreen = updatedModel.(Screen)
+			cmds = append(cmds, screenCmd)
+		}
+
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+		m.help.Width = m.width
+
+		availableScreenHeight := max(m.height-1-m.keybindingsViewHeight, 0)
+
+		if m.currentScreen != nil {
+			var screenCmd tea.Cmd
+			var updatedModel tea.Model
+			updatedModel, screenCmd = m.currentScreen.Update(ScreenSizeMsg{Width: m.width, Height: availableScreenHeight})
+			m.currentScreen = updatedModel.(Screen)
+			cmds = append(cmds, screenCmd)
+		}
+
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c", "q":
+		switch {
+		case key.Matches(msg, m.globalKeybindings.Quit):
 			return m, tea.Quit
-		case "?":
+		case key.Matches(msg, m.globalKeybindings.Help):
 			m.showFullHelp = !m.showFullHelp
 
-			// recalculate footer height and update screen dimensions
-			// Create a temporary combined key map to get the new footer height
 			combinedKeys := combinedKeyMap{
 				global: m.globalKeybindings,
 				screen: m.currentScreen.Keybindings(),
@@ -65,37 +101,34 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				tempFooter = m.help.ShortHelpView(combinedKeys.ShortHelp())
 			}
-			m.keybindingsViewHeight = lipgloss.Height(tempFooter) // Update m.keybindingsViewHeight with the new height
+			m.keybindingsViewHeight = lipgloss.Height(tempFooter)
 
-			// Now recalculate availableScreenHeight with the updated footer height
 			availableScreenHeight := max(m.height-1-m.keybindingsViewHeight, 0)
-			m.currentScreen.SetDimensions(m.width, availableScreenHeight)
-
-		default:
-			// handle screen switching based on key press
-			if screenName, ok := m.screenKeyMap[msg.String()]; ok {
-				if nextScreen, ok := m.screens[screenName]; ok {
-					m.currentScreen = nextScreen
-					// when switching screens, recalculate and set dimensions for the new screen
-					availableScreenHeight := max(m.height-1-m.keybindingsViewHeight, 0)
-					m.currentScreen.SetDimensions(m.width, availableScreenHeight)
-					// also send WindowSizeMsg to the new screen's Update method
-					var screenCmd tea.Cmd
-					updatedModel, screenCmd := m.currentScreen.Update(tea.WindowSizeMsg{
-						Width:  m.width,
-						Height: m.height,
-					})
-					m.currentScreen = updatedModel.(Screen)
-					cmds = append(cmds, screenCmd)
-				}
+			if m.currentScreen != nil {
+				var screenCmd tea.Cmd
+				var updatedModel tea.Model
+				updatedModel, screenCmd = m.currentScreen.Update(ScreenSizeMsg{Width: m.width, Height: availableScreenHeight})
+				m.currentScreen = updatedModel.(Screen)
+				cmds = append(cmds, screenCmd)
 			}
+
+		case key.Matches(msg, m.globalKeybindings.Screen1):
+			cmd := m.switchScreen("manager")
+			cmds = append(cmds, cmd)
+
+		case key.Matches(msg, m.globalKeybindings.Screen2):
+			cmd := m.switchScreen("storage")
+			cmds = append(cmds, cmd)
+
+		case key.Matches(msg, m.globalKeybindings.Screen3):
+			cmd := m.switchScreen("network")
+			cmds = append(cmds, cmd)
 		}
 	}
 
 	m.help, cmd = m.help.Update(msg)
 	cmds = append(cmds, cmd)
 
-	// delegate update to the current screen
 	if m.currentScreen != nil {
 		var screenCmd tea.Cmd
 		var updatedModel tea.Model

@@ -6,17 +6,21 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
 	"github.com/nixpig/virtui/internal/common"
-	libvirtconn "github.com/nixpig/virtui/internal/libvirt/conn"
-	"libvirt.org/go/libvirt"
+	libvirtconn "github.com/nixpig/virtui/internal/libvirt"
 )
 
 var _ tea.Model = (*model)(nil)
+
+// ScreenSizeMsg is a message to notify a screen of a size change.
+type ScreenSizeMsg struct {
+	Width  int
+	Height int
+}
 
 // Screen is the interface that all application screens must implement.
 type Screen interface {
 	tea.Model
 	ID() string
-	SetDimensions(width, height int)
 	Title() string
 	Keybindings() []key.Binding
 	ScrollKeys() common.ScrollKeyMap
@@ -27,28 +31,33 @@ type model struct {
 	currentScreen         Screen
 	screens               map[string]Screen
 	width, height         int
-	globalKeybindings     []key.Binding
+	globalKeybindings     KeyMap
 	keybindingsViewHeight int
-	screenKeyMap          map[string]string
 	help                  help.Model
 	showFullHelp          bool
-	events                chan *libvirt.DomainEventLifecycle
-	libvirt               libvirtconn.LibvirtConnection
+	events                chan libvirtconn.DomainEvent
+	conn                  libvirtconn.Connection
+	service               libvirtconn.Service
 }
 
-func listenForEvents(ch chan *libvirt.DomainEventLifecycle) tea.Cmd {
+func listenForEvents(ch chan libvirtconn.DomainEvent) tea.Cmd {
 	return func() tea.Msg {
 		return <-ch
 	}
 }
 
-func NewAppModel(conn libvirtconn.LibvirtConnection, screens []Screen) *model {
+func NewAppModel(
+	conn libvirtconn.Connection,
+	service libvirtconn.Service,
+	screens []Screen,
+) *model {
 	m := &model{
-		globalKeybindings: globalKeyBindings,
+		globalKeybindings: GlobalKeyMap,
 		help:              help.New(),
 		showFullHelp:      false,
 		screens:           make(map[string]Screen),
-		libvirt:           conn,
+		conn:              conn,
+		service:           service,
 	}
 
 	for _, screen := range screens {
@@ -57,15 +66,8 @@ func NewAppModel(conn libvirtconn.LibvirtConnection, screens []Screen) *model {
 
 	m.currentScreen = m.screens[screens[0].ID()]
 
-	m.screenKeyMap = map[string]string{
-		"1": "manager",
-		"2": "storage",
-		"3": "network",
-	}
-
-	if _, err := m.libvirt.DomainEventLifecycleRegister(
-		nil,
-		func(c *libvirt.Connect, d *libvirt.Domain, event *libvirt.DomainEventLifecycle) {
+	if _, err := m.conn.DomainEventLifecycleRegister(
+		func(event libvirtconn.DomainEvent) {
 			log.Debug(
 				"handling domain event",
 				"event",
@@ -84,5 +86,9 @@ func NewAppModel(conn libvirtconn.LibvirtConnection, screens []Screen) *model {
 }
 
 func (m *model) Init() tea.Cmd {
-	return tea.Batch(tea.ClearScreen, listenForEvents(m.events))
+	return tea.Batch(
+		tea.ClearScreen,
+		listenForEvents(m.events),
+		getDomainsCmd(m.service), // Call getDomainsCmd here
+	)
 }

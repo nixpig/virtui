@@ -1,4 +1,4 @@
-package mappers
+package libvirt
 
 import (
 	"fmt"

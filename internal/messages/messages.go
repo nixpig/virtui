@@ -1,7 +1,19 @@
 package messages
 
 import (
-	"github.com/nixpig/virtui/internal/libvirt"
+	"github.com/nixpig/virtui/internal/libvirtui"
 )
 
-type DomainsMsg []libvirt.Domain
+// DomainsMsg is a message to notify of domain list.
+type DomainsMsg struct {
+	// Domains contains the list of available domains.
+	Domains []libvirtui.Domain
+}
+
+// ScreenSizeMsg is a message to notify a screen of a size change.
+type ScreenSizeMsg struct {
+	// Width is the screen size width in terminal characters.
+	Width int
+	// Height is the screen size height in terminal characters.
+	Height int
+}

@@ -1,8 +1,7 @@
-package libvirt
+package libvirtui
 
 import (
-	"log"
-
+	"github.com/charmbracelet/log"
 	"libvirt.org/go/libvirt"
 )
 
@@ -12,10 +11,14 @@ func StartEventLoop() error {
 	if err := libvirt.EventRegisterDefaultImpl(); err != nil {
 		return err
 	}
+
 	go func() {
-		if err := libvirt.EventRunDefaultImpl(); err != nil {
-			log.Printf("libvirt event loop error: %v", err)
+		for {
+			if err := libvirt.EventRunDefaultImpl(); err != nil {
+				log.Error("libvirt event loop error", "err", err)
+			}
 		}
 	}()
+
 	return nil
 }

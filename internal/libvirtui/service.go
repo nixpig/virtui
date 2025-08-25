@@ -1,15 +1,16 @@
-package libvirt
+package libvirtui
 
 import (
 	"fmt"
-	"log"
 
+	"github.com/charmbracelet/log"
 	"libvirt.org/go/libvirt"
 	"libvirt.org/go/libvirtxml"
 )
 
 type Service interface {
 	ConnectionDetails() (ConnectionDetails, error)
+	DomainXML(uuid string) (string, error)
 	ListAllDomains() ([]Domain, error)
 	DomainState(uuid string) (string, error)
 	DomainMemoryStats(uuid string) (DomainMemoryStats, error)
@@ -17,7 +18,7 @@ type Service interface {
 	DomainInterfaceStats(uuid string) ([]DomainInterfaceStats, error)
 	DomainCPUStats(uuid string) (DomainCPUStats, error)
 	DomainBlockJobInfo(uuid string) (DomainBlockJobInfo, error)
-	DomainXML(uuid string) (string, error)
+
 	DomainCreate(xml string) error
 	DomainDefine(xml string) error
 	DomainStart(uuid string) error
@@ -28,9 +29,8 @@ type Service interface {
 	DomainResume(uuid string) error
 	DomainUndefine(uuid string) error
 	DomainMigrate(uuid string, destURI string) error
-	DomainEventLifecycleRegister(
-		cb func(DomainEvent),
-	) (int, error)
+
+	DomainEventLifecycleRegister(cb func(DomainEvent)) (int, error)
 	DomainEventLifecycleDeregister(callbackID int) error
 }
 
@@ -81,40 +81,38 @@ func NewService(conn Connection) Service {
 	return &service{conn: conn}
 }
 
+func (s *service) hasConnection() bool {
+	return s.conn != nil
+}
+
 func (s *service) ConnectionDetails() (ConnectionDetails, error) {
-	if s.conn == nil {
+	if !s.hasConnection() {
 		return ConnectionDetails{}, fmt.Errorf("not connected to libvirt")
 	}
 
 	hostname, err := s.conn.GetHostname()
 	if err != nil {
-		return ConnectionDetails{}, fmt.Errorf(
-			"failed to get hostname: %w",
-			err,
-		)
+		return ConnectionDetails{}, fmt.Errorf("get hostname: %w", err)
 	}
 
 	libVersion, err := s.conn.GetLibVersion()
 	if err != nil {
-		return ConnectionDetails{}, fmt.Errorf(
-			"failed to get libvirt version: %w",
-			err,
-		)
+		return ConnectionDetails{}, fmt.Errorf("get libvirt version: %w", err)
 	}
 
 	version, err := s.conn.GetVersion()
 	if err != nil {
-		return ConnectionDetails{}, fmt.Errorf("failed to get version: %w", err)
+		return ConnectionDetails{}, fmt.Errorf("get version: %w", err)
 	}
 
 	connType, err := s.conn.GetType()
 	if err != nil {
-		return ConnectionDetails{}, fmt.Errorf("failed to get type: %w", err)
+		return ConnectionDetails{}, fmt.Errorf("get type: %w", err)
 	}
 
 	uri, err := s.conn.GetURI()
 	if err != nil {
-		return ConnectionDetails{}, fmt.Errorf("failed to get URI: %w", err)
+		return ConnectionDetails{}, fmt.Errorf("get URI: %w", err)
 	}
 
 	return ConnectionDetails{
@@ -127,7 +125,7 @@ func (s *service) ConnectionDetails() (ConnectionDetails, error) {
 }
 
 func (s *service) ListAllDomains() ([]Domain, error) {
-	if s.conn == nil {
+	if !s.hasConnection() {
 		return nil, fmt.Errorf("not connected to libvirt")
 	}
 
@@ -135,14 +133,14 @@ func (s *service) ListAllDomains() ([]Domain, error) {
 		libvirt.CONNECT_LIST_DOMAINS_ACTIVE | libvirt.CONNECT_LIST_DOMAINS_INACTIVE,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list all domains: %w", err)
+		return nil, fmt.Errorf("list all domains: %w", err)
 	}
 
 	var result []Domain
 	for _, d := range domains {
 		domain, err := ToDomainStruct(&d)
 		if err != nil {
-			log.Printf("failed to convert domain to struct: %v", err)
+			log.Error("failed to convert domain to struct", "err", err)
 			continue
 		}
 		result = append(result, domain)
@@ -152,42 +150,39 @@ func (s *service) ListAllDomains() ([]Domain, error) {
 }
 
 func (s *service) DomainState(uuid string) (string, error) {
-	if s.conn == nil {
+	if !s.hasConnection() {
 		return "", fmt.Errorf("not connected to libvirt")
 	}
 
 	domain, err := s.conn.LookupDomainByUUIDString(uuid)
 	if err != nil {
-		return "", fmt.Errorf("failed to lookup domain by UUID: %w", err)
+		return "", fmt.Errorf("lookup domain by UUID: %w", err)
 	}
 	defer domain.Free()
 
 	state, _, err := domain.GetState()
 	if err != nil {
-		return "", fmt.Errorf("failed to get domain state: %w", err)
+		return "", fmt.Errorf("get domain state: %w", err)
 	}
 
 	return FromState(state), nil
 }
 
 func (s *service) DomainMemoryStats(uuid string) (DomainMemoryStats, error) {
-	if s.conn == nil {
+	if !s.hasConnection() {
 		return DomainMemoryStats{}, fmt.Errorf("not connected to libvirt")
 	}
 
 	domain, err := s.conn.LookupDomainByUUIDString(uuid)
 	if err != nil {
-		return DomainMemoryStats{}, fmt.Errorf(
-			"failed to lookup domain by UUID: %w",
-			err,
-		)
+		return DomainMemoryStats{}, fmt.Errorf("lookup domain by UUID: %w", err)
 	}
 	defer domain.Free()
 
 	stats, err := domain.MemoryStats(uint32(libvirt.DOMAIN_MEMORY_STAT_NR), 0)
 	if err != nil {
 		return DomainMemoryStats{}, fmt.Errorf(
-			"failed to get domain memory stats: %w",
+			"get domain memory stats: %w",
 			err,
 		)
 	}
@@ -212,24 +207,24 @@ func (s *service) DomainMemoryStats(uuid string) (DomainMemoryStats, error) {
 }
 
 func (s *service) DomainDiskStats(uuid string) ([]DomainDiskStats, error) {
-	if s.conn == nil {
+	if !s.hasConnection() {
 		return nil, fmt.Errorf("not connected to libvirt")
 	}
 
 	domain, err := s.conn.LookupDomainByUUIDString(uuid)
 	if err != nil {
-		return nil, fmt.Errorf("failed to lookup domain by UUID: %w", err)
+		return nil, fmt.Errorf("lookup domain by UUID: %w", err)
 	}
 	defer domain.Free()
 
 	xmlDesc, err := domain.GetXMLDesc(0)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get domain XML description: %w", err)
+		return nil, fmt.Errorf("get domain XML description: %w", err)
 	}
 
 	var domainXML libvirtxml.Domain
 	if err := domainXML.Unmarshal(xmlDesc); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal domain XML: %w", err)
+		return nil, fmt.Errorf("unmarshal domain XML: %w", err)
 	}
 
 	var diskStats []DomainDiskStats
@@ -237,10 +232,10 @@ func (s *service) DomainDiskStats(uuid string) ([]DomainDiskStats, error) {
 		if disk.Source != nil && disk.Target != nil {
 			stats, err := domain.BlockStats(disk.Target.Dev)
 			if err != nil {
-				log.Printf(
-					"failed to get block stats for device %s: %v",
-					disk.Target.Dev,
-					err,
+				log.Error(
+					"failed to get block stats for device",
+					"device", disk.Target.Dev,
+					"err", err,
 				)
 				continue
 			}
@@ -258,24 +253,24 @@ func (s *service) DomainDiskStats(uuid string) ([]DomainDiskStats, error) {
 func (s *service) DomainInterfaceStats(
 	uuid string,
 ) ([]DomainInterfaceStats, error) {
-	if s.conn == nil {
+	if !s.hasConnection() {
 		return nil, fmt.Errorf("not connected to libvirt")
 	}
 
 	domain, err := s.conn.LookupDomainByUUIDString(uuid)
 	if err != nil {
-		return nil, fmt.Errorf("failed to lookup domain by UUID: %w", err)
+		return nil, fmt.Errorf("lookup domain by UUID: %w", err)
 	}
 	defer domain.Free()
 
 	xmlDesc, err := domain.GetXMLDesc(0)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get domain XML description: %w", err)
+		return nil, fmt.Errorf("get domain XML description: %w", err)
 	}
 
 	var domainXML libvirtxml.Domain
 	if err := domainXML.Unmarshal(xmlDesc); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal domain XML: %w", err)
+		return nil, fmt.Errorf("unmarshal domain XML: %w", err)
 	}
 
 	var interfaceStats []DomainInterfaceStats
@@ -283,10 +278,10 @@ func (s *service) DomainInterfaceStats(
 		if iface.Target != nil {
 			stats, err := domain.InterfaceStats(iface.Target.Dev)
 			if err != nil {
-				log.Printf(
-					"failed to get interface stats for device %s: %v",
-					iface.Target.Dev,
-					err,
+				log.Error(
+					"failed to get interface stats for device",
+					"device", iface.Target.Dev,
+					"err", err,
 				)
 				continue
 			}
@@ -302,14 +297,14 @@ func (s *service) DomainInterfaceStats(
 }
 
 func (s *service) DomainCPUStats(uuid string) (DomainCPUStats, error) {
-	if s.conn == nil {
+	if !s.hasConnection() {
 		return DomainCPUStats{}, fmt.Errorf("not connected to libvirt")
 	}
 
 	domain, err := s.conn.LookupDomainByUUIDString(uuid)
 	if err != nil {
 		return DomainCPUStats{}, fmt.Errorf(
-			"failed to lookup domain by UUID: %w",
+			"lookup domain by UUID: %w",
 			err,
 		)
 	}
@@ -318,7 +313,7 @@ func (s *service) DomainCPUStats(uuid string) (DomainCPUStats, error) {
 	stats, err := domain.GetCPUStats(0, 0, 1)
 	if err != nil {
 		return DomainCPUStats{}, fmt.Errorf(
-			"failed to get domain CPU stats: %w",
+			"get domain CPU stats: %w",
 			err,
 		)
 	}
@@ -335,14 +330,14 @@ func (s *service) DomainCPUStats(uuid string) (DomainCPUStats, error) {
 }
 
 func (s *service) DomainBlockJobInfo(uuid string) (DomainBlockJobInfo, error) {
-	if s.conn == nil {
+	if !s.hasConnection() {
 		return DomainBlockJobInfo{}, fmt.Errorf("not connected to libvirt")
 	}
 
 	domain, err := s.conn.LookupDomainByUUIDString(uuid)
 	if err != nil {
 		return DomainBlockJobInfo{}, fmt.Errorf(
-			"failed to lookup domain by UUID: %w",
+			"lookup domain by UUID: %w",
 			err,
 		)
 	}
@@ -351,7 +346,7 @@ func (s *service) DomainBlockJobInfo(uuid string) (DomainBlockJobInfo, error) {
 	info, err := domain.GetBlockJobInfo("", 0)
 	if err != nil {
 		return DomainBlockJobInfo{}, fmt.Errorf(
-			"failed to get domain block job info: %w",
+			"get domain block job info: %w",
 			err,
 		)
 	}
@@ -365,26 +360,26 @@ func (s *service) DomainBlockJobInfo(uuid string) (DomainBlockJobInfo, error) {
 }
 
 func (s *service) DomainXML(uuid string) (string, error) {
-	if s.conn == nil {
+	if !s.hasConnection() {
 		return "", fmt.Errorf("not connected to libvirt")
 	}
 
 	domain, err := s.conn.LookupDomainByUUIDString(uuid)
 	if err != nil {
-		return "", fmt.Errorf("failed to lookup domain by UUID: %w", err)
+		return "", fmt.Errorf("lookup domain by UUID: %w", err)
 	}
 	defer domain.Free()
 
 	xml, err := domain.GetXMLDesc(0)
 	if err != nil {
-		return "", fmt.Errorf("failed to get domain XML description: %w", err)
+		return "", fmt.Errorf("get domain XML description: %w", err)
 	}
 
 	return xml, nil
 }
 
 func (s *service) DomainCreate(xml string) error {
-	if s.conn == nil {
+	if !s.hasConnection() {
 		return fmt.Errorf("not connected to libvirt")
 	}
 
@@ -393,19 +388,19 @@ func (s *service) DomainCreate(xml string) error {
 		libvirt.DOMAIN_DEFINE_VALIDATE,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to define domain: %w", err)
+		return fmt.Errorf("define domain: %w", err)
 	}
 	defer domain.Free()
 
 	if err := domain.Create(); err != nil {
-		return fmt.Errorf("failed to create domain: %w", err)
+		return fmt.Errorf("create domain: %w", err)
 	}
 
 	return nil
 }
 
 func (s *service) DomainDefine(xml string) error {
-	if s.conn == nil {
+	if !s.hasConnection() {
 		return fmt.Errorf("not connected to libvirt")
 	}
 
@@ -414,151 +409,151 @@ func (s *service) DomainDefine(xml string) error {
 		libvirt.DOMAIN_DEFINE_VALIDATE,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to define domain: %w", err)
+		return fmt.Errorf("define domain: %w", err)
 	}
 
 	return nil
 }
 
 func (s *service) DomainStart(uuid string) error {
-	if s.conn == nil {
+	if !s.hasConnection() {
 		return fmt.Errorf("not connected to libvirt")
 	}
 
 	domain, err := s.conn.LookupDomainByUUIDString(uuid)
 	if err != nil {
-		return fmt.Errorf("failed to lookup domain by UUID: %w", err)
+		return fmt.Errorf("lookup domain by UUID: %w", err)
 	}
 	defer domain.Free()
 
 	if err := domain.Create(); err != nil {
-		return fmt.Errorf("failed to start domain: %w", err)
+		return fmt.Errorf("start domain: %w", err)
 	}
 
 	return nil
 }
 
 func (s *service) DomainShutdown(uuid string) error {
-	if s.conn == nil {
+	if !s.hasConnection() {
 		return fmt.Errorf("not connected to libvirt")
 	}
 
 	domain, err := s.conn.LookupDomainByUUIDString(uuid)
 	if err != nil {
-		return fmt.Errorf("failed to lookup domain by UUID: %w", err)
+		return fmt.Errorf("lookup domain by UUID: %w", err)
 	}
 	defer domain.Free()
 
 	if err := domain.Shutdown(); err != nil {
-		return fmt.Errorf("failed to shutdown domain: %w", err)
+		return fmt.Errorf("shutdown domain: %w", err)
 	}
 
 	return nil
 }
 
 func (s *service) DomainReboot(uuid string) error {
-	if s.conn == nil {
+	if !s.hasConnection() {
 		return fmt.Errorf("not connected to libvirt")
 	}
 
 	domain, err := s.conn.LookupDomainByUUIDString(uuid)
 	if err != nil {
-		return fmt.Errorf("failed to lookup domain by UUID: %w", err)
+		return fmt.Errorf("lookup domain by UUID: %w", err)
 	}
 	defer domain.Free()
 
 	if err := domain.Reboot(libvirt.DOMAIN_REBOOT_DEFAULT); err != nil {
-		return fmt.Errorf("failed to reboot domain: %w", err)
+		return fmt.Errorf("reboot domain: %w", err)
 	}
 
 	return nil
 }
 
 func (s *service) DomainDestroy(uuid string) error {
-	if s.conn == nil {
+	if !s.hasConnection() {
 		return fmt.Errorf("not connected to libvirt")
 	}
 
 	domain, err := s.conn.LookupDomainByUUIDString(uuid)
 	if err != nil {
-		return fmt.Errorf("failed to lookup domain by UUID: %w", err)
+		return fmt.Errorf("lookup domain by UUID: %w", err)
 	}
 	defer domain.Free()
 
 	if err := domain.Destroy(); err != nil {
-		return fmt.Errorf("failed to destroy domain: %w", err)
+		return fmt.Errorf("destroy domain: %w", err)
 	}
 
 	return nil
 }
 
 func (s *service) DomainSuspend(uuid string) error {
-	if s.conn == nil {
+	if !s.hasConnection() {
 		return fmt.Errorf("not connected to libvirt")
 	}
 
 	domain, err := s.conn.LookupDomainByUUIDString(uuid)
 	if err != nil {
-		return fmt.Errorf("failed to lookup domain by UUID: %w", err)
+		return fmt.Errorf("lookup domain by UUID: %w", err)
 	}
 	defer domain.Free()
 
 	if err := domain.Suspend(); err != nil {
-		return fmt.Errorf("failed to suspend domain: %w", err)
+		return fmt.Errorf("suspend domain: %w", err)
 	}
 
 	return nil
 }
 
 func (s *service) DomainResume(uuid string) error {
-	if s.conn == nil {
+	if !s.hasConnection() {
 		return fmt.Errorf("not connected to libvirt")
 	}
 
 	domain, err := s.conn.LookupDomainByUUIDString(uuid)
 	if err != nil {
-		return fmt.Errorf("failed to lookup domain by UUID: %w", err)
+		return fmt.Errorf("lookup domain by UUID: %w", err)
 	}
 	defer domain.Free()
 
 	if err := domain.Resume(); err != nil {
-		return fmt.Errorf("failed to resume domain: %w", err)
+		return fmt.Errorf("resume domain: %w", err)
 	}
 
 	return nil
 }
 
 func (s *service) DomainUndefine(uuid string) error {
-	if s.conn == nil {
+	if !s.hasConnection() {
 		return fmt.Errorf("not connected to libvirt")
 	}
 
 	domain, err := s.conn.LookupDomainByUUIDString(uuid)
 	if err != nil {
-		return fmt.Errorf("failed to lookup domain by UUID: %w", err)
+		return fmt.Errorf("lookup domain by UUID: %w", err)
 	}
 	defer domain.Free()
 
 	if err := domain.Undefine(); err != nil {
-		return fmt.Errorf("failed to undefine domain: %w", err)
+		return fmt.Errorf("undefine domain: %w", err)
 	}
 
 	return nil
 }
 
 func (s *service) DomainMigrate(uuid string, destURI string) error {
-	if s.conn == nil {
+	if !s.hasConnection() {
 		return fmt.Errorf("not connected to libvirt")
 	}
 
 	domain, err := s.conn.LookupDomainByUUIDString(uuid)
 	if err != nil {
-		return fmt.Errorf("failed to lookup domain by UUID: %w", err)
+		return fmt.Errorf("lookup domain by UUID: %w", err)
 	}
 	defer domain.Free()
 
 	if _, err := domain.Migrate(s.conn.(*connection).Connect, 0, destURI, "", 0); err != nil {
-		return fmt.Errorf("failed to migrate domain: %w", err)
+		return fmt.Errorf("migrate domain: %w", err)
 	}
 
 	return nil
@@ -567,14 +562,14 @@ func (s *service) DomainMigrate(uuid string, destURI string) error {
 func (s *service) DomainEventLifecycleRegister(
 	cb func(DomainEvent),
 ) (int, error) {
-	if s.conn == nil {
+	if !s.hasConnection() {
 		return 0, fmt.Errorf("not connected to libvirt")
 	}
 
 	callbackID, err := s.conn.DomainEventLifecycleRegister(cb)
 	if err != nil {
 		return 0, fmt.Errorf(
-			"failed to register domain event lifecycle callback: %w",
+			"register domain event lifecycle callback: %w",
 			err,
 		)
 	}
@@ -583,15 +578,12 @@ func (s *service) DomainEventLifecycleRegister(
 }
 
 func (s *service) DomainEventLifecycleDeregister(callbackID int) error {
-	if s.conn == nil {
+	if !s.hasConnection() {
 		return fmt.Errorf("not connected to libvirt")
 	}
 
 	if err := s.conn.DomainEventLifecycleDeregister(callbackID); err != nil {
-		return fmt.Errorf(
-			"failed to deregister domain event lifecycle callback: %w",
-			err,
-		)
+		return fmt.Errorf("deregister domain event lifecycle callback: %w", err)
 	}
 
 	return nil

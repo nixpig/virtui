@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/google/uuid"
 	"github.com/nixpig/virtui/internal/app"
-	libvirtconn "github.com/nixpig/virtui/internal/libvirt"
+	"github.com/nixpig/virtui/internal/libvirtui"
 	"github.com/nixpig/virtui/internal/screens/manager"
 	"github.com/nixpig/virtui/internal/screens/network"
 	"github.com/nixpig/virtui/internal/screens/storage"
@@ -50,13 +50,15 @@ func main() {
 	// BubbleTea is capturing, also we're not handling the cancelled context in
 	// the libvirt connection
 
-	conn, err := libvirtconn.New(ctx, qemuURI)
+	// just a reminder that the event loop needs to be started _before_ the
+	// connection is created
+	if err := libvirtui.StartEventLoop(); err != nil {
+		abort("failed to start libvirt event loop", err)
+	}
+
+	conn, err := libvirtui.NewConnection(ctx, qemuURI)
 	if err != nil {
-		log.Error("failed to establish connection with hypervisor", "err", err)
-		os.Stderr.WriteString(
-			"Error: failed to establish hypervisor connection and need to exit\n",
-		)
-		os.Exit(1)
+		abort("failed to establish connection with hypervisor", err)
 	}
 	defer func() {
 		if _, err := conn.Close(); err != nil {
@@ -64,37 +66,30 @@ func main() {
 		}
 	}()
 
-	if err := libvirtconn.StartEventLoop(); err != nil {
-		log.Error("failed to start libvirt event loop", "err", err)
-		os.Stderr.WriteString(
-			"Error: failed to start libvirt event loop and need to exit\n",
-		)
-		os.Exit(1)
+	appScreens := []app.Screen{
+		manager.NewManagerScreen(),
+		storage.NewStorageScreen(),
+		network.NewNetworkScreen(),
 	}
 
-	initialModel := app.NewAppModel(
-		conn,
-		libvirtconn.NewService(conn),
-		[]app.Screen{
-			manager.NewManagerScreen(),
-			storage.NewStorageScreen(),
-			network.NewNetworkScreen(),
-		},
-	)
+	service := libvirtui.NewService(conn)
 
-	p := tea.NewProgram(
+	initialModel := app.NewAppModel(conn, service, appScreens)
+
+	program := tea.NewProgram(
 		initialModel,
 		tea.WithContext(ctx),
 		tea.WithAltScreen(),
 		tea.WithMouseAllMotion(),
 	)
 
-	if model, err := p.Run(); err != nil {
-		log.Error("unrecoverable error", "err", err, "model", model)
-		os.Stderr.WriteString(
-			"Error: encountered unrecoverable error and need to exit\n",
-		)
-		os.Exit(1)
+	if _, err := program.Run(); err != nil {
+		abort("unrecoverable error", err)
 	}
+}
 
+func abort(msg string, err error) {
+	log.Error(msg, "err", err)
+	os.Stderr.WriteString("Error: " + msg + "\n")
+	os.Exit(1)
 }

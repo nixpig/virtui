@@ -1,12 +1,12 @@
 ### screens roadmap
 
 #### manager
- - Manager needs to display a table of all virtual machines. 
- - Each virtual macine row must display the name, state, memory and cpu.
- - The current selected row must be highlighted. The row that's selected must be 'remembered' if I navigate to a different screen and come back.
- - The "k" and "up" keys must move the row selection in the table up. If the first row is already selected, then do nothing. 
- - The "j" "down" keys must move the row selection in the table down. If the last row is already selected, then do nothing.
- - When the state of a virtual machine changes, it must be reflected immediately - we already handle events to some extent and need to verify whether these already provide this functionality.
+ - [x] Manager needs to display a table of all virtual machines. 
+ - [x] Each virtual macine row must display the name, state, memory and cpu.
+ - [x] The current selected row must be highlighted. The row that's selected must be 'remembered' if I navigate to a different screen and come back.
+ - [x] The "k" and "up" keys must move the row selection in the table up. If the first row is already selected, then do nothing. 
+ - [x] The "j" "down" keys must move the row selection in the table down. If the last row is already selected, then do nothing.
+ - [x] When the state of a virtual machine changes, it must be reflected immediately - we already handle events to some extent and need to verify whether these already provide this functionality.
  - Actions that can be taken on a virtual machine must be bound to the following keys.
     1. Key: "t" | Action: "start" | Description: "Starts the virtual machine" | Type: "immediate" |
     2. Key: "p" | Action: "pause/resume" | Description: "Pauses or resumes the virtual machine" | Type: "immediate" |
@@ -28,26 +28,12 @@
 
 ---
 
-### internal/app/model.go
- - [x] Register screens dynamically.
- - [x] Move `globalKeybindings` initialisation to a separate file.
-
-### internal/app/update.go
- - [x] Extract the `availableScreenHeight` calculation into a private helper method to reduce redundancy.
- - [x] The explicit `m.currentScreen.SetDimensions()` calls when switching screens are redundant if the screen's `Update` method already handles `tea.WindowSizeMsg`, so those should be removed.
- - [x] Switch over actual keys instead of magic strings.
-
-
-### internal/app/view.go
- - [x] `combinedKeyMap` could be moved to internal/app/model.go or internal/app/keymaps.go for better organization.
- - [x] While `lipgloss.NewStyle().Height(...).Render("")` for padding is acceptable, `log.Debug` lines should be removed. Actionable items are to fix the `lipgloss.Height(header)` formatting and remove `log.Debug` lines.
-
-### internal/screens/{manager,network,storage}/model.go
- - [x] Remove the redundant `m.viewport.Width` and `m.viewport.Height` assignments in `SetDimensions()`.
-
 ### overall
  - [x] Tidy up all the keybindings stuff; refactoring out magic strings and shit
  - [ ] Unit test coverage
+ - [ ] Not happy with keybindings configuration complexity
+ - [ ] Not happy with hard-coded keybindings to switch between screens
+ - [ ] Error handling and display
 
 ### internal/libvirt/*
  - [ ] This abstraction feels like a bit of a mess. Tidy it up.

@@ -1,31 +1,8 @@
 package app
 
 import (
-	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/nixpig/virtui/internal/common"
 )
-
-// combinedKeyMap implements help.KeyMap for global and screen-specific keybindings.
-type combinedKeyMap struct {
-	global []key.Binding
-	screen []key.Binding
-	scroll common.ScrollKeyMap
-}
-
-func (k combinedKeyMap) ShortHelp() []key.Binding {
-	return k.global
-}
-
-func (k combinedKeyMap) FullHelp() [][]key.Binding {
-	fullHelp := [][]key.Binding{}
-	fullHelp = append(fullHelp, k.global)
-	fullHelp = append(fullHelp, k.screen)
-	fullHelp = append(
-		fullHelp,
-		k.scroll.FullHelp()...) // Assuming ScrollKeyMap has FullHelp
-	return fullHelp
-}
 
 func (m *model) View() string {
 	if m.currentScreen == nil {

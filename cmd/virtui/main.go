@@ -8,8 +8,7 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/google/uuid"
 	"github.com/nixpig/virtui/internal/app"
-	libvirtconn "github.com/nixpig/virtui/internal/libvirt/conn"
-	"github.com/nixpig/virtui/internal/libvirt/events"
+	libvirtconn "github.com/nixpig/virtui/internal/libvirt"
 	"github.com/nixpig/virtui/internal/screens/manager"
 	"github.com/nixpig/virtui/internal/screens/network"
 	"github.com/nixpig/virtui/internal/screens/storage"
@@ -47,6 +46,10 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// TODO: I'm not satisfied everything shuts down gracefully; I'm sure
+	// BubbleTea is capturing, also we're not handling the cancelled context in
+	// the libvirt connection
+
 	conn, err := libvirtconn.New(ctx, qemuURI)
 	if err != nil {
 		log.Error("failed to establish connection with hypervisor", "err", err)
@@ -55,22 +58,23 @@ func main() {
 		)
 		os.Exit(1)
 	}
-
-	if err := events.RegisterDefaultEventLoopImpl(); err != nil {
-		log.Error("failed to register default event loop", "err", err)
-	}
-
-	go func() {
-		for {
-			// TODO: pass context and close event loop cleanly on exit and unregister handlers
-			if err := events.RunDefaultEventLoopImpl(); err != nil {
-				log.Error("failed to run default event loop", "err", err)
-			}
+	defer func() {
+		if _, err := conn.Close(); err != nil {
+			log.Error("failed to close libvirt connection", "err", err)
 		}
 	}()
 
+	if err := libvirtconn.StartEventLoop(); err != nil {
+		log.Error("failed to start libvirt event loop", "err", err)
+		os.Stderr.WriteString(
+			"Error: failed to start libvirt event loop and need to exit\n",
+		)
+		os.Exit(1)
+	}
+
 	initialModel := app.NewAppModel(
 		conn,
+		libvirtconn.NewService(conn),
 		[]app.Screen{
 			manager.NewManagerScreen(),
 			storage.NewStorageScreen(),

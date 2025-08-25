@@ -4,11 +4,13 @@ import (
 	"fmt"
 
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/nixpig/virtui/internal/app"
-	"github.com/nixpig/virtui/internal/common" // Updated import
+	"github.com/nixpig/virtui/internal/common"
+	"github.com/nixpig/virtui/internal/messages" // New import
 )
 
 var _ app.Screen = (*model)(nil)
@@ -19,13 +21,41 @@ type model struct {
 	width    int
 	height   int
 	keys     common.ScrollKeyMap
+	table    table.Model // New field for the table
 }
 
 func NewManagerScreen() *model {
+	columns := []table.Column{
+		{Title: "Name", Width: 20},
+		{Title: "State", Width: 10},
+		{Title: "Memory", Width: 10},
+		{Title: "CPU", Width: 5},
+	}
+
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows([]table.Row{}), // Initially empty
+		table.WithFocused(true),
+		table.WithHeight(10), // Placeholder height
+	)
+
+	s := table.DefaultStyles()
+	s.Header = s.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		BorderBottom(true).
+		Bold(false)
+	s.Selected = s.Selected.
+		Foreground(lipgloss.Color("229")).
+		Background(lipgloss.Color("57")).
+		Bold(false)
+	t.SetStyles(s)
+
 	return &model{
 		id:       "manager",
 		viewport: viewport.New(0, 0),
 		keys:     common.DefaultScrollKeyMap(),
+		table:    t,
 	}
 }
 
@@ -38,14 +68,27 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
+	case app.ScreenSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+		m.table.SetWidth(m.width)
+		m.table.SetHeight(m.height - 2) // Adjust for header/footer
+	case messages.DomainsMsg: // New case for DomainsMsg
+		rows := make([]table.Row, len(msg))
+		for i, domain := range msg {
+			rows[i] = table.Row{domain.Name, domain.State, fmt.Sprintf("%dMB", domain.Memory/1024), fmt.Sprintf("%d", domain.VCPU)}
+		}
+		m.table.SetRows(rows)
 	case tea.KeyMsg:
-		// handle scrolling using the common key map
 		if key.Matches(msg, m.keys.ScrollUp) {
-			m.viewport.ScrollUp(1)
+			m.table.MoveUp(1) // Use MoveUp
 		} else if key.Matches(msg, m.keys.ScrollDown) {
-			m.viewport.ScrollUp(1)
+			m.table.MoveDown(1) // Use MoveDown
 		}
 	}
+
+	m.table, cmd = m.table.Update(msg)
+	cmds = append(cmds, cmd)
 
 	m.viewport, cmd = m.viewport.Update(msg)
 	cmds = append(cmds, cmd)
@@ -54,48 +97,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *model) View() string {
-	content := "Welcome to virtui!\n\n" +
-		"This is a multi-screen Bubble Tea application template.\n\n" +
-		"Current screen dimensions: Width = %d, Height = %d\n\n" +
-		"This is a multi-screen Bubble Tea application template.\n\n" +
-		"Current screen dimensions: Width = %d, Height = %d\n\n" +
-		"This is a multi-screen Bubble Tea application template.\n\n" +
-		"Current screen dimensions: Width = %d, Height = %d\n\n" +
-		"This is a multi-screen Bubble Tea application template.\n\n" +
-		"This is a multi-screen Bubble Tea application template.\n\n" +
-		"Current screen dimensions: Width = %d, Height = %d\n\n" +
-		"Current screen dimensions: Width = %d, Height = %d\n\n" +
-		"This is a multi-screen Bubble Tea application template.\n\n" +
-		"Current screen dimensions: Width = %d, Height = %d\n\n" +
-		"This is a multi-screen Bubble Tea application template.\n\n" +
-		"This is a multi-screen Bubble Tea application template.\n\n" +
-		"Current screen dimensions: Width = %d, Height = %d\n\n" +
-		"This is a multi-screen Bubble Tea application template.\n\n" +
-		"Current screen dimensions: Width = %d, Height = %d\n\n" +
-		"Current screen dimensions: Width = %d, Height = %d\n\n" +
-		"This is a multi-screen Bubble Tea application template.\n\n" +
-		"Current screen dimensions: Width = %d, Height = %d\n\n" +
-		"Press 'q' or 'ctrl+c' to quit."
-
-	renderedContent := fmt.Sprintf(content, m.width, m.height)
-
-	m.viewport.SetContent(renderedContent)
-
-	style := lipgloss.NewStyle().Border(lipgloss.NormalBorder())
-
-	// calculate content width and height by subtracting frame size
-	m.viewport.Width = max(m.width-style.GetHorizontalFrameSize(), 0)
-	m.viewport.Height = max(m.height-style.GetVerticalFrameSize(), 0)
-
-	// Render the viewport within the styled box
-	return style.Width(m.viewport.Width).
-		Height(m.viewport.Height).
-		Render(m.viewport.View())
-}
-
-func (m *model) SetDimensions(width, height int) {
-	m.width = width
-	m.height = height
+	return m.table.View()
 }
 
 func (m *model) Title() string {
@@ -111,7 +113,7 @@ func (m *model) Keybindings() []key.Binding {
 	}
 }
 
-func (m *model) ScrollKeys() common.ScrollKeyMap { // Updated: Use common.ScrollKeyMap
+func (m *model) ScrollKeys() common.ScrollKeyMap {
 	return m.keys
 }
 

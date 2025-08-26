@@ -22,9 +22,10 @@
  - Long-term: filtering, sorting, pagination, detailed view. 
 
 #### network
+ - [x] Basic display
 
 #### storage
-
+ - [x] Basic display
 
 ---
 

@@ -96,6 +96,10 @@ func (m *model) Init() tea.Cmd {
 		tea.ClearScreen,
 		listenForEvents(m.events),
 		getDomainsCmd(m.service),
+		// TODO: review whether I really want to be getting pools and networks on
+		// init before either screen can be displayed or whether to lazily fetch
+		getStoragePoolsCmd(m.service),
+		getNetworksCmd(m.service),
 	)
 }
 
@@ -117,6 +121,38 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.currentScreen = updatedModel.(Screen)
 
 			cmds = append(cmds, screenCmd)
+		}
+
+	case messages.StoragePoolsMsg:
+		storageScreen, ok := m.screens["storage"]
+		if ok {
+			var screenCmd tea.Cmd
+			var updatedModel tea.Model
+
+			updatedModel, screenCmd = storageScreen.Update(msg)
+			m.screens["storage"] = updatedModel.(Screen)
+			cmds = append(cmds, screenCmd)
+		}
+
+		if m.currentScreen.ID() == "storage" {
+			// if storage is the current screen, also update the currentScreen reference
+			m.currentScreen = m.screens["storage"]
+		}
+
+	case messages.NetworksMsg:
+		networkScreen, ok := m.screens["network"]
+		if ok {
+			var screenCmd tea.Cmd
+			var updatedModel tea.Model
+
+			updatedModel, screenCmd = networkScreen.Update(msg)
+			m.screens["network"] = updatedModel.(Screen)
+			cmds = append(cmds, screenCmd)
+		}
+
+		if m.currentScreen.ID() == "network" {
+			// if network is the current screen, also update the currentScreen reference
+			m.currentScreen = m.screens["network"]
 		}
 
 	case messages.ScreenSizeMsg:
@@ -258,5 +294,33 @@ func getDomainsCmd(service libvirtui.Service) tea.Cmd {
 		}
 
 		return messages.DomainsMsg{Domains: domains}
+	}
+}
+
+func getStoragePoolsCmd(service libvirtui.Service) tea.Cmd {
+	return func() tea.Msg {
+		storage, err := service.ListAllStoragePoolsAndVolumes()
+		if err != nil {
+			log.Error(
+				"failed to list all storage pools and volumes",
+				"err",
+				err,
+			)
+			return nil
+		}
+
+		return messages.StoragePoolsMsg{Storage: storage}
+	}
+}
+
+func getNetworksCmd(service libvirtui.Service) tea.Cmd {
+	return func() tea.Msg {
+		networks, err := service.ListAllNetworks()
+		if err != nil {
+			log.Error("failed to list all networks", "err", err)
+			return nil
+		}
+
+		return messages.NetworksMsg{Networks: networks}
 	}
 }

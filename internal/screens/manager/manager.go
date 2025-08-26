@@ -114,7 +114,7 @@ func (m *managerScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				icon = icons.Icons.VM.Off
 			}
 
-			rows[i] = table.Row{fmt.Sprintf("%s  %s", icon, domain.Name), domain.State, fmt.Sprintf("%dMB", domain.Memory/1024), fmt.Sprintf("%d", domain.VCPU)}
+			rows[i] = table.Row{fmt.Sprintf("%s  %s", icon, domain.Name()), domain.State(), fmt.Sprintf("%dMB", domain.Memory()/1024), fmt.Sprintf("%d", domain.VCPU())}
 		}
 
 		m.table.SetRows(rows)

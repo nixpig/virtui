@@ -8,6 +8,8 @@ import (
 	"libvirt.org/go/libvirtxml"
 )
 
+// Service is the abstraction that encapsulates the underlying libvirt API and
+// provides simplified methods for interacting with it.
 type Service interface {
 	ConnectionDetails() (ConnectionDetails, error)
 	DomainXML(uuid string) (string, error)
@@ -33,7 +35,9 @@ type Service interface {
 	DomainEventLifecycleRegister(cb func(DomainEvent)) (int, error)
 	DomainEventLifecycleDeregister(callbackID int) error
 
-	ListAllStoragePoolsAndVolumes() (map[StoragePool][]StorageVolume, error)
+	ListAllStoragePools() ([]StoragePool, error)
+	ListStorageVolumes(pool StoragePool) ([]StorageVolume, error)
+	GetStorageVolumeInfo(volume StorageVolume) (string, error)
 	ListAllNetworks() ([]Network, error)
 }
 
@@ -592,7 +596,7 @@ func (s *service) DomainEventLifecycleDeregister(callbackID int) error {
 	return nil
 }
 
-func (s *service) ListAllStoragePoolsAndVolumes() (map[StoragePool][]StorageVolume, error) {
+func (s *service) ListAllStoragePools() ([]StoragePool, error) {
 	if !s.hasConnection() {
 		return nil, fmt.Errorf("not connected to libvirt")
 	}
@@ -603,45 +607,80 @@ func (s *service) ListAllStoragePoolsAndVolumes() (map[StoragePool][]StorageVolu
 		return nil, fmt.Errorf("list all storage pools: %w", err)
 	}
 
-	storage := make(map[StoragePool][]StorageVolume, len(pools))
-
+	var result []StoragePool
 	for i := range pools {
-		pool := pools[i] // Create a local variable for the current pool
-		defer func(pool *libvirt.StoragePool) {
-			if err := pool.Free(); err != nil {
-				log.Warn("failed to free storage pool", "err", err)
-			}
-		}(&pool)
-
-		p, err := ToStoragePoolStruct(&pool)
+		p, err := ToStoragePoolStruct(&pools[i])
 		if err != nil {
-			log.Error("failed to convert storage pool to struct", "err", err, "pool", pool)
+			log.Error(
+				"failed to convert storage pool to struct",
+				"err",
+				err,
+				"pool",
+				pools[i],
+			)
 			continue
 		}
 
-		storage[p] = []StorageVolume{}
-
-		volumes, err := pool.ListAllStorageVolumes(0)
-		if err != nil {
-			log.Error("failed to list all storage volumes", "err", err, "pool", pool)
-			continue
-		}
-
-		for j := range volumes {
-			volumePtr := &volumes[j] // Get a pointer to the current volume
-			defer volumePtr.Free()
-
-			v, err := ToStorageVolumeStruct(volumePtr)
-			if err != nil {
-				log.Error("failed to convert storage volume to struct", "err", err, "volume", volumePtr)
-				continue
-			}
-
-			storage[p] = append(storage[p], v)
-		}
+		result = append(result, p)
 	}
 
-	return storage, nil
+	return result, nil
+}
+
+func (s *service) ListStorageVolumes(
+	pool StoragePool,
+) ([]StorageVolume, error) {
+	if !s.hasConnection() {
+		return nil, fmt.Errorf("not connected to libvirt")
+	}
+
+	volumes, err := pool.ListAllStorageVolumes(0)
+	if err != nil {
+		log.Error(
+			"failed to list all storage volumes",
+			"err",
+			err,
+			"pool",
+			pool,
+		)
+		return nil, fmt.Errorf("list all storage volumes: %w", err)
+	}
+
+	log.Info("ListStorageVolumes found volumes", "count", len(volumes))
+
+	var result []StorageVolume
+	for j := range volumes {
+		volumePtr := &volumes[j] // Get a pointer to the current volume
+
+		v, err := ToStorageVolumeStruct(volumePtr)
+		if err != nil {
+			log.Error(
+				"failed to convert storage volume to struct",
+				"err",
+				err,
+				"volume",
+				volumePtr,
+			)
+			continue
+		}
+
+		result = append(result, v)
+	}
+
+	return result, nil
+}
+
+func (s *service) GetStorageVolumeInfo(volume StorageVolume) (string, error) {
+	if !s.hasConnection() {
+		return "", fmt.Errorf("not connected to libvirt")
+	}
+
+	xml, err := volume.GetXMLDesc(0)
+	if err != nil {
+		return "", fmt.Errorf("get volume XML description: %w", err)
+	}
+
+	return xml, nil
 }
 
 func (s *service) ListAllNetworks() ([]Network, error) {

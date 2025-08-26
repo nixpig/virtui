@@ -17,6 +17,8 @@ var states = map[libvirt.DomainState]string{
 	libvirt.DOMAIN_SHUTOFF:     "Shutoff",
 }
 
+// FromState converts a libvirt domain state to a string representation to
+// display in the UI.
 func FromState(domainState libvirt.DomainState) string {
 	s, ok := states[domainState]
 	if !ok {
@@ -26,6 +28,8 @@ func FromState(domainState libvirt.DomainState) string {
 	return s
 }
 
+// Version converts the int representation of the libvirt version to a semver
+// string.
 func Version(v uint32) string {
 	major := v / 1_000_000
 	minor := (v - (major * 1_000_000)) / 1000

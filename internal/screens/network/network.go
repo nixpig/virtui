@@ -70,6 +70,7 @@ func (m *networkScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *networkScreenModel) View() string {
 	var sb strings.Builder
+
 	if len(m.networks) == 0 {
 		sb.WriteString("No networks found.")
 	} else {

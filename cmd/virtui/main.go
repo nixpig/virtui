@@ -66,13 +66,13 @@ func main() {
 		}
 	}()
 
+	service := libvirtui.NewService(conn)
+
 	appScreens := []app.Screen{
 		manager.NewManagerScreen(),
-		storage.NewStorageScreen(),
+		storage.NewStorageScreen(service),
 		network.NewNetworkScreen(),
 	}
-
-	service := libvirtui.NewService(conn)
 
 	initialModel := app.NewAppModel(conn, service, appScreens)
 

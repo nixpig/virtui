@@ -5,6 +5,7 @@ import (
 	"libvirt.org/go/libvirtxml"
 )
 
+// Network encapsulates a libvirt network and xml representation.
 type Network struct {
 	*libvirt.Network
 	xml libvirtxml.Network

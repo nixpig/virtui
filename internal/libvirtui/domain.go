@@ -5,16 +5,18 @@ import (
 	"libvirt.org/go/libvirtxml"
 )
 
+// Domain encapsulates the libvirt domain and XML representation.
 type Domain struct {
 	*libvirt.Domain
 	xml libvirtxml.Domain
 }
 
+// DomainState represents the state of a libvirt domain.
 type DomainState uint32
 
 const (
-	DomainStateRunning  = DomainState(libvirt.DOMAIN_RUNNING)
 	DomainStateBlocked  = DomainState(libvirt.DOMAIN_BLOCKED)
+	DomainStateRunning  = DomainState(libvirt.DOMAIN_RUNNING)
 	DomainStatePaused   = DomainState(libvirt.DOMAIN_PAUSED)
 	DomainStateShutdown = DomainState(libvirt.DOMAIN_SHUTDOWN)
 	DomainStateShutoff  = DomainState(libvirt.DOMAIN_SHUTOFF)
@@ -51,6 +53,8 @@ func (d *Domain) VCPU() uint32 {
 	return uint32(info.NrVirtCpu)
 }
 
+// ToDomainStruct takes a domain of underlying libvirt implementation and
+// creates a domain for libvirtui.
 func ToDomainStruct(domain *libvirt.Domain) (Domain, error) {
 	var d Domain
 	d.Domain = domain

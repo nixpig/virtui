@@ -30,7 +30,7 @@ type model struct {
 	currentScreen    Screen
 	screens          map[string]Screen
 	width, height    int
-	globalKeyMap     GlobalKeyMap
+	globalKeys       GlobalKeyMap
 	keyMapViewHeight int
 	help             help.Model
 	events           chan libvirtui.DomainEvent
@@ -52,12 +52,12 @@ func NewAppModel(
 	screens []Screen,
 ) *model {
 	m := &model{
-		globalKeyMap: DefaultGlobalKeyMap(),
-		help:         help.New(),
-		screens:      make(map[string]Screen),
-		conn:         conn,
-		service:      service,
-		events:       make(chan libvirtui.DomainEvent),
+		globalKeys: DefaultGlobalKeyMap(),
+		help:       help.New(),
+		screens:    make(map[string]Screen),
+		conn:       conn,
+		service:    service,
+		events:     make(chan libvirtui.DomainEvent),
 	}
 
 	for _, screen := range screens {
@@ -67,7 +67,7 @@ func NewAppModel(
 	m.currentScreen = m.screens[screens[0].ID()]
 
 	m.combinedKeys = combinedKeyMap{
-		global: m.globalKeyMap,
+		global: m.globalKeys,
 		screen: m.currentScreen.Keybindings(),
 		scroll: m.currentScreen.ScrollKeys(),
 	}
@@ -81,7 +81,6 @@ func NewAppModel(
 	if _, err := m.conn.DomainEventLifecycleRegister(
 		func(event libvirtui.DomainEvent) {
 			log.Debug("handling domain event", "event", event.Event, "detail", event.Detail)
-
 			m.events <- event
 		},
 	); err != nil {
@@ -123,7 +122,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, screenCmd)
 		}
 
-	case messages.StoragePoolsMsg:
+	case messages.StoragePoolsMsg, messages.StorageVolumesMsg:
 		storageScreen, ok := m.screens["storage"]
 		if ok {
 			var screenCmd tea.Cmd
@@ -177,7 +176,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			var screenCmd tea.Cmd
 			var updatedModel tea.Model
 
-			updatedModel, screenCmd = m.currentScreen.Update(messages.ScreenSizeMsg{Width: m.width, Height: availableScreenHeight})
+			updatedModel, screenCmd = m.currentScreen.Update(messages.ScreenSizeMsg{
+				Width:  m.width,
+				Height: availableScreenHeight,
+			})
+
 			m.currentScreen = updatedModel.(Screen)
 
 			cmds = append(cmds, screenCmd)
@@ -185,20 +188,20 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, m.globalKeyMap.Quit):
+		case key.Matches(msg, m.globalKeys.Quit):
 			return m, tea.Quit
-		case key.Matches(msg, m.globalKeyMap.Help):
+		case key.Matches(msg, m.globalKeys.Help):
 		// TODO: pop a dialog
 
-		case key.Matches(msg, m.globalKeyMap.Screen1):
+		case key.Matches(msg, m.globalKeys.DashboardScreen):
 			cmd := m.switchScreen("manager")
 			cmds = append(cmds, cmd)
 
-		case key.Matches(msg, m.globalKeyMap.Screen2):
+		case key.Matches(msg, m.globalKeys.StorageScreen):
 			cmd := m.switchScreen("storage")
 			cmds = append(cmds, cmd)
 
-		case key.Matches(msg, m.globalKeyMap.Screen3):
+		case key.Matches(msg, m.globalKeys.NetworksScreen):
 			cmd := m.switchScreen("network")
 			cmds = append(cmds, cmd)
 		}
@@ -237,7 +240,7 @@ func (m *model) View() string {
 	header := titleStyle.Render(m.currentScreen.Title())
 
 	combinedKeys := combinedKeyMap{
-		global: m.globalKeyMap,
+		global: m.globalKeys,
 		screen: m.currentScreen.Keybindings(),
 		scroll: m.currentScreen.ScrollKeys(),
 	}
@@ -299,17 +302,13 @@ func getDomainsCmd(service libvirtui.Service) tea.Cmd {
 
 func getStoragePoolsCmd(service libvirtui.Service) tea.Cmd {
 	return func() tea.Msg {
-		storage, err := service.ListAllStoragePoolsAndVolumes()
+		pools, err := service.ListAllStoragePools()
 		if err != nil {
-			log.Error(
-				"failed to list all storage pools and volumes",
-				"err",
-				err,
-			)
+			log.Error("failed to list all storage pools", "err", err)
 			return nil
 		}
 
-		return messages.StoragePoolsMsg{Storage: storage}
+		return messages.StoragePoolsMsg{Pools: pools}
 	}
 }
 

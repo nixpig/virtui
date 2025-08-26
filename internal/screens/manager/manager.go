@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/x/exp/charmtone"
 	"github.com/nixpig/virtui/internal/app"
 	"github.com/nixpig/virtui/internal/common"
@@ -49,8 +50,9 @@ func NewManagerScreen() *managerScreenModel {
 	s := table.DefaultStyles()
 
 	s.Header = s.Header.
+		Foreground(lipgloss.Color(charmtone.Ash.Hex())).
 		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
+		BorderForeground(lipgloss.Color(charmtone.Charcoal.Hex())).
 		BorderBottom(true).
 		Bold(false)
 
@@ -82,7 +84,9 @@ func (m *managerScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.ScreenSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+
 		style := lipgloss.NewStyle().Border(lipgloss.HiddenBorder())
+
 		m.table.SetWidth(m.width - style.GetHorizontalFrameSize())
 		m.table.SetHeight(m.height - style.GetVerticalFrameSize())
 
@@ -99,7 +103,8 @@ func (m *managerScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		for i, domain := range msg.Domains {
 			var icon string
-			domainState, _, _ := domain.GetState()
+			domainState, _, err := domain.GetState()
+			log.Error("failed to get domain state", "name", domain.Name(), "err", err)
 
 			switch libvirtui.DomainState(domainState) {
 			case libvirtui.DomainStateRunning:
@@ -114,7 +119,12 @@ func (m *managerScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				icon = icons.Icons.VM.Off
 			}
 
-			rows[i] = table.Row{fmt.Sprintf("%s  %s", icon, domain.Name()), domain.State(), fmt.Sprintf("%dMB", domain.Memory()/1024), fmt.Sprintf("%d", domain.VCPU())}
+			rows[i] = table.Row{
+				fmt.Sprintf("%s  %s", icon, domain.Name()),
+				domain.State(),
+				fmt.Sprintf("%dMB", domain.Memory()/1024),
+				fmt.Sprintf("%d", domain.VCPU()),
+			}
 		}
 
 		m.table.SetRows(rows)
@@ -140,7 +150,7 @@ func (m *managerScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *managerScreenModel) View() string {
 	style := lipgloss.NewStyle().
 		Border(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240"))
+		BorderForeground(lipgloss.Color(charmtone.Charcoal.Hex()))
 	return style.Render(m.table.View())
 }
 

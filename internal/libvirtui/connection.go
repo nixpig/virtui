@@ -6,6 +6,7 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
+// Connection is the abstraction around the underlying libvirt API connection.
 type Connection interface {
 	GetHostname() (string, error)
 	GetLibVersion() (uint32, error)
@@ -42,6 +43,7 @@ type connection struct {
 	*libvirt.Connect
 }
 
+// NewConnection returns a new Connection for the provided QEMU server URI.
 func NewConnection(ctx context.Context, qemuURI string) (Connection, error) {
 	c, err := libvirt.NewConnect(qemuURI)
 	if err != nil {

@@ -35,6 +35,7 @@
  - [ ] Not happy with keybindings configuration complexity
  - [ ] Not happy with hard-coded keybindings to switch between screens
  - [ ] Error handling and display
+ - [ ] Summary panel next to keys at bottom with Hostname, URI, Hypervisor, Libvirt version
 
 ### internal/libvirt/*
  - [ ] This abstraction feels like a bit of a mess. Tidy it up.

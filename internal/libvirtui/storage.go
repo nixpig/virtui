@@ -5,6 +5,7 @@ import (
 	"libvirt.org/go/libvirtxml"
 )
 
+// StorageVolume encapsulates the libvirt storage volume and XML representation.
 type StorageVolume struct {
 	*libvirt.StorageVol
 	xml libvirtxml.StorageVolume
@@ -22,6 +23,7 @@ func (s StorageVolume) TargetFormatType() string {
 	return s.xml.Target.Format.Type
 }
 
+// StoragePool encapsulates the libvirt storage pool and xml representation.
 type StoragePool struct {
 	*libvirt.StoragePool
 	xml libvirtxml.StoragePool

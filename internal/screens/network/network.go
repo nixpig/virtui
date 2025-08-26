@@ -2,6 +2,7 @@ package network
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -9,6 +10,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/nixpig/virtui/internal/app"
 	"github.com/nixpig/virtui/internal/common"
+	"github.com/nixpig/virtui/internal/libvirtui"
 	"github.com/nixpig/virtui/internal/messages"
 )
 
@@ -21,6 +23,7 @@ type networkScreenModel struct {
 	width    int
 	height   int
 	keys     common.ScrollKeyMap
+	networks []libvirtui.Network
 }
 
 // NewNetworkScreen returns an initialised network screen model.
@@ -30,6 +33,7 @@ func NewNetworkScreen() *networkScreenModel {
 		title:    "Networks",
 		viewport: viewport.New(0, 0),
 		keys:     common.DefaultScrollKeyMap(),
+		networks: []libvirtui.Network{},
 	}
 }
 
@@ -45,6 +49,9 @@ func (m *networkScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.ScreenSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+
+	case messages.NetworksMsg:
+		m.networks = msg.Networks
 
 	case tea.KeyMsg:
 		switch {
@@ -62,11 +69,20 @@ func (m *networkScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *networkScreenModel) View() string {
-	content := "This is the Network Screen.\n\n" +
-		"Current screen dimensions: Width = %d, Height = %d\n\n" +
-		"Press '1' for Manager, '2' for Network, 'q' or 'ctrl+c' to quit."
+	var sb strings.Builder
+	if len(m.networks) == 0 {
+		sb.WriteString("No networks found.")
+	} else {
+		for _, network := range m.networks {
+			sb.WriteString("Name: " + network.Name() + "\n")
+			sb.WriteString("UUID: " + network.UUID() + "\n")
+			sb.WriteString("Bridge: " + network.Bridge() + "\n")
+			sb.WriteString(fmt.Sprintf("Active: %t\n", network.Active()))
+			sb.WriteString("\n")
+		}
+	}
 
-	renderedContent := fmt.Sprintf(content, m.width, m.height)
+	renderedContent := sb.String()
 
 	m.viewport.SetContent(renderedContent)
 

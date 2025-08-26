@@ -32,6 +32,9 @@ type Service interface {
 
 	DomainEventLifecycleRegister(cb func(DomainEvent)) (int, error)
 	DomainEventLifecycleDeregister(callbackID int) error
+
+	ListAllStoragePoolsAndVolumes() (map[StoragePool][]StorageVolume, error)
+	ListAllNetworks() ([]Network, error)
 }
 
 type ConnectionDetails struct {
@@ -587,4 +590,84 @@ func (s *service) DomainEventLifecycleDeregister(callbackID int) error {
 	}
 
 	return nil
+}
+
+func (s *service) ListAllStoragePoolsAndVolumes() (map[StoragePool][]StorageVolume, error) {
+	if !s.hasConnection() {
+		return nil, fmt.Errorf("not connected to libvirt")
+	}
+
+	pools, err := s.conn.ListAllStoragePools(0)
+	if err != nil {
+		log.Error("failed to list all storage pools", "err", err)
+		return nil, fmt.Errorf("list all storage pools: %w", err)
+	}
+
+	storage := make(map[StoragePool][]StorageVolume, len(pools))
+
+	for i := range pools {
+		pool := pools[i] // Create a local variable for the current pool
+		defer func(pool *libvirt.StoragePool) {
+			if err := pool.Free(); err != nil {
+				log.Warn("failed to free storage pool", "err", err)
+			}
+		}(&pool)
+
+		p, err := ToStoragePoolStruct(&pool)
+		if err != nil {
+			log.Error("failed to convert storage pool to struct", "err", err, "pool", pool)
+			continue
+		}
+
+		storage[p] = []StorageVolume{}
+
+		volumes, err := pool.ListAllStorageVolumes(0)
+		if err != nil {
+			log.Error("failed to list all storage volumes", "err", err, "pool", pool)
+			continue
+		}
+
+		for j := range volumes {
+			volumePtr := &volumes[j] // Get a pointer to the current volume
+			defer volumePtr.Free()
+
+			v, err := ToStorageVolumeStruct(volumePtr)
+			if err != nil {
+				log.Error("failed to convert storage volume to struct", "err", err, "volume", volumePtr)
+				continue
+			}
+
+			storage[p] = append(storage[p], v)
+		}
+	}
+
+	return storage, nil
+}
+
+func (s *service) ListAllNetworks() ([]Network, error) {
+	if !s.hasConnection() {
+		return nil, fmt.Errorf("not connected to libvirt")
+	}
+
+	networks, err := s.conn.ListAllNetworks(0)
+	if err != nil {
+		return nil, fmt.Errorf("list all networks: %w", err)
+	}
+
+	var result []Network
+	for _, n := range networks {
+		network, err := ToNetworkStruct(&n)
+		if err != nil {
+			log.Error("failed to convert network to struct", "err", err)
+			continue
+		}
+		result = append(result, network)
+		defer func(network *libvirt.Network) {
+			if err := network.Free(); err != nil {
+				log.Warn("failed to free network", "err", err)
+			}
+		}(&n)
+	}
+
+	return result, nil
 }

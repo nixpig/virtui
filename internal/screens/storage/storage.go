@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -9,6 +10,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/nixpig/virtui/internal/app"
 	"github.com/nixpig/virtui/internal/common"
+	"github.com/nixpig/virtui/internal/libvirtui"
 	"github.com/nixpig/virtui/internal/messages"
 )
 
@@ -21,15 +23,17 @@ type storageScreenModel struct {
 	width    int
 	height   int
 	keys     common.ScrollKeyMap
+	storage  map[libvirtui.StoragePool][]libvirtui.StorageVolume
 }
 
-// NewStorageScreen returns and initialised storage screen model.
+// NewStorageScreen returns an initialised storage screen model.
 func NewStorageScreen() *storageScreenModel {
 	return &storageScreenModel{
 		id:       "storage",
 		title:    "Storage",
 		viewport: viewport.New(0, 0),
 		keys:     common.DefaultScrollKeyMap(),
+		storage:  make(map[libvirtui.StoragePool][]libvirtui.StorageVolume),
 	}
 }
 
@@ -45,6 +49,9 @@ func (m *storageScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.ScreenSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+
+	case messages.StoragePoolsMsg:
+		m.storage = msg.Storage
 
 	case tea.KeyMsg:
 		switch {
@@ -62,11 +69,39 @@ func (m *storageScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *storageScreenModel) View() string {
-	content := "This is the Storage Screen.\n\n" +
-		"Current screen dimensions: Width = %d, Height = %d\n\n" +
-		"Press '1' for Manager, '2' for Network, 'q' or 'ctrl+c' to quit."
+	var sb strings.Builder
+	if len(m.storage) == 0 {
+		sb.WriteString("No storage pools found.")
+	} else {
+		for k, v := range m.storage {
+			sb.WriteString("Name: " + k.Name() + "\n")
+			sb.WriteString("UUID: " + k.UUID() + "\n")
+			sb.WriteString("Type: " + k.Type() + "\n")
+			capacityValue, capacityUnit := k.Capacity()
+			availableValue, availableUnit := k.Available()
+			sb.WriteString("Size: " + fmt.Sprintf("%d%s (%d%s available)", capacityValue, capacityUnit, availableValue, availableUnit) + "\n")
+			sb.WriteString("Location: " + k.TargetPath() + "\n")
+			sb.WriteString("Volumes:\n")
+			if len(v) == 0 {
+				sb.WriteString("  No volumes found.\n")
+			} else {
+				for i, x := range v {
+					volumeCapacityValue, volumeCapacityUnit := x.Capacity()
+					sb.WriteString(fmt.Sprintf(
+						"  %d %s - %d %s - %s \n",
+						i,
+						x.Name(),
+						volumeCapacityValue,
+						volumeCapacityUnit,
+						x.TargetFormatType(),
+					))
+				}
+			}
+			sb.WriteString("\n")
+		}
+	}
 
-	renderedContent := fmt.Sprintf(content, m.width, m.height)
+	renderedContent := sb.String()
 
 	m.viewport.SetContent(renderedContent)
 
@@ -88,19 +123,16 @@ func (m *storageScreenModel) Title() string {
 // Keybindings returns screen-specific keybindings.
 func (m *storageScreenModel) Keybindings() []key.Binding {
 	return []key.Binding{
-		key.NewBinding(key.WithKeys("z"), key.WithHelp("z", "action z")),
-		key.NewBinding(key.WithKeys("y"), key.WithHelp("y", "action y")),
-		key.NewBinding(key.WithKeys("x"), key.WithHelp("x", "action x")),
-		key.NewBinding(key.WithKeys("w"), key.WithHelp("w", "action w")),
+		key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "action s")),
 	}
 }
 
-// ScrollKeys returns screen-specific keys used for scrolling.
+// ScrollKeys returns the the screen-specific keybindings for scrolling.
 func (m *storageScreenModel) ScrollKeys() common.ScrollKeyMap {
 	return m.keys
 }
 
-// ID returns the screen ID.
+// ID returns the screen ID used to reference the screen in other areas of app.
 func (m *storageScreenModel) ID() string {
 	return m.id
 }

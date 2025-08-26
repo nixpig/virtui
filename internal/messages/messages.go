@@ -17,3 +17,15 @@ type ScreenSizeMsg struct {
 	// Height is the screen size height in terminal characters.
 	Height int
 }
+
+// StoragePoolsMsg is a message to notify of storage pool and volume list.
+type StoragePoolsMsg struct {
+	// Storage contains the list of available storage pools and their volumes.
+	Storage map[libvirtui.StoragePool][]libvirtui.StorageVolume
+}
+
+// NetworksMsg is a message to notify of network list.
+type NetworksMsg struct {
+	// Networks contains the list of available networks.
+	Networks []libvirtui.Network
+}

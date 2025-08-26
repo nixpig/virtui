@@ -15,17 +15,27 @@ type Connection interface {
 
 	Close() (int, error)
 
-	DomainEventLifecycleRegister(func(DomainEvent)) (int, error)
+	DomainEventLifecycleRegister(cb func(DomainEvent)) (int, error)
 	DomainEventLifecycleDeregister(callbackID int) error
 
 	LookupDomainByUUIDString(uuid string) (*libvirt.Domain, error)
+
 	ListAllDomains(
 		flags libvirt.ConnectListAllDomainsFlags,
 	) ([]libvirt.Domain, error)
+
 	DefineDomainFlags(
 		xml string,
 		flags libvirt.DomainDefineFlags,
 	) (*libvirt.Domain, error)
+
+	ListAllStoragePools(
+		flags libvirt.ConnectListAllStoragePoolsFlags,
+	) ([]libvirt.StoragePool, error)
+
+	ListAllNetworks(
+		flags libvirt.ConnectListAllNetworksFlags,
+	) ([]libvirt.Network, error)
 }
 
 type connection struct {
@@ -61,4 +71,16 @@ func (c connection) DomainEventLifecycleRegister(
 
 func (c connection) DomainEventLifecycleDeregister(callbackID int) error {
 	return c.Connect.DomainEventDeregister(callbackID)
+}
+
+func (c connection) ListAllStoragePools(
+	flags libvirt.ConnectListAllStoragePoolsFlags,
+) ([]libvirt.StoragePool, error) {
+	return c.Connect.ListAllStoragePools(flags)
+}
+
+func (c connection) ListAllNetworks(
+	flags libvirt.ConnectListAllNetworksFlags,
+) ([]libvirt.Network, error) {
+	return c.Connect.ListAllNetworks(flags)
 }

@@ -10,14 +10,13 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/x/exp/charmtone"
-	"github.com/nixpig/virtui/internal/app"
-	"github.com/nixpig/virtui/internal/common"
 	"github.com/nixpig/virtui/internal/icons"
 	"github.com/nixpig/virtui/internal/libvirtui"
 	"github.com/nixpig/virtui/internal/messages"
+	"github.com/nixpig/virtui/internal/screen"
 )
 
-var _ app.Screen = (*managerScreenModel)(nil)
+var _ screen.Screen = (*managerScreenModel)(nil)
 
 type managerScreenModel struct {
 	id       string
@@ -25,8 +24,9 @@ type managerScreenModel struct {
 	viewport viewport.Model
 	width    int
 	height   int
-	keys     common.ScrollKeyMap
+	keys     KeyMap
 	table    table.Model
+	domains  []libvirtui.Domain
 }
 
 // NewManagerScreen returns an initialised manager screen model.
@@ -67,7 +67,7 @@ func NewManagerScreen() *managerScreenModel {
 		id:       "manager",
 		title:    "Dashboard",
 		viewport: viewport.New(0, 0),
-		keys:     common.DefaultScrollKeyMap(),
+		keys:     defaultKeyMap,
 		table:    t,
 	}
 }
@@ -99,6 +99,7 @@ func (m *managerScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.Columns()[0].Width = nameColumnWidth
 
 	case messages.DomainsMsg:
+		m.domains = msg.Domains
 		rows := make([]table.Row, len(msg.Domains))
 
 		for i, domain := range msg.Domains {
@@ -130,12 +131,7 @@ func (m *managerScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.SetRows(rows)
 
 	case tea.KeyMsg:
-		switch {
-		case key.Matches(msg, m.keys.Up):
-			m.table.MoveUp(1)
-		case key.Matches(msg, m.keys.Down):
-			m.table.MoveDown(1)
-		}
+		return m.handleKeypress(msg)
 	}
 
 	m.table, cmd = m.table.Update(msg)
@@ -159,22 +155,65 @@ func (m *managerScreenModel) Title() string {
 	return m.title
 }
 
-// Keybindings returns screen-specific keybindings.
-func (m *managerScreenModel) Keybindings() []key.Binding {
-	return []key.Binding{
-		key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "action a")),
-		key.NewBinding(key.WithKeys("b"), key.WithHelp("b", "action b")),
-		key.NewBinding(key.WithKeys("c"), key.WithHelp("c", "action c")),
-		key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "action d")),
-	}
-}
-
-// ScrollKeys returns the screen-specific keybindings for scrolling.
-func (m *managerScreenModel) ScrollKeys() common.ScrollKeyMap {
-	return m.keys
+func (m *managerScreenModel) HelpKeys() [][]key.Binding {
+	return m.keys.FullHelp()
 }
 
 // ID returns the screen ID.
 func (m *managerScreenModel) ID() string {
 	return m.id
+}
+
+func (m *managerScreenModel) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	selectedDomainIndex := m.table.Cursor()
+	selectedDomain := m.domains[selectedDomainIndex]
+	domainUUID, err := selectedDomain.GetUUIDString()
+	if err != nil {
+		log.Error("failed to get domain UUID", "err", err)
+		return m, nil
+	}
+
+	switch {
+	case key.Matches(msg, m.keys.Start):
+		return m, messages.NewDomainActionWithFunc(domainUUID, func(service libvirtui.Service, uuid string) error {
+			return service.DomainStart(uuid)
+		})
+	case key.Matches(msg, m.keys.PauseResume):
+		return m, messages.NewDomainActionWithFunc(domainUUID, func(service libvirtui.Service, uuid string) error {
+			return service.ToggleDomainState(uuid)
+		})
+	case key.Matches(msg, m.keys.Shutdown):
+		return m, messages.NewDomainActionWithFunc(domainUUID, func(service libvirtui.Service, uuid string) error {
+			return service.DomainShutdown(uuid)
+		})
+	case key.Matches(msg, m.keys.Reboot):
+		return m, messages.NewDomainActionWithFunc(domainUUID, func(service libvirtui.Service, uuid string) error {
+			return service.DomainReboot(uuid)
+		})
+	case key.Matches(msg, m.keys.Reset):
+		return m, messages.NewDomainActionWithFunc(domainUUID, func(service libvirtui.Service, uuid string) error {
+			return service.ResetDomain(uuid)
+		})
+	case key.Matches(msg, m.keys.ForceOff):
+		return m, messages.NewDomainActionWithFunc(domainUUID, func(service libvirtui.Service, uuid string) error {
+			return service.ForceOffDomain(uuid)
+		})
+	case key.Matches(msg, m.keys.Save):
+		// TODO: implement save
+		return m, messages.NewDomainAction("save", domainUUID, true)
+	case key.Matches(msg, m.keys.Clone):
+		// TODO: implement clone
+		return m, messages.NewDomainAction("clone", domainUUID, true)
+	case key.Matches(msg, m.keys.Delete):
+		// TODO: implement delete
+		return m, messages.NewDomainAction("delete", domainUUID, true)
+	case key.Matches(msg, m.keys.Open):
+		// TODO: implement open
+		return m, messages.NewDomainAction("open", domainUUID, true)
+	case key.Matches(msg, m.keys.KeyUp):
+		m.table.MoveUp(1)
+	case key.Matches(msg, m.keys.KeyDown):
+		m.table.MoveDown(1)
+	}
+	return m, nil
 }

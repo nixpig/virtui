@@ -8,13 +8,12 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/nixpig/virtui/internal/app"
-	"github.com/nixpig/virtui/internal/common"
 	"github.com/nixpig/virtui/internal/libvirtui"
 	"github.com/nixpig/virtui/internal/messages"
+	"github.com/nixpig/virtui/internal/screen"
 )
 
-var _ app.Screen = (*networkScreenModel)(nil)
+var _ screen.Screen = (*networkScreenModel)(nil)
 
 type networkScreenModel struct {
 	id       string
@@ -22,7 +21,6 @@ type networkScreenModel struct {
 	viewport viewport.Model
 	width    int
 	height   int
-	keys     common.ScrollKeyMap
 	networks []libvirtui.Network
 }
 
@@ -32,7 +30,6 @@ func NewNetworkScreen() *networkScreenModel {
 		id:       "network",
 		title:    "Networks",
 		viewport: viewport.New(0, 0),
-		keys:     common.DefaultScrollKeyMap(),
 		networks: []libvirtui.Network{},
 	}
 }
@@ -55,9 +52,9 @@ func (m *networkScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, m.keys.Up):
+		case key.Matches(msg, key.NewBinding(key.WithKeys("up", "k"))):
 			m.viewport.ScrollUp(1)
-		case key.Matches(msg, m.keys.Down):
+		case key.Matches(msg, key.NewBinding(key.WithKeys("down", "j"))):
 			m.viewport.ScrollDown(1)
 		}
 	}
@@ -102,19 +99,19 @@ func (m *networkScreenModel) Title() string {
 	return m.title
 }
 
-// Keybindings returns screen-specific keybindings.
-func (m *networkScreenModel) Keybindings() []key.Binding {
-	return []key.Binding{
-		key.NewBinding(key.WithKeys("z"), key.WithHelp("z", "action z")),
-		key.NewBinding(key.WithKeys("y"), key.WithHelp("y", "action y")),
-		key.NewBinding(key.WithKeys("x"), key.WithHelp("x", "action x")),
-		key.NewBinding(key.WithKeys("w"), key.WithHelp("w", "action w")),
+func (m *networkScreenModel) HelpKeys() [][]key.Binding {
+	return [][]key.Binding{
+		{
+			key.NewBinding(key.WithKeys("up", "k"), key.WithHelp("↑/k", "move up")),
+			key.NewBinding(key.WithKeys("down", "j"), key.WithHelp("↓/j", "move down")),
+		},
+		{
+			key.NewBinding(key.WithKeys("z"), key.WithHelp("z", "action z")),
+			key.NewBinding(key.WithKeys("y"), key.WithHelp("y", "action y")),
+			key.NewBinding(key.WithKeys("x"), key.WithHelp("x", "action x")),
+			key.NewBinding(key.WithKeys("w"), key.WithHelp("w", "action w")),
+		},
 	}
-}
-
-// ScrollKeys returns the the screen-specific keybindings for scrolling.
-func (m *networkScreenModel) ScrollKeys() common.ScrollKeyMap {
-	return m.keys
 }
 
 // ID returns the screen ID used to reference the screen in other areas of app.

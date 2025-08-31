@@ -53,6 +53,10 @@ func (d *Domain) VCPU() uint32 {
 	return uint32(info.NrVirtCpu)
 }
 
+func (d *Domain) Reset() error {
+	return d.Domain.Reset(0)
+}
+
 // ToDomainStruct takes a domain of underlying libvirt implementation and
 // creates a domain for libvirtui.
 func ToDomainStruct(domain *libvirt.Domain) (Domain, error) {

@@ -7,28 +7,19 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/x/exp/charmtone"
-	"github.com/nixpig/virtui/internal/common"
 	"github.com/nixpig/virtui/internal/libvirtui"
 	"github.com/nixpig/virtui/internal/messages"
+	"github.com/nixpig/virtui/internal/screen"
 )
 
 var _ tea.Model = (*model)(nil)
 
 var footerStyle = lipgloss.NewStyle().Padding(0, 1, 1)
 
-// Screen is the interface that all application screens must implement.
-type Screen interface {
-	tea.Model
-	ID() string
-	Title() string
-	Keybindings() []key.Binding
-	ScrollKeys() common.ScrollKeyMap
-}
-
 // model holds the global state and rendering logic.
 type model struct {
-	currentScreen    Screen
-	screens          map[string]Screen
+	currentScreen    screen.Screen
+	screens          map[string]screen.Screen
 	width, height    int
 	globalKeys       GlobalKeyMap
 	keyMapViewHeight int
@@ -49,12 +40,12 @@ func listenForEvents(ch <-chan libvirtui.DomainEvent) tea.Cmd {
 func NewAppModel(
 	conn libvirtui.Connection,
 	service libvirtui.Service,
-	screens []Screen,
+	screens []screen.Screen,
 ) *model {
 	m := &model{
 		globalKeys: DefaultGlobalKeyMap(),
 		help:       help.New(),
-		screens:    make(map[string]Screen),
+		screens:    make(map[string]screen.Screen),
 		conn:       conn,
 		service:    service,
 		events:     make(chan libvirtui.DomainEvent),
@@ -68,8 +59,8 @@ func NewAppModel(
 
 	m.combinedKeys = combinedKeyMap{
 		global: m.globalKeys,
-		screen: m.currentScreen.Keybindings(),
-		scroll: m.currentScreen.ScrollKeys(),
+		screen: m.currentScreen.HelpKeys(),
+		currentScreenID: m.currentScreen.ID(),
 	}
 
 	// temporarily rendering the footer to calculate the height offset
@@ -107,6 +98,58 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
+
+	case messages.DomainActionWithFuncMsg:
+		go func() {
+			if err := msg.Action(m.service, msg.DomainUUID); err != nil {
+				log.Error("failed to perform domain action", "err", err)
+			}
+		}()
+
+	case messages.DomainActionMsg:
+		if msg.IsPrompt {
+			log.Info("prompt action not yet implemented")
+		} else {
+			switch msg.Action {
+			case "start":
+				go func() {
+					if err := m.service.DomainStart(msg.Domain); err != nil {
+						log.Error("failed to start domain", "err", err)
+					}
+				}()
+			case "pause/resume":
+				go func() {
+					if err := m.service.ToggleDomainState(msg.Domain); err != nil {
+						log.Error("failed to toggle domain state", "err", err)
+					}
+				}()
+			case "shutdown":
+				go func() {
+					if err := m.service.DomainShutdown(msg.Domain); err != nil {
+						log.Error("failed to shutdown domain", "err", err)
+					}
+				}()
+			case "reboot":
+				go func() {
+					if err := m.service.DomainReboot(msg.Domain); err != nil {
+						log.Error("failed to reboot domain", "err", err)
+					}
+				}()
+			case "reset":
+				go func() {
+					if err := m.service.ResetDomain(msg.Domain); err != nil {
+						log.Error("failed to reset domain", "err", err)
+					}
+				}()
+			case "off":
+				go func() {
+					if err := m.service.ForceOffDomain(msg.Domain); err != nil {
+						log.Error("failed to force off domain", "err", err)
+					}
+				}()
+			}
+		}
+
 	case libvirtui.DomainEvent:
 		// just re-fetch all the domain details for the time-being
 		cmds = append(cmds, getDomainsCmd(m.service))
@@ -117,7 +160,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			var updatedModel tea.Model
 
 			updatedModel, screenCmd = m.currentScreen.Update(msg)
-			m.currentScreen = updatedModel.(Screen)
+			m.currentScreen = updatedModel.(screen.Screen)
 
 			cmds = append(cmds, screenCmd)
 		}
@@ -129,7 +172,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			var updatedModel tea.Model
 
 			updatedModel, screenCmd = storageScreen.Update(msg)
-			m.screens["storage"] = updatedModel.(Screen)
+			m.screens["storage"] = updatedModel.(screen.Screen)
 			cmds = append(cmds, screenCmd)
 		}
 
@@ -145,7 +188,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			var updatedModel tea.Model
 
 			updatedModel, screenCmd = networkScreen.Update(msg)
-			m.screens["network"] = updatedModel.(Screen)
+			m.screens["network"] = updatedModel.(screen.Screen)
 			cmds = append(cmds, screenCmd)
 		}
 
@@ -160,7 +203,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			var updatedModel tea.Model
 
 			updatedModel, screenCmd = m.currentScreen.Update(msg)
-			m.currentScreen = updatedModel.(Screen)
+			m.currentScreen = updatedModel.(screen.Screen)
 
 			cmds = append(cmds, screenCmd)
 		}
@@ -181,7 +224,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				Height: availableScreenHeight,
 			})
 
-			m.currentScreen = updatedModel.(Screen)
+			m.currentScreen = updatedModel.(screen.Screen)
 
 			cmds = append(cmds, screenCmd)
 		}
@@ -215,7 +258,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var updatedModel tea.Model
 
 		updatedModel, screenCmd = m.currentScreen.Update(msg)
-		m.currentScreen = updatedModel.(Screen)
+		m.currentScreen = updatedModel.(screen.Screen)
 
 		cmds = append(cmds, screenCmd)
 	}
@@ -239,14 +282,8 @@ func (m *model) View() string {
 
 	header := titleStyle.Render(m.currentScreen.Title())
 
-	combinedKeys := combinedKeyMap{
-		global: m.globalKeys,
-		screen: m.currentScreen.Keybindings(),
-		scroll: m.currentScreen.ScrollKeys(),
-	}
-
 	footer := footerStyle.Render(
-		m.help.FullHelpView(combinedKeys.FullHelp()),
+		m.help.FullHelpView(m.combinedKeys.FullHelp()),
 	)
 
 	availableScreenHeight := max(
@@ -270,6 +307,7 @@ func (m *model) switchScreen(screenName string) tea.Cmd {
 	}
 
 	m.currentScreen = nextScreen
+	m.combinedKeys.currentScreenID = nextScreen.ID()
 
 	availableScreenHeight := max(m.height-1-m.keyMapViewHeight, 0)
 
@@ -283,7 +321,7 @@ func (m *model) switchScreen(screenName string) tea.Cmd {
 		},
 	)
 
-	m.currentScreen = updatedModel.(Screen)
+	m.currentScreen = updatedModel.(screen.Screen)
 
 	return screenCmd
 }

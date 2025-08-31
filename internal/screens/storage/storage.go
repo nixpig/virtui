@@ -12,13 +12,12 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/x/exp/charmtone"
-	"github.com/nixpig/virtui/internal/app"
-	"github.com/nixpig/virtui/internal/common"
 	"github.com/nixpig/virtui/internal/libvirtui"
 	"github.com/nixpig/virtui/internal/messages"
+	"github.com/nixpig/virtui/internal/screen"
 )
 
-var _ app.Screen = (*storageScreenModel)(nil)
+var _ screen.Screen = (*storageScreenModel)(nil)
 
 const (
 	panePools = iota
@@ -111,7 +110,6 @@ type storageScreenModel struct {
 	volumesPaneWidth       int
 	volumeDetailsPaneWidth int
 	containerHeight        int
-	keys                   common.ScrollKeyMap
 	err                    error
 }
 
@@ -149,7 +147,6 @@ func NewStorageScreen(service libvirtui.Service) *storageScreenModel {
 		pools:         poolsList,
 		volumes:       volumesList,
 		volumeDetails: viewport.New(0, 0),
-		keys:          common.DefaultScrollKeyMap(),
 	}
 }
 
@@ -256,6 +253,12 @@ func (m *storageScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case key.Matches(msg, key.NewBinding(key.WithKeys("enter"))):
 					m.activePane = paneVolumes
 
+				case key.Matches(msg, key.NewBinding(key.WithKeys("up", "k"))):
+					m.pools, cmd = m.pools.Update(msg)
+
+				case key.Matches(msg, key.NewBinding(key.WithKeys("down", "j"))):
+					m.pools, cmd = m.pools.Update(msg)
+
 				default:
 					originalIndex := m.pools.Index()
 					m.pools, cmd = m.pools.Update(msg)
@@ -274,6 +277,12 @@ func (m *storageScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.activePane = paneVolumeDetails
 					cmds = append(cmds, m.loadVolumeDetailsCmd())
 
+				case key.Matches(msg, key.NewBinding(key.WithKeys("up", "k"))):
+					m.volumes, cmd = m.volumes.Update(msg)
+
+				case key.Matches(msg, key.NewBinding(key.WithKeys("down", "j"))):
+					m.volumes, cmd = m.volumes.Update(msg)
+
 				default:
 					originalIndex := m.volumes.Index()
 					m.volumes, cmd = m.volumes.Update(msg)
@@ -287,11 +296,20 @@ func (m *storageScreenModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 			case paneVolumeDetails:
-				m.volumeDetails, cmd = m.volumeDetails.Update(msg)
-				m.volumeDetails.Width = m.volumeDetailsPaneWidth
-				m.volumeDetails.Height = m.containerHeight
+				switch {
+				case key.Matches(msg, key.NewBinding(key.WithKeys("up", "k"))):
+					m.volumeDetails, cmd = m.volumeDetails.Update(msg)
 
-				cmds = append(cmds, cmd)
+				case key.Matches(msg, key.NewBinding(key.WithKeys("down", "j"))):
+					m.volumeDetails, cmd = m.volumeDetails.Update(msg)
+
+				default:
+					m.volumeDetails, cmd = m.volumeDetails.Update(msg)
+					m.volumeDetails.Width = m.volumeDetailsPaneWidth
+					m.volumeDetails.Height = m.containerHeight
+
+					cmds = append(cmds, cmd)
+				}
 			}
 		}
 
@@ -471,19 +489,21 @@ func (m *storageScreenModel) Title() string {
 	return m.title
 }
 
-func (m *storageScreenModel) Keybindings() []key.Binding {
-	return []key.Binding{
-		key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "next pane")),
-		key.NewBinding(
-			key.WithKeys("shift+tab"),
-			key.WithHelp("shift+tab", "prev pane"),
-		),
-		key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "select")),
+func (m *storageScreenModel) HelpKeys() [][]key.Binding {
+	return [][]key.Binding{
+		{
+			key.NewBinding(key.WithKeys("up", "k"), key.WithHelp("↑/k", "move up")),
+			key.NewBinding(key.WithKeys("down", "j"), key.WithHelp("↓/j", "move down")),
+		},
+		{
+			key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "next pane")),
+			key.NewBinding(
+				key.WithKeys("shift+tab"),
+				key.WithHelp("shift+tab", "prev pane"),
+			),
+			key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "select")),
+		},
 	}
-}
-
-func (m *storageScreenModel) ScrollKeys() common.ScrollKeyMap {
-	return m.keys
 }
 
 func (m *storageScreenModel) ID() string {

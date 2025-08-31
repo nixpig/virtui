@@ -31,6 +31,9 @@ type Service interface {
 	DomainResume(uuid string) error
 	DomainUndefine(uuid string) error
 	DomainMigrate(uuid string, destURI string) error
+	ToggleDomainState(uuid string) error
+	ResetDomain(uuid string) error
+	ForceOffDomain(uuid string) error
 
 	DomainEventLifecycleRegister(cb func(DomainEvent)) (int, error)
 	DomainEventLifecycleDeregister(callbackID int) error
@@ -561,6 +564,71 @@ func (s *service) DomainMigrate(uuid string, destURI string) error {
 
 	if _, err := domain.Migrate(s.conn.(*connection).Connect, 0, destURI, "", 0); err != nil {
 		return fmt.Errorf("migrate domain: %w", err)
+	}
+
+	return nil
+}
+
+func (s *service) ToggleDomainState(uuid string) error {
+	if !s.hasConnection() {
+		return fmt.Errorf("not connected to libvirt")
+	}
+
+	domain, err := s.conn.LookupDomainByUUIDString(uuid)
+	if err != nil {
+		return fmt.Errorf("lookup domain by UUID: %w", err)
+	}
+	defer domain.Free()
+
+	state, _, err := domain.GetState()
+	if err != nil {
+		return fmt.Errorf("get domain state: %w", err)
+	}
+
+	if DomainState(state) == DomainStateRunning {
+		if err := domain.Suspend(); err != nil {
+			return fmt.Errorf("suspend domain: %w", err)
+		}
+	} else if DomainState(state) == DomainStatePaused {
+		if err := domain.Resume(); err != nil {
+			return fmt.Errorf("resume domain: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (s *service) ResetDomain(uuid string) error {
+	if !s.hasConnection() {
+		return fmt.Errorf("not connected to libvirt")
+	}
+
+	domain, err := s.conn.LookupDomainByUUIDString(uuid)
+	if err != nil {
+		return fmt.Errorf("lookup domain by UUID: %w", err)
+	}
+	defer domain.Free()
+
+	if err := domain.Reset(0); err != nil {
+		return fmt.Errorf("reset domain: %w", err)
+	}
+
+	return nil
+}
+
+func (s *service) ForceOffDomain(uuid string) error {
+	if !s.hasConnection() {
+		return fmt.Errorf("not connected to libvirt")
+	}
+
+	domain, err := s.conn.LookupDomainByUUIDString(uuid)
+	if err != nil {
+		return fmt.Errorf("lookup domain by UUID: %w", err)
+	}
+	defer domain.Free()
+
+	if err := domain.Destroy(); err != nil {
+		return fmt.Errorf("force off domain: %w", err)
 	}
 
 	return nil

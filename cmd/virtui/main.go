@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nixpig/virtui/internal/app"
 	"github.com/nixpig/virtui/internal/libvirtui"
+	"github.com/nixpig/virtui/internal/screen"
 	"github.com/nixpig/virtui/internal/screens/manager"
 	"github.com/nixpig/virtui/internal/screens/network"
 	"github.com/nixpig/virtui/internal/screens/storage"
@@ -68,7 +69,7 @@ func main() {
 
 	service := libvirtui.NewService(conn)
 
-	appScreens := []app.Screen{
+	appScreens := []screen.Screen{
 		manager.NewManagerScreen(),
 		storage.NewStorageScreen(service),
 		network.NewNetworkScreen(),

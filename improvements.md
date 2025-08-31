@@ -7,7 +7,7 @@
  - [x] The "k" and "up" keys must move the row selection in the table up. If the first row is already selected, then do nothing. 
  - [x] The "j" "down" keys must move the row selection in the table down. If the last row is already selected, then do nothing.
  - [x] When the state of a virtual machine changes, it must be reflected immediately - we already handle events to some extent and need to verify whether these already provide this functionality.
- - Actions that can be taken on a virtual machine must be bound to the following keys.
+ - [ ] Actions that can be taken on a virtual machine must be bound to the following keys.
     1. Key: "t" | Action: "start" | Description: "Starts the virtual machine" | Type: "immediate" |
     2. Key: "p" | Action: "pause/resume" | Description: "Pauses or resumes the virtual machine" | Type: "immediate" |
     3. Key: "s" | Action: "shutdown" | Description: "Shutdown the virtual machine" | Type: "immediate" |
